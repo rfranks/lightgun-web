@@ -34,3 +34,37 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Project Overview
+
+This project is a TypeScript-based Next.js game. It uses React hooks and the Next.js app router to deliver a browser-based shooter under `src/games/warbirds`.
+
+### Project Layout
+
+```
+src/
+  app/            -> Next.js "app router" files (layout, pages, styles)
+  constants/      -> Game constants for assets and gameplay values
+  games/
+    warbirds/     -> Actual game implementation (components, hooks, logic)
+  hooks/          -> General React hooks (audio, window size)
+  styles/         -> Global CSS
+  types/          -> TypeScript interfaces used across the game
+  utils/          -> Helper modules (environment drawing, physics, audio helpers)
+public/           -> Game assets (images, sound)
+```
+
+### Key Points for New Contributors
+
+1. **Game Loop** – Most gameplay logic lives in `src/games/warbirds/useGameEngine.ts`. Understanding its state structure and render/update loops is crucial.
+2. **Asset Management** – Assets load via hooks in `src/hooks`. `useGameAssets` handles images, while `useGameAudio` manages sound effects.
+3. **Constants and Types** – Values under `src/constants` and interfaces under `src/types` define gameplay tuning and object shapes.
+4. **Next.js Setup** – Game pages reside in `src/app`, with `/main` serving as the entry point for the main game.
+
+### Suggested Next Steps
+
+- Review `useGameEngine.ts` and `games/warbirds/utils.ts` to see how spawning, physics, and rendering are implemented.
+- Explore the `src/constants` directory to understand configurable gameplay values.
+- Inspect assets in `public/` so you can extend graphics and audio.
+- Familiarize yourself with React hooks and the Next.js app router.
+
