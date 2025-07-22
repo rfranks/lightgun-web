@@ -28,7 +28,7 @@ export function useGameAudio(): AudioMgr {
   const groundTouchSfx = useAudio("/audio/explosionCrunch_002.ogg");
   const homingExplSfx = useAudio("/audio/explosionCrunch_001.ogg");
   const medalSfx = useAudio("/audio/confirmation_003.ogg");
-  const napalmExplodeSfx = useAudio("audio/explosionCrunch_000.ogg");
+  const napalmExplodeSfx = useAudio("/audio/explosionCrunch_000.ogg");
   const powerupSfx = useAudio("/audio/powerUp8.ogg");
   const reloadSfx = useAudio("/audio/scratch_003.ogg");
   const shieldSfx = useAudio("/audio/forceField_002.ogg");
