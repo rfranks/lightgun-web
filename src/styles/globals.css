@@ -1,0 +1,18 @@
+html,
+body,
+#__next {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: #000;
+}
+canvas {
+  display: block;
+  margin: 0 auto;
+  background: url("/assets/tappyplane/PNG/background.png") no-repeat center;
+  background-size: cover;
+}
+@keyframes fadeUp {
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(-20px); }
+}
