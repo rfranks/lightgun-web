@@ -20,7 +20,13 @@ export const useAudio = (url: string, loop = false) => {
 
       // Check if browser supports this audio type
       if (a.canPlayType(mime) === "") {
-        console.warn(`Skipping audio load, unsupported type: ${mime}`);
+        if (ext.toLowerCase() !== "mp3" && !triedFallback) {
+          triedFallback = true;
+          const mp3Url = audioUrl.replace(/\.[^/.]+$/, ".mp3");
+          tryLoadAudio(mp3Url);
+        } else {
+          console.warn(`Skipping audio load, unsupported type: ${mime}`);
+        }
         return;
       }
 
