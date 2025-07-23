@@ -585,6 +585,10 @@ export function useGameEngine() {
             state.current.activePowerups.shrink.expires =
               state.current.frameCount + POWERUP_DURATION;
             play("shrinkSfx");
+          } else if (p.type === "freeze") {
+            state.current.activePowerups.freeze.expires =
+              state.current.frameCount + POWERUP_DURATION;
+            play("freezeSfx");
           } else {
             state.current.activePowerups[p.type].expires =
               state.current.frameCount + POWERUP_DURATION;
@@ -939,10 +943,9 @@ export function useGameEngine() {
         ? 0.4
         : 1;
       const gravityBase = TEST_SLOW_FALL ? 0.5 * GRAVITY : GRAVITY;
-      const gravity = state.current.isActive(
-        "hourglass",
-        state.current.frameCount
-      )
+      const gravity = state.current.isActive("freeze", state.current.frameCount)
+        ? 0
+        : state.current.isActive("hourglass", state.current.frameCount)
         ? gravityBase * 0.5
         : gravityBase;
       const flapStrength = state.current.isActive(
@@ -1379,6 +1382,11 @@ export function useGameEngine() {
       ctx.globalAlpha = 1;
 
       // update + draw enemies
+            const freezeActive = state.current.isActive(
+        "freeze",
+        state.current.frameCount
+      );
+
       state.current.enemies.forEach((e) => {
         const cx = e.x + ENEMY_WIDTH / 2;
         const cy = e.y + ENEMY_HEIGHT / 2;
@@ -1389,7 +1397,7 @@ export function useGameEngine() {
 
         if (!e.alive) return;
 
-        if (!e.glide) {
+        if (!freezeActive &&!e.glide) {
           // flappers obey gravity + flap
           if (state.current.frameCount % ENEMY_FLAP_INTERVAL === 0) {
             e.vy = e.flapStrength;
@@ -1401,7 +1409,7 @@ export function useGameEngine() {
             e.y = groundY - ENEMY_HEIGHT;
             e.vy = e.flapStrength;
           }
-        } else {
+        } else if (!freezeActive) {
           // glider: maybe start a backwards loop
           if (e.loopProgress < 0 && Math.random() < ENEMY_LOOP_PROB) {
             e.loopProgress = 0;
@@ -1482,7 +1490,7 @@ export function useGameEngine() {
         }
 
         // if windy effect is active, add a little random jitter:
-        if (state.current.isActive("windy", state.current.frameCount)) {
+        if (!freezeActive && state.current.isActive("windy", state.current.frameCount)) {
           e.x += (Math.random() * 2 - 1) * SCRAMBLE_INTENSITY;
           e.y += (Math.random() * 2 - 1) * SCRAMBLE_INTENSITY;
           // optional: randomize their flapStrength too
@@ -1494,9 +1502,11 @@ export function useGameEngine() {
 
         // move forward in the direction we’re facing:
         // cos(rotation)=+1 when level right, –1 when upside-down (so we reverse)
-        const facing = Math.cos(e.rotation || 0);
-        e.x -= state.current.enemySpeed(state.current.frameCount) * facing;
-
+        if (!freezeActive) {
+          const facing = Math.cos(e.rotation || 0);
+          e.x -= state.current.enemySpeed(state.current.frameCount) * facing;
+        }
+        
         // draw flipped horizontally *around its center*
         // advance propeller
         e.frameCounter++;

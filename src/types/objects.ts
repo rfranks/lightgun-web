@@ -6,6 +6,7 @@ export type PowerupType =
   | "bomb"
   | "coin2x"
   | "ducksight"
+  | "freeze"
   | "ghost"
   | "homing"
   | "hourglass"
@@ -35,6 +36,7 @@ export type AntiPowerupType = "skull" | "gunjam" | "sticky" | "heavy" | "windy";
  * Extra-strong, rare powerup types.
  */
 export type SuperPowerupType =
+  | "freeze"
   | "supermag"
   | "megaducks"
   | "napalm"

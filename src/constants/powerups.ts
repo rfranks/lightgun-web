@@ -10,6 +10,7 @@ export const POWERUP_TYPES: PowerupType[] = [
   "bomb",
   "coin2x",
   "ducksight",
+  "freeze",
   "ghost",
   "homing",
   "hourglass",
@@ -43,6 +44,7 @@ export const ANTI_POWERUP_TYPES: AntiPowerupType[] = [
 /** High power, rare powerups that provide significant advantages */
 export const SUPER_POWERUP_TYPES: SuperPowerupType[] = [
   "artillery",
+  "freeze",
   "supermag",
   "megaducks",
   "napalm",

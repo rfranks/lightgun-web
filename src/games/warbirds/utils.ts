@@ -81,6 +81,7 @@ export function initState(
     bomb: { expires: 0 },
     coin2x: { expires: 0 },
     ducksight: { expires: 0 },
+    freeze: { expires: 0 },
     ghost: { expires: 0 },
     gunjam: { expires: 0 },
     heavy: { expires: 0 },

@@ -24,6 +24,7 @@ export function useGameAudio(): AudioMgr {
   const enemyHitSfx = useAudio("/audio/laser9.ogg");
   const flapSfx = useAudio("/audio/click_001.ogg");
   const flightSfx = useAudio("/audio/engineCircular_001.ogg", true);
+  const freezeSfx = useAudio("/audio/freeze.ogg");
   const gameOverSfx = useAudio("/audio/select_005.ogg");
   const groundTouchSfx = useAudio("/audio/explosionCrunch_002.ogg");
   const homingExplSfx = useAudio("/audio/explosionCrunch_001.ogg");
@@ -57,6 +58,7 @@ export function useGameAudio(): AudioMgr {
       duckSfx,
       enemyHitSfx,
       flapSfx,
+      freezeSfx,
       flightSfx,
       gameOverSfx,
       groundTouchSfx,
@@ -85,6 +87,7 @@ export function useGameAudio(): AudioMgr {
       duckSfx,
       enemyHitSfx,
       flapSfx,
+      freezeSfx,
       flightSfx,
       gameOverSfx,
       groundTouchSfx,

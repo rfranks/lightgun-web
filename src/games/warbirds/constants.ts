@@ -40,7 +40,6 @@ export const ENEMY_MAX_STEP = 150; // max vertical shift for a step
 // how often a dropped medal appears when you shoot an enemy
 export const ENEMY_MEDAL_SPAWN_PROB = 0.3;
 
-
 // point value of shooting a medal
 export const MEDAL_SCORE = 500;
 // size at which we'll draw each medal
@@ -59,5 +58,3 @@ export const DEFAULT_CURSOR =
   "url('/assets/shooting-gallery/PNG/HUD/crosshair_red_small.png') 16 16, auto";
 export const SHOT_CURSOR =
   "url('/assets/shooting-gallery/PNG/Objects/shot_brown_large.png') 16 16, auto";
-
-
