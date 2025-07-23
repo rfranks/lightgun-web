@@ -64,7 +64,7 @@ export function GameUI({
   const medalFrames = getImg("medalFrames") as HTMLImageElement[][];
 
   return (
-    <Box position="relative" width="100vw" height="100vh">
+    <Box position="relative" width="100vw" height="100dvh">
       {/* Ammo icons */}
       <Box
         position="absolute"

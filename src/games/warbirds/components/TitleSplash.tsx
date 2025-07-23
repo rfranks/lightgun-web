@@ -18,7 +18,7 @@ export const TitleSplash: React.FC<TitleSplashProps> = ({
   <Box
     position="relative"
     width="100vw"
-    height="100vh"
+    height="100dvh"
     sx={{ backgroundColor, cursor: "pointer" }}
     display="flex"
     justifyContent="center"

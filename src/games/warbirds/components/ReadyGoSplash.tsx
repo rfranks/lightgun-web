@@ -35,7 +35,7 @@ export const ReadyGoSplash: React.FC<ReadyGoSplashProps> = ({
     <Box
       position="relative"
       width="100vw"
-      height="100vh"
+      height="100dvh"
       sx={{ backgroundColor: SKY_COLOR }}
       display="flex"
       flexDirection="column"
