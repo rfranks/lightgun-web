@@ -430,7 +430,7 @@ export function spawnSystems(state: GameState): void {
           vx: CANNONBALL_SPEED,
           img: state.assets.getImg("cannonballImg") as HTMLImageElement,
         });
-        state.audio.play("cannon");
+        state.audio.play("cannonballSfx");
         state.burstRemaining--;
         state.burstCooldown = MACHINE_GUN_SHOT_INTERVAL;
       } else {
