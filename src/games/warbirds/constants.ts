@@ -1,4 +1,5 @@
 import { PowerupType } from "@/types/objects";
+import { BASE_PATH } from "@/utils/basePath";
 
 // ─── DEBUG FLAGS ─────────────────────────────────────────────────────────
 export const DEBUG_PLAYER_CRASH = false; // when true, player never actually “dies”
@@ -55,6 +56,6 @@ export const MIN_STREAK = 3; // minimum streak to show label
 
 // Cursor styles
 export const DEFAULT_CURSOR =
-  "url('/assets/shooting-gallery/PNG/HUD/crosshair_red_small.png') 16 16, auto";
+  `url('${BASE_PATH}/assets/shooting-gallery/PNG/HUD/crosshair_red_small.png') 16 16, auto`;
 export const SHOT_CURSOR =
-  "url('/assets/shooting-gallery/PNG/Objects/shot_brown_large.png') 16 16, auto";
+  `url('${BASE_PATH}/assets/shooting-gallery/PNG/Objects/shot_brown_large.png') 16 16, auto`;
