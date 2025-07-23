@@ -35,6 +35,17 @@ The easiest way to deploy your Next.js app is to use the [Vercel Platform](https
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
 
+## Deploy on GitHub Pages
+
+To deploy the static build under a subpath like `https://USERNAME.github.io/lightgun-web/`,
+the build must know the repository name. The workflow sets the `NEXT_PUBLIC_BASE_PATH`
+environment variable and `next.config.ts` reads it to configure `basePath` and
+`assetPrefix`. When building locally you can replicate this with:
+
+```bash
+NEXT_PUBLIC_BASE_PATH=/lightgun-web npm run build
+```
+
 ## Project Overview
 
 This project is a TypeScript-based Next.js game. It uses React hooks and the Next.js app router to deliver a browser-based shooter under `src/games/warbirds`.
