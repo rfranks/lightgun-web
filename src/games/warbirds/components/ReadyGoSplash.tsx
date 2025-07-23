@@ -6,6 +6,7 @@ import {
   SCORE_DIGIT_HEIGHT,
 } from "@/constants/ui";
 import { SKY_COLOR } from "../constants";
+import { withBasePath } from "@/utils/basePath";
 
 /**
  * Props for ReadyGoSplash.
@@ -24,10 +25,11 @@ export const ReadyGoSplash: React.FC<ReadyGoSplashProps> = ({
   phase,
   countdown,
 }) => {
-  const src =
+  const src = withBasePath(
     phase === "ready"
       ? "/assets/shooting-gallery/PNG/HUD/text_ready.png"
-      : "/assets/shooting-gallery/PNG/HUD/text_go.png";
+      : "/assets/shooting-gallery/PNG/HUD/text_go.png"
+  );
 
   return (
     <Box
@@ -49,7 +51,7 @@ export const ReadyGoSplash: React.FC<ReadyGoSplashProps> = ({
       {phase === "ready" && countdown != null && (
         <Box
           component="img"
-          src={`${SCORE_DIGIT_PATH}${countdown}.png`}
+          src={withBasePath(`${SCORE_DIGIT_PATH}${countdown}.png`)}
           alt={`${countdown}`}
           sx={{
             mt: 2,

@@ -9,6 +9,7 @@ import {
 } from "@/constants/ui";
 import { ENEMY_COLORS } from "@/constants/vehicles";
 import { MAX_AMMO, DEFAULT_CURSOR } from "../constants";
+import { withBasePath } from "@/utils/basePath";
 
 /**
  * Props for GameUI component.
@@ -79,8 +80,8 @@ export function GameUI({
             component="img"
             src={
               i < ammo
-                ? "/assets/tanks/PNG/Retina/tank_bullet5.png"
-                : "/assets/tanks/PNG/Retina/tank_bullet1.png"
+                ? withBasePath("/assets/tanks/PNG/Retina/tank_bullet5.png")
+                : withBasePath("/assets/tanks/PNG/Retina/tank_bullet1.png")
             }
             width={64}
             height={64}
@@ -102,7 +103,8 @@ export function GameUI({
           <Box
             component="img"
             src={
-              medalFrames[0]?.[0]?.src || "/assets/medals/PNG/flat_medal1.png"
+              medalFrames[0]?.[0]?.src ||
+              withBasePath("/assets/medals/PNG/flat_medal1.png")
             }
             width={48}
             height={48}
@@ -130,7 +132,9 @@ export function GameUI({
         >
           <Box
             component="img"
-            src="/assets/shooting-gallery/PNG/Objects/duck_brown.png"
+            src={withBasePath(
+              "/assets/shooting-gallery/PNG/Objects/duck_brown.png"
+            )}
             width={48}
             height={48}
             sx={{ mr: 2 }}
@@ -173,14 +177,19 @@ export function GameUI({
         alignItems="center"
         zIndex={1}
       >
-        <Box component="img" src={SCORE_LABEL_SRC} alt="Score" sx={{ mr: 1 }} />
+        <Box
+          component="img"
+          src={withBasePath(SCORE_LABEL_SRC)}
+          alt="Score"
+          sx={{ mr: 1 }}
+        />
         {String(score)
           .split("")
           .map((d, i) => (
             <Box
               key={i}
               component="img"
-              src={`${SCORE_DIGIT_PATH}${d}.png`}
+              src={withBasePath(`${SCORE_DIGIT_PATH}${d}.png`)}
               alt={d}
               width={SCORE_DIGIT_WIDTH}
               height={SCORE_DIGIT_HEIGHT}
@@ -202,7 +211,9 @@ export function GameUI({
       {crashed && (
         <Box
           component="img"
-          src="/assets/shooting-gallery/PNG/HUD/text_gameover.png"
+          src={withBasePath(
+            "/assets/shooting-gallery/PNG/HUD/text_gameover.png"
+          )}
           alt="Game Over"
           onClick={resetGame}
           sx={{

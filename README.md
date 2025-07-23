@@ -46,6 +46,10 @@ environment variable and `next.config.ts` reads it to configure `basePath` and
 NEXT_PUBLIC_BASE_PATH=/lightgun-web npm run build
 ```
 
+When referencing static files in code, prefix paths with `withBasePath()` from
+`src/utils/basePath` to ensure they work both locally and when deployed under a
+subpath.
+
 ## Project Overview
 
 This project is a TypeScript-based Next.js game. It uses React hooks and the Next.js app router to deliver a browser-based shooter under `src/games/warbirds`.

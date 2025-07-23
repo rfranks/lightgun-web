@@ -2,6 +2,7 @@
 
 import React from "react";
 import { DEFAULT_CURSOR, SKY_COLOR } from "./constants";
+import { withBasePath } from "@/utils/basePath";
 import { TitleSplash } from "./components/TitleSplash";
 import GameUI from "./components/GameUI";
 import ReadyGoSplash from "./components/ReadyGoSplash";
@@ -27,7 +28,7 @@ export default function Game() {
     return (
       <TitleSplash
         onStart={startSplash}
-        titleSrc={"/assets/titles/warbirds_title.png"}
+        titleSrc={withBasePath("/assets/titles/warbirds_title.png")}
         backgroundColor={SKY_COLOR}
         cursor={DEFAULT_CURSOR}
       />

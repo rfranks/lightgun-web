@@ -22,6 +22,7 @@ import {
 import { SCORE_DIGIT_PATH } from "@/constants/ui";
 import { ENEMY_COLORS, AIRSHIP_COLORS } from "@/constants/vehicles";
 import { AssetMgr } from "@/types/ui";
+import { withBasePath } from "@/utils/basePath";
 
 /**
  * SSR-safe asset loader for browser games.
@@ -45,7 +46,7 @@ export function useGameAssets(): {
     // Utility to load an image and return it
     const loadImg = (src: string) => {
       const img = new window.Image();
-      img.src = src;
+      img.src = withBasePath(src);
       return img;
     };
 
