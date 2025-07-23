@@ -9,8 +9,6 @@ body,
 canvas {
   display: block;
   margin: 0 auto;
-  background: url(var(--base-path)/assets/tappyplane/PNG/background.png)
-    no-repeat center;
   background-size: cover;
 }
 @keyframes fadeUp {
