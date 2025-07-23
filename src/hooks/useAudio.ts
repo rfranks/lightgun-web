@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { withBasePath } from "@/utils/basePath";
 
 export const useAudio = (url: string, loop = false) => {
   const ref = useRef<HTMLAudioElement | null>(null);
@@ -15,7 +16,7 @@ export const useAudio = (url: string, loop = false) => {
         console.warn(`Skipping audio load, unsupported type: ${mime}`);
         return;
       }
-      a.src = url;
+      a.src = withBasePath(url);
       a.loop = loop;
       a.load();
     } catch (e) {
