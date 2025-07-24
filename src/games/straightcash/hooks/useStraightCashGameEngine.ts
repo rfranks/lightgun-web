@@ -33,6 +33,15 @@ export default function useStraightCashGameEngine() {
   const [tokenValue, setTokenValue] = useState<number>(1);
   const [wheelSpinning, setWheelSpinning] = useState(false);
 
+  const isReelDisabled = useCallback(
+    (index: number) => {
+      if (bet < 5) return index > 0;
+      if (bet < 10) return index > 1;
+      return false;
+    },
+    [bet]
+  );
+
   const autoStopRefs = useRef<(ReturnType<typeof setTimeout> | null)[]>([
     null,
     null,
@@ -200,18 +209,21 @@ export default function useStraightCashGameEngine() {
 
   useEffect(() => {
     if (spinning.every((s) => !s)) {
-      if (reelResults.every((r) => r)) {
+      const activeIndices = [0, 1, 2].filter((i) => !isReelDisabled(i));
+      if (activeIndices.every((i) => reelResults[i])) {
         setPhase("wheel");
         setWheelSpinning(true);
       } else {
-        const totalValue = reelValues.reduce((a, b) => a + b, 0);
+        const totalValue = reelValues.reduce(
+          (sum, val, i) => (isReelDisabled(i) ? sum : sum + val),
+          0
+        );
         const maxTotal = Math.floor(10500 / tokenValue);
         let finalTotal = totalValue;
-        const finalValues = [...reelValues];
         if (finalTotal > maxTotal) {
-          for (let i = finalValues.length - 1; i >= 0 && finalTotal > maxTotal; i--) {
-            const reduce = Math.min(finalValues[i], finalTotal - maxTotal);
-            finalValues[i] -= reduce;
+          for (let i = reelValues.length - 1; i >= 0 && finalTotal > maxTotal; i--) {
+            if (isReelDisabled(i)) continue;
+            const reduce = Math.min(reelValues[i], finalTotal - maxTotal);
             finalTotal -= reduce;
           }
         }
@@ -219,7 +231,7 @@ export default function useStraightCashGameEngine() {
         setTokens((t) => t + payout);
       }
     }
-  }, [spinning, reelResults, reelValues, tokenValue]);
+  }, [spinning, reelResults, reelValues, tokenValue, isReelDisabled]);
 
   const resetGame = useCallback(() => {
     setPhase("title");

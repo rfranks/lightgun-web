@@ -46,6 +46,12 @@ export default function GameUI({
 
   const tokenOptions = [0.25, 1, 5, 10, 50];
 
+  const isReelDisabled = (index: number) => {
+    if (bet < 5) return index > 0;
+    if (bet < 10) return index > 1;
+    return false;
+  };
+
   return (
     <Box position="relative" width="100vw" height="100dvh" display="flex" flexDirection="column" alignItems="center" justifyContent="center">
       <JackpotDisplay bet={bet} />
@@ -56,6 +62,7 @@ export default function GameUI({
             key={i}
             spinning={spin}
             locked={locked[i]}
+            disabled={isReelDisabled(i)}
             showDie={showDie[i]}
             onStop={(e) => handleReelClick(i, e)}
             onSpinEnd={(result) => onSpinEnd(i, result)}
