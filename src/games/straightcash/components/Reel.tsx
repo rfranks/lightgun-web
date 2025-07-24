@@ -5,8 +5,8 @@ import useStraightCashAssets from "../hooks/useStraightCashAssets";
 export interface ReelProps {
   spinning: boolean;
   locked: boolean;
-  onStop: () => void;
-  onSpinEnd?: (isWheel: boolean) => void;
+  onStop: (e: React.MouseEvent<HTMLDivElement>) => void;
+  onSpinEnd?: (result: string) => void;
 }
 
 const ITEM_SIZE = 120;
@@ -20,7 +20,7 @@ export const Reel: React.FC<ReelProps> = ({
   const { assetRefs, ready } = useStraightCashAssets();
 
   const items = useMemo(() => {
-    if (!ready) return [] as (HTMLImageElement | null)[];
+    if (!ready) return [] as { img: HTMLImageElement | null; rank: string }[];
     const cardImgs = assetRefs.cardImgs as Record<string, HTMLImageElement>;
     const wheelImg = assetRefs.wheelBonusChipImg as HTMLImageElement;
 
@@ -40,14 +40,18 @@ export const Reel: React.FC<ReelProps> = ({
       "Q",
       "K",
     ];
-    const keys = suits.flatMap((s) => ranks.map((r) => `${s}${r}`));
-    keys.push("Joker");
 
-    return [
-      null, // blank slot
-      ...keys.map((k) => cardImgs[k]),
-      wheelImg,
-    ] as (HTMLImageElement | null)[];
+    const arr: { img: HTMLImageElement | null; rank: string }[] = [
+      { img: null, rank: "blank" },
+    ];
+    for (const suit of suits) {
+      for (const r of ranks) {
+        arr.push({ img: cardImgs[`${suit}${r}`], rank: r });
+      }
+    }
+    arr.push({ img: wheelImg, rank: "wheel" });
+
+    return arr;
   }, [ready, assetRefs]);
 
   const [index, setIndex] = useState(0);
@@ -63,15 +67,14 @@ export const Reel: React.FC<ReelProps> = ({
 
   useEffect(() => {
     if (prevSpinning.current && !spinning && onSpinEnd) {
-      const wheelIndex = items.length - 1;
-      onSpinEnd(index === wheelIndex);
+      onSpinEnd(items[index]?.rank ?? "blank");
     }
     prevSpinning.current = spinning;
-  }, [spinning, index, onSpinEnd, items.length]);
+  }, [spinning, index, onSpinEnd, items]);
 
-  const handleClick = () => {
+  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!locked) {
-      onStop();
+      onStop(e);
     }
   };
 
@@ -88,11 +91,11 @@ export const Reel: React.FC<ReelProps> = ({
         position="absolute"
         sx={{ transform: `translateY(${-index * ITEM_SIZE}px)` }}
       >
-        {items.map((img, i) => (
+        {items.map((item, i) => (
           <Box
             key={i}
-            component={img ? "img" : "div"}
-            src={img ? img.src : undefined}
+            component={item.img ? "img" : "div"}
+            src={item.img ? item.img.src : undefined}
             width={ITEM_SIZE}
             height={ITEM_SIZE}
             sx={{ display: "block" }}
@@ -100,8 +103,8 @@ export const Reel: React.FC<ReelProps> = ({
         ))}
         {items.length > 0 && (
           <Box
-            component={items[0] ? "img" : "div"}
-            src={items[0] ? items[0]!.src : undefined}
+            component={items[0].img ? "img" : "div"}
+            src={items[0].img ? items[0].img!.src : undefined}
             width={ITEM_SIZE}
             height={ITEM_SIZE}
             sx={{ display: "block" }}

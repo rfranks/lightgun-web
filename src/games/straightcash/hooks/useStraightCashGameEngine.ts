@@ -28,6 +28,8 @@ export default function useStraightCashGameEngine() {
   const [bet, setBet] = useState<number>(1);
   const [tokens, setTokens] = useState<number>(100);
   const [reelResults, setReelResults] = useState<boolean[]>([false, false, false]);
+  const [reelValues, setReelValues] = useState<number[]>([0, 0, 0]);
+  const [tokenValue, setTokenValue] = useState<number>(1);
   const [wheelSpinning, setWheelSpinning] = useState(false);
 
   const autoStopRefs = useRef<(ReturnType<typeof setTimeout> | null)[]>([
@@ -75,19 +77,40 @@ export default function useStraightCashGameEngine() {
     }
   }, []);
 
+  const cardValue = useCallback((rank: string) => {
+    if (rank === "wheel" || rank === "blank" || rank === "Joker") return 0;
+    if (rank === "A") return 50;
+    if (rank === "K") return 30;
+    if (rank === "Q") return 20;
+    if (rank === "J") return 15;
+    const n = parseInt(rank, 10);
+    return isNaN(n) ? 0 : n;
+  }, []);
+
   const handleSpinEnd = useCallback(
-    (index: number, isWheel: boolean) => {
+    (index: number, result: string) => {
+      const isWheel = result === "wheel";
       setReelResults((prev) => {
         const arr = [...prev];
         arr[index] = isWheel;
         return arr;
       });
+      const val = cardValue(result);
+      setReelValues((prev) => {
+        const arr = [...prev];
+        arr[index] = val;
+        return arr;
+      });
+      const click = reelClicks[index];
+      if (val > 0 && click) {
+        makeText(`${val}`, 0.5, click.x, click.y, 60);
+      }
     },
-    []
+    [cardValue, reelClicks, makeText]
   );
 
   const handleReelClick = useCallback(
-    (index: number, e: React.MouseEvent<HTMLCanvasElement>) => {
+    (index: number, e: React.MouseEvent<HTMLDivElement>) => {
       const rect = e.currentTarget.getBoundingClientRect();
       const pos = { x: e.clientX - rect.left, y: e.clientY - rect.top };
       setReelClicks((prev) => {
@@ -103,10 +126,13 @@ export default function useStraightCashGameEngine() {
   );
 
   const startSpins = useCallback(
-    (amount: number) => {
+    (amount: number, denom: number) => {
       if (tokens < amount) return;
       setBet(amount);
+      setTokenValue(denom);
       setTokens((t) => t - amount);
+      setReelValues([0, 0, 0]);
+      setReelResults([false, false, false]);
       setSpinSpeed(1);
       setSpinning((prev) =>
         prev.map((_, i) => (locked[i] ? false : true))
@@ -139,11 +165,27 @@ export default function useStraightCashGameEngine() {
   }, [spinning]);
 
   useEffect(() => {
-    if (spinning.every((s) => !s) && reelResults.every((r) => r)) {
-      setPhase("wheel");
-      setWheelSpinning(true);
+    if (spinning.every((s) => !s)) {
+      if (reelResults.every((r) => r)) {
+        setPhase("wheel");
+        setWheelSpinning(true);
+      } else {
+        const totalValue = reelValues.reduce((a, b) => a + b, 0);
+        const maxTotal = Math.floor(10500 / tokenValue);
+        let finalTotal = totalValue;
+        const finalValues = [...reelValues];
+        if (finalTotal > maxTotal) {
+          for (let i = finalValues.length - 1; i >= 0 && finalTotal > maxTotal; i--) {
+            const reduce = Math.min(finalValues[i], finalTotal - maxTotal);
+            finalValues[i] -= reduce;
+            finalTotal -= reduce;
+          }
+        }
+        const payout = finalTotal * tokenValue;
+        setTokens((t) => t + payout);
+      }
     }
-  }, [spinning, reelResults]);
+  }, [spinning, reelResults, reelValues, tokenValue]);
 
   const resetGame = useCallback(() => {
     setPhase("title");
@@ -197,6 +239,7 @@ export default function useStraightCashGameEngine() {
     handleWheelFinish,
     bet,
     tokens,
+    tokenValue,
     setReelPos,
     setSpinSpeed,
     setLocked,

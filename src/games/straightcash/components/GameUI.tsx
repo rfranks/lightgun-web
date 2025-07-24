@@ -12,11 +12,11 @@ export interface GameUIProps {
   canvasRef: React.RefObject<HTMLCanvasElement | null>;
   handleClick: (e: React.MouseEvent) => void;
   handleContext: (e: React.MouseEvent) => void;
-  startSpins: (amount: number) => void;
+  startSpins: (amount: number, denom: number) => void;
   spinning: boolean[];
   locked: boolean[];
-  stopReel: (index: number) => void;
-  onSpinEnd: (index: number, isWheel: boolean) => void;
+  handleReelClick: (index: number, e: React.MouseEvent<HTMLDivElement>) => void;
+  onSpinEnd: (index: number, result: string) => void;
   wheelSpinning: boolean;
   onWheelFinish: (reward: string) => void;
   bet: number;
@@ -30,7 +30,7 @@ export default function GameUI({
   startSpins,
   spinning,
   locked,
-  stopReel,
+  handleReelClick,
   onSpinEnd,
   wheelSpinning,
   onWheelFinish,
@@ -39,7 +39,7 @@ export default function GameUI({
   const [tokenValue, setTokenValue] = useState<number>(1);
 
   const handleBet = (amount: number) => {
-    startSpins(amount);
+    startSpins(amount, tokenValue);
   };
 
   const tokenOptions = [0.25, 1, 5, 10, 50];
@@ -54,8 +54,8 @@ export default function GameUI({
             key={i}
             spinning={spin}
             locked={locked[i]}
-            onStop={() => stopReel(i)}
-            onSpinEnd={(isWheel) => onSpinEnd(i, isWheel)}
+            onStop={(e) => handleReelClick(i, e)}
+            onSpinEnd={(result) => onSpinEnd(i, result)}
           />
         ))}
       </Box>
