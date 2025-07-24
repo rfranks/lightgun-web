@@ -166,6 +166,50 @@ export default function useStraightCashGameEngine() {
     return isNaN(n) ? 0 : n;
   }, []);
 
+  const maybeTriggerSpinDie = useCallback(
+    (index: number) => {
+      // 10% chance to activate the spinning die feature
+      if (Math.random() < 0.1) {
+        setLocked((prev) => {
+          const arr = [...prev];
+          arr[index] = true;
+          return arr;
+        });
+        setDieActive((prev) => {
+          const arr = [...prev];
+          arr[index] = true;
+          return arr;
+        });
+
+        // re-spin any other reel that currently has no card value
+        setSpinning((prev) => {
+          const arr = [...prev];
+          for (let i = 0; i < arr.length; i++) {
+            if (i !== index && reelValues[i] === 0 && !locked[i]) {
+              arr[i] = true;
+              if (autoStopRefs.current[i]) {
+                clearTimeout(autoStopRefs.current[i]!);
+              }
+              autoStopRefs.current[i] = setTimeout(() => autoStop(i), 30000);
+            }
+          }
+          return arr;
+        });
+
+        setForcedResults((prev) => {
+          const arr = [...prev];
+          for (let i = 0; i < arr.length; i++) {
+            if (i !== index && reelValues[i] === 0 && !locked[i]) {
+              arr[i] = null;
+            }
+          }
+          return arr;
+        });
+      }
+    },
+    [reelValues, locked, autoStop]
+  );
+
   const handleSpinEnd = useCallback(
     (index: number, result: string) => {
       const isWheel = result === "wheel";
@@ -196,8 +240,9 @@ export default function useStraightCashGameEngine() {
       if (val > 0 && click) {
         makeText(`${val}`, 0.5, click.x, click.y, 60);
       }
+      maybeTriggerSpinDie(index);
     },
-    [cardValue, reelClicks, makeText]
+    [cardValue, reelClicks, makeText, maybeTriggerSpinDie]
   );
 
   const handleReelClick = useCallback(
