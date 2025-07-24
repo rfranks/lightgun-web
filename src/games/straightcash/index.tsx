@@ -19,6 +19,10 @@ export default function Game() {
     resetGame,
     getImg,
     startSplash,
+    startSpins,
+    spinning,
+    locked,
+    stopReel,
   } = useStraightCashGameEngine();
 
   if (phase === "title") {
@@ -42,6 +46,10 @@ export default function Game() {
       canvasRef={canvasRef}
       handleClick={handleClick}
       handleContext={handleContext}
+      startSpins={startSpins}
+      spinning={spinning}
+      locked={locked}
+      stopReel={stopReel}
     />
   );
 }
