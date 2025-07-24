@@ -64,9 +64,10 @@ export interface TextLabel {
 }
 
 /**
- * Main game phase/state for UI and logic.
+ * Main game phase/state for UI and logic. The initial asset loading phase has
+ * been removed, so the game starts in the "ready" state.
  */
-export type Phase = "loading" | "ready" | "go" | "playing" | "title";
+export type Phase = "ready" | "go" | "playing" | "title";
 
 /**
  * Alias for Phase, for rendering-specific state.
