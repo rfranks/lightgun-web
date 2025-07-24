@@ -1,5 +1,7 @@
 import { useState, useRef, useCallback } from "react";
 import { DEFAULT_CURSOR } from "../constants";
+import { AudioMgr } from "@/types/audio";
+import useStraightCashAudio from "./useStraightCashAudio";
 
 export default function useGameEngine() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -7,6 +9,8 @@ export default function useGameEngine() {
     "title"
   );
   const [countdown] = useState<number | null>(null);
+
+  const audioMgr: AudioMgr = useStraightCashAudio();
 
   const ui = { cursor: DEFAULT_CURSOR };
 
