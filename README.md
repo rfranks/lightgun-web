@@ -1,5 +1,14 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Prerequisites
+
+Make sure you have **Node.js 20** or later installed. After cloning the repo run
+
+```bash
+npm install
+```
+to install all dependencies before starting the development server.
+
 ## Getting Started
 
 First, run the development server:
@@ -69,6 +78,10 @@ src/
 public/           -> Game assets (images, sound)
 ```
 
+Imports throughout the codebase use the `@/` prefix to resolve modules from the
+`src/` directory. This path alias is configured in `tsconfig.json` and allows for
+cleaner import statements.
+
 ### Key Points for New Contributors
 
 1. **Game Loop** – Most gameplay logic lives in `src/games/warbirds/useGameEngine.ts`. Understanding its state structure and render/update loops is crucial.
@@ -82,4 +95,14 @@ public/           -> Game assets (images, sound)
 - Explore the `src/constants` directory to understand configurable gameplay values.
 - Inspect assets in `public/` so you can extend graphics and audio.
 - Familiarize yourself with React hooks and the Next.js app router.
+
+### Running Tests
+
+Unit tests use Jest and can be executed with:
+
+```bash
+npm test
+```
+
+This will run all tests under `src/**/__tests__` and output the results in your terminal.
 
