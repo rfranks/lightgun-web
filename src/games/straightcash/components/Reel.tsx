@@ -13,6 +13,7 @@ export interface ReelProps {
   showDie?: boolean;
   onStop: (e: React.MouseEvent<HTMLDivElement>) => void;
   onSpinEnd?: (result: string) => void;
+  cursor: string;
 }
 
 const ITEM_SIZE = 120;
@@ -24,6 +25,7 @@ export const Reel: React.FC<ReelProps> = ({
   showDie,
   onStop,
   onSpinEnd,
+  cursor,
 }) => {
   const { assetRefs, ready } = useStraightCashAssets();
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -118,7 +120,7 @@ export const Reel: React.FC<ReelProps> = ({
       position="relative"
       onClick={handleClick}
       sx={{
-        cursor: locked || disabled ? "default" : "pointer",
+        cursor: locked || disabled ? "default" : cursor,
         pointerEvents: disabled ? "none" : "auto",
       }}
     >

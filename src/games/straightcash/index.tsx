@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { DEFAULT_CURSOR, SKY_COLOR } from "./constants";
+import { SKY_COLOR } from "./constants";
 import { withBasePath } from "@/utils/basePath";
 import TitleSplash from "./components/TitleSplash";
 import GameUI from "./components/GameUI";
@@ -30,6 +30,7 @@ export default function Game() {
     handleWheelStart,
     handleWheelFinish,
     bet,
+    triggerShotCursor,
   } = useStraightCashGameEngine();
 
   if (phase === "title") {
@@ -38,7 +39,8 @@ export default function Game() {
         onStart={startSplash}
         titleSrc={withBasePath("/assets/titles/warbirds_title.png")}
         backgroundColor={SKY_COLOR}
-        cursor={DEFAULT_CURSOR}
+        cursor={ui.cursor}
+        onShot={triggerShotCursor}
       />
     );
   }
@@ -50,6 +52,7 @@ export default function Game() {
   return (
     <GameUI
       cursor={ui.cursor}
+      onShot={triggerShotCursor}
       canvasRef={canvasRef}
       handleClick={handleClick}
       handleContext={handleContext}

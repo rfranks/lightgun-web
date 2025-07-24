@@ -10,6 +10,7 @@ import { withBasePath } from "@/utils/basePath";
 
 export interface GameUIProps {
   cursor: string;
+  onShot: () => void;
   canvasRef: React.RefObject<HTMLCanvasElement | null>;
   handleClick: (e: React.MouseEvent) => void;
   handleContext: (e: React.MouseEvent) => void;
@@ -28,6 +29,7 @@ export interface GameUIProps {
 
 export default function GameUI({
   cursor,
+  onShot,
   canvasRef,
   handleClick,
   handleContext,
@@ -58,7 +60,16 @@ export default function GameUI({
   };
 
   return (
-    <Box position="relative" width="100vw" height="100dvh" display="flex" flexDirection="column" alignItems="center" justifyContent="center">
+    <Box
+      position="relative"
+      width="100vw"
+      height="100dvh"
+      display="flex"
+      flexDirection="column"
+      alignItems="center"
+      justifyContent="center"
+      onClickCapture={onShot}
+    >
       <JackpotDisplay bet={bet} />
       <Box position="relative">
         <BonusWheel spinning={wheelSpinning} onFinish={onWheelFinish} />
@@ -75,7 +86,7 @@ export default function GameUI({
               transform: "translate(-50%, -50%)",
               width: 150,
               height: "auto",
-              cursor: "pointer",
+              cursor,
             }}
           />
         )}
@@ -90,6 +101,7 @@ export default function GameUI({
             showDie={showDie[i]}
             onStop={(e) => handleReelClick(i, e)}
             onSpinEnd={(result) => onSpinEnd(i, result)}
+            cursor={cursor}
           />
         ))}
       </Box>
@@ -103,7 +115,7 @@ export default function GameUI({
           size="small"
         >
           {tokenOptions.map((val) => (
-            <ToggleButton key={val} value={val}>
+            <ToggleButton key={val} value={val} sx={{ cursor }}>
               {val === 0.25 ? "25¢" : `$${val}`}
             </ToggleButton>
           ))}
@@ -111,7 +123,12 @@ export default function GameUI({
       </Box>
       <Box display="flex" gap={1}>
         {[1, 5, 10].map((n) => (
-          <Button key={n} variant="contained" onClick={() => handleBet(n)}>
+          <Button
+            key={n}
+            variant="contained"
+            onClick={() => handleBet(n)}
+            sx={{ cursor }}
+          >
             {n} Token{n > 1 ? "s" : ""}
           </Button>
         ))}
