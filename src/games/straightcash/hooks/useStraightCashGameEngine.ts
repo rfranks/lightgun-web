@@ -298,6 +298,26 @@ export default function useStraightCashGameEngine() {
     textLabels.current = [];
   }, [audioMgr, slideKeys]);
 
+  const resetRound = useCallback(() => {
+    setPhase("playing");
+    setReelPos([0, 0, 0]);
+    setSpinSpeed(0);
+    setLocked([false, false, false]);
+    setSpinning([false, false, false]);
+    setReelClicks([null, null, null]);
+    setDieActive([false, false, false]);
+    autoStopRefs.current.forEach((t) => {
+      if (t) clearTimeout(t);
+    });
+    autoStopRefs.current = [null, null, null];
+    spinStartRef.current = null;
+    setForcedResults([null, null, null]);
+    setWheelReady(false);
+    audioMgr.pause("wheelSpinSfx");
+    slideKeys.forEach((k) => audioMgr.pause(k));
+    textLabels.current = [];
+  }, [audioMgr, slideKeys]);
+
   // play sliding sounds while any reel spins
   useEffect(() => {
     if (spinning.some((s) => s)) {
@@ -331,10 +351,10 @@ export default function useStraightCashGameEngine() {
 
   useEffect(() => {
     if (phase === "score") {
-      const id = window.setTimeout(() => resetGame(), 3000);
+      const id = window.setTimeout(() => resetRound(), 3000);
       return () => window.clearTimeout(id);
     }
-  }, [phase, resetGame]);
+  }, [phase, resetRound]);
 
   useEffect(() => {
     if (spinning.every((s) => !s) && spinStartRef.current !== null) {
@@ -408,6 +428,7 @@ export default function useStraightCashGameEngine() {
     handleClick,
     handleContext,
     resetGame,
+    resetRound,
     getImg,
     startSplash,
     startSpins,

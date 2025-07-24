@@ -17,7 +17,7 @@ export default function Game() {
     canvasRef,
     handleClick,
     handleContext,
-    resetGame,
+    resetRound,
     getImg,
     startSplash,
     startSpins,
@@ -53,7 +53,7 @@ export default function Game() {
   }
 
   if (phase === "score") {
-    return <ScoreSplash reward={scoreReward} onReset={resetGame} />;
+    return <ScoreSplash reward={scoreReward} onReset={resetRound} />;
   }
 
   return (
