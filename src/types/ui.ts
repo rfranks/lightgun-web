@@ -1,6 +1,6 @@
 /**
  * An object with all asset refs as .current properties, for robust asset lookup.
- * Example: get("planeImg") returns the ref for the yellow plane image.
+ * Example: get("planeFrames") returns the ref for the yellow plane image.
  */
 export interface AssetMgr {
   get: (
