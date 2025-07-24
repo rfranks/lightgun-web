@@ -1700,10 +1700,14 @@ export function useGameEngine() {
           !DEBUG_PLAYER_CRASH &&
           !state.current.isActive("ghost", state.current.frameCount)
         ) {
-          if (state.current.isActive("shield", state.current.frameCount)) {
-            // block it once:
-            // shield is one‐time use
-            state.current.activePowerups.shield.expires = 0;
+          if (
+            state.current.isActive("shield", state.current.frameCount) ||
+            state.current.isActive("supershield", state.current.frameCount)
+          ) {
+            // consume regular shield once
+            if (state.current.isActive("shield", state.current.frameCount)) {
+              state.current.activePowerups.shield.expires = 0;
+            }
             // trigger shield flash
             state.current.shieldFlash = 10;
             // shielded so no crash
@@ -2003,6 +2007,7 @@ export function useGameEngine() {
         // draw the shield “flash” only while our counter is active
         if (
           state.current.isActive("shield", state.current.frameCount) ||
+          state.current.isActive("supershield", state.current.frameCount) ||
           state.current.shieldFlash > 0
         ) {
           if (state.current.shieldFlash > 0) {
@@ -2509,9 +2514,14 @@ export function useGameEngine() {
           t.y >= state.current.y &&
           t.y <= state.current.y + PLANE_HEIGHT
         ) {
-          if (state.current.isActive("shield", state.current.frameCount)) {
-            // consume shield
-            state.current.activePowerups.shield.expires = 0;
+          if (
+            state.current.isActive("shield", state.current.frameCount) ||
+            state.current.isActive("supershield", state.current.frameCount)
+          ) {
+            // consume regular shield
+            if (state.current.isActive("shield", state.current.frameCount)) {
+              state.current.activePowerups.shield.expires = 0;
+            }
             state.current.shieldFlash = 10;
             play("shieldSfx");
           } else {

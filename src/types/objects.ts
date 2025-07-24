@@ -16,6 +16,7 @@ export type PowerupType =
   | "napalm"
   | "magnet"
   | "shield"
+  | "supershield"
   | "shrink"
   | "skull"
   | "gunjam"
@@ -41,6 +42,7 @@ export type SuperPowerupType =
   | "supermag"
   | "megaducks"
   | "napalm"
+  | "supershield"
   | "artillery"
   | "laserbeam"
   | "thunderstrike";
