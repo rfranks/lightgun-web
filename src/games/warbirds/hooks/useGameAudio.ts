@@ -35,6 +35,7 @@ export function useGameAudio(): AudioMgr {
   const shieldSfx = useAudio("/audio/forceField_002.ogg");
   const shrinkSfx = useAudio("/audio/phaserDown1.ogg");
   const skullSfx = useAudio("/audio/lowDown.ogg");
+  const laserBeamFireSfx = useAudio("/audio/laserSmall_001.ogg");
   const shotSfx = useAudio("/audio/laser4.ogg");
   const thunderSfx = useAudio("/audio/thunderstrike.ogg");
   const thrusterSfx = useAudio("/audio/thrusterFire_000.ogg", true);
@@ -70,6 +71,7 @@ export function useGameAudio(): AudioMgr {
       shieldSfx,
       shrinkSfx,
       skullSfx,
+      laserBeamFireSfx,
       shotSfx,
       thunderSfx,
       thrusterSfx,
@@ -99,6 +101,7 @@ export function useGameAudio(): AudioMgr {
       shieldSfx,
       shrinkSfx,
       skullSfx,
+      laserBeamFireSfx,
       shotSfx,
       thunderSfx,
       thrusterSfx,
