@@ -6,6 +6,7 @@ import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import Reel from "./Reel";
 import BonusWheel from "./BonusWheel";
 import JackpotDisplay from "./JackpotDisplay";
+import { withBasePath } from "@/utils/basePath";
 
 export interface GameUIProps {
   cursor: string;
@@ -20,6 +21,8 @@ export interface GameUIProps {
   onSpinEnd: (index: number, result: string) => void;
   wheelSpinning: boolean;
   onWheelFinish: (reward: string) => void;
+  wheelReady: boolean;
+  onWheelStart: () => void;
   bet: number;
 }
 
@@ -36,6 +39,8 @@ export default function GameUI({
   onSpinEnd,
   wheelSpinning,
   onWheelFinish,
+  wheelReady,
+  onWheelStart,
   bet,
 }: GameUIProps) {
   const [tokenValue, setTokenValue] = useState<number>(1);
@@ -55,7 +60,26 @@ export default function GameUI({
   return (
     <Box position="relative" width="100vw" height="100dvh" display="flex" flexDirection="column" alignItems="center" justifyContent="center">
       <JackpotDisplay bet={bet} />
-      <BonusWheel spinning={wheelSpinning} onFinish={onWheelFinish} />
+      <Box position="relative">
+        <BonusWheel spinning={wheelSpinning} onFinish={onWheelFinish} />
+        {wheelReady && !wheelSpinning && (
+          <Box
+            component="img"
+            src={withBasePath("/assets/shooting-gallery/PNG/HUD/text_spin.svg")}
+            alt="Spin"
+            onClick={onWheelStart}
+            sx={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              width: 150,
+              height: "auto",
+              cursor: "pointer",
+            }}
+          />
+        )}
+      </Box>
       <Box display="flex" gap={2} mb={2}>
         {spinning.map((spin, i) => (
           <Reel

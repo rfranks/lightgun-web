@@ -26,6 +26,8 @@ export default function Game() {
     handleReelClick,
     handleSpinEnd,
     wheelSpinning,
+    wheelReady,
+    handleWheelStart,
     handleWheelFinish,
     bet,
   } = useStraightCashGameEngine();
@@ -58,6 +60,8 @@ export default function Game() {
       handleReelClick={handleReelClick}
       onSpinEnd={handleSpinEnd}
       wheelSpinning={wheelSpinning}
+      wheelReady={wheelReady}
+      onWheelStart={handleWheelStart}
       onWheelFinish={handleWheelFinish}
       bet={bet}
     />
