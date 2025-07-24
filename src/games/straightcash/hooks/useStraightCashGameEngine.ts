@@ -276,6 +276,28 @@ export default function useStraightCashGameEngine() {
     e.preventDefault();
   }, []);
 
+  const resetGame = useCallback(() => {
+    setPhase("title");
+    setReelPos([0, 0, 0]);
+    setSpinSpeed(0);
+    setLocked([false, false, false]);
+    setSpinning([false, false, false]);
+    setReelClicks([null, null, null]);
+    setDieActive([false, false, false]);
+    autoStopRefs.current.forEach((t) => {
+      if (t) clearTimeout(t);
+    });
+    autoStopRefs.current = [null, null, null];
+    spinStartRef.current = null;
+    setForcedResults([null, null, null]);
+    setBet(1);
+    setTokens(100);
+    setWheelReady(false);
+    audioMgr.pause("wheelSpinSfx");
+    slideKeys.forEach((k) => audioMgr.pause(k));
+    textLabels.current = [];
+  }, [audioMgr, slideKeys]);
+
   // play sliding sounds while any reel spins
   useEffect(() => {
     if (spinning.some((s) => s)) {
@@ -346,27 +368,6 @@ export default function useStraightCashGameEngine() {
     }
   }, [spinning, reelResults, reelValues, tokenValue, isReelDisabled, audioMgr]);
 
-  const resetGame = useCallback(() => {
-    setPhase("title");
-    setReelPos([0, 0, 0]);
-    setSpinSpeed(0);
-    setLocked([false, false, false]);
-    setSpinning([false, false, false]);
-    setReelClicks([null, null, null]);
-    setDieActive([false, false, false]);
-    autoStopRefs.current.forEach((t) => {
-      if (t) clearTimeout(t);
-    });
-    autoStopRefs.current = [null, null, null];
-    spinStartRef.current = null;
-    setForcedResults([null, null, null]);
-    setBet(1);
-    setTokens(100);
-    setWheelReady(false);
-    audioMgr.pause("wheelSpinSfx");
-    slideKeys.forEach((k) => audioMgr.pause(k));
-    textLabels.current = [];
-  }, [audioMgr, slideKeys]);
 
   const getImg = useCallback(() => undefined, []);
 
