@@ -73,6 +73,11 @@ export function useStraightCashAssets(): {
       }
     }
 
+    // ─── PLUS IMAGE ─────────────────────────────────────────────────
+    assetRefs.current.plusImg = loadImg(
+      "/assets/shooting-gallery/PNG/HUD/text_plus_small.png"
+    );
+
     // ─── WHEEL BONUS CHIP ────────────────────────────────────────────
     assetRefs.current.wheelBonusChipImg = loadImg(
       "/assets/boardgame/PNG/Chips/chipGreenWhite_border.png"

@@ -5,6 +5,7 @@ import useStraightCashAssets from "../hooks/useStraightCashAssets";
 export interface ReelProps {
   spinning: boolean;
   locked: boolean;
+  showDie?: boolean;
   onStop: (e: React.MouseEvent<HTMLDivElement>) => void;
   onSpinEnd?: (result: string) => void;
 }
@@ -14,10 +15,12 @@ const ITEM_SIZE = 120;
 export const Reel: React.FC<ReelProps> = ({
   spinning,
   locked,
+  showDie,
   onStop,
   onSpinEnd,
 }) => {
   const { assetRefs, ready } = useStraightCashAssets();
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const items = useMemo(() => {
     if (!ready) return [] as { img: HTMLImageElement | null; rank: string }[];
@@ -41,8 +44,10 @@ export const Reel: React.FC<ReelProps> = ({
       "K",
     ];
 
+    const plusImg = assetRefs.plusImg as HTMLImageElement;
     const arr: { img: HTMLImageElement | null; rank: string }[] = [
       { img: null, rank: "blank" },
+      { img: plusImg, rank: "+spin" },
     ];
     for (const suit of suits) {
       for (const r of ranks) {
@@ -56,6 +61,27 @@ export const Reel: React.FC<ReelProps> = ({
 
   const [index, setIndex] = useState(0);
   const prevSpinning = useRef(spinning);
+  useEffect(() => {
+    if (!showDie) return;
+    const ctx = canvasRef.current?.getContext("2d");
+    if (!ctx) return;
+    const diceImgs = assetRefs.diceImgs as Record<string, HTMLImageElement>;
+    let frame = 0;
+    let id: number;
+    const draw = () => {
+      const img = diceImgs[`White_border${frame + 1}`];
+      if (img) {
+        ctx.clearRect(0, 0, 32, 32);
+        ctx.drawImage(img, 0, 0, 32, 32);
+      }
+      frame = (frame + 1) % 6;
+      id = window.setTimeout(draw, 100);
+    };
+    draw();
+    return () => {
+      clearTimeout(id);
+    };
+  }, [showDie, assetRefs]);
 
   useEffect(() => {
     if (!spinning || items.length === 0) return;
@@ -120,6 +146,18 @@ export const Reel: React.FC<ReelProps> = ({
           bottom={0}
           bgcolor="rgba(0,0,0,0.3)"
         />
+      )}
+      {showDie && (
+        <Box
+          position="absolute"
+          top={4}
+          right={4}
+          width={32}
+          height={32}
+          pointerEvents="none"
+        >
+          <canvas ref={canvasRef} width={32} height={32} />
+        </Box>
       )}
     </Box>
   );
