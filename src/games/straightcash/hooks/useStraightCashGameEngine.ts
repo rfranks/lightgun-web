@@ -4,6 +4,31 @@ import { AudioMgr } from "@/types/audio";
 import { TextLabel } from "@/types/ui";
 import useStraightCashAudio from "./useStraightCashAudio";
 
+const REEL_RANKS = [
+  "A",
+  "2",
+  "3",
+  "4",
+  "5",
+  "6",
+  "7",
+  "8",
+  "9",
+  "10",
+  "J",
+  "Q",
+  "K",
+];
+
+const RESULT_POOL = (() => {
+  const arr = ["blank", "+spin"] as string[];
+  for (const r of REEL_RANKS) {
+    for (let i = 0; i < 4; i++) arr.push(r);
+  }
+  arr.push("wheel");
+  return arr;
+})();
+
 /**
  * Straight Cash game engine hook.
  * Manages basic slot machine state like reels and tokens.
@@ -33,6 +58,11 @@ export default function useStraightCashGameEngine() {
   const [tokenValue, setTokenValue] = useState<number>(1);
   const [wheelSpinning, setWheelSpinning] = useState(false);
   const [wheelReady, setWheelReady] = useState(false);
+  const [forcedResults, setForcedResults] = useState<(string | null)[]>([
+    null,
+    null,
+    null,
+  ]);
 
   const isReelDisabled = useCallback(
     (index: number) => {
@@ -48,6 +78,7 @@ export default function useStraightCashGameEngine() {
     null,
     null,
   ]);
+  const spinStartRef = useRef<number | null>(null);
 
   const textLabels = useRef<TextLabel[]>([]);
 
@@ -110,6 +141,19 @@ export default function useStraightCashGameEngine() {
       autoStopRefs.current[index] = null;
     }
   }, []);
+
+  const autoStop = useCallback(
+    (index: number) => {
+      const rand = RESULT_POOL[Math.floor(Math.random() * RESULT_POOL.length)];
+      setForcedResults((prev) => {
+        const arr = [...prev];
+        arr[index] = rand;
+        return arr;
+      });
+      stopReel(index);
+    },
+    [stopReel]
+  );
 
   const cardValue = useCallback((rank: string) => {
     if (rank === "wheel" || rank === "blank" || rank === "Joker" || rank === "+spin")
@@ -181,11 +225,21 @@ export default function useStraightCashGameEngine() {
           arr[index] = true;
           return arr;
         });
+        setForcedResults((prev) => {
+          const arr = [...prev];
+          arr[index] = null;
+          return arr;
+        });
         if (autoStopRefs.current[index]) {
           clearTimeout(autoStopRefs.current[index]!);
         }
-        autoStopRefs.current[index] = setTimeout(() => stopReel(index), 30000);
+        autoStopRefs.current[index] = setTimeout(() => autoStop(index), 30000);
       } else if (!locked[index]) {
+        setForcedResults((prev) => {
+          const arr = [...prev];
+          arr[index] = null;
+          return arr;
+        });
         stopReel(index);
       }
     },
@@ -198,8 +252,10 @@ export default function useStraightCashGameEngine() {
       setBet(amount);
       setTokenValue(denom);
       setTokens((t) => t - amount);
+      spinStartRef.current = Date.now();
       setReelValues([0, 0, 0]);
       setReelResults([false, false, false]);
+      setForcedResults([null, null, null]);
       setSpinSpeed(1);
       setSpinning((prev) =>
         prev.map((_, i) => (locked[i] ? false : true))
@@ -209,11 +265,11 @@ export default function useStraightCashGameEngine() {
           if (autoStopRefs.current[i]) {
             clearTimeout(autoStopRefs.current[i]!);
           }
-          autoStopRefs.current[i] = setTimeout(() => stopReel(i), 30000);
+          autoStopRefs.current[i] = setTimeout(() => autoStop(i), 30000);
         }
       }
     },
-    [tokens, locked, stopReel]
+    [tokens, locked, autoStop]
   );
 
   const handleContext = useCallback((e: React.MouseEvent) => {
@@ -271,10 +327,12 @@ export default function useStraightCashGameEngine() {
           }
         }
         const payout = finalTotal * tokenValue;
-        if (payout > 0) {
+        const nudge = Math.random() * 2 - 1; // small payout adjustment
+        const finalPayout = Math.max(0, Math.round(payout + nudge));
+        if (finalPayout > 0) {
           audioMgr.play("payoutSfx");
         }
-        setTokens((t) => t + payout);
+        setTokens((t) => t + finalPayout);
       }
     }
   }, [spinning, reelResults, reelValues, tokenValue, isReelDisabled, audioMgr]);
@@ -291,6 +349,8 @@ export default function useStraightCashGameEngine() {
       if (t) clearTimeout(t);
     });
     autoStopRefs.current = [null, null, null];
+    spinStartRef.current = null;
+    setForcedResults([null, null, null]);
     setBet(1);
     setTokens(100);
     setWheelReady(false);
@@ -341,6 +401,7 @@ export default function useStraightCashGameEngine() {
     spinning,
     locked,
     dieActive,
+    forcedResults,
     wheelReady,
     wheelSpinning,
     handleWheelStart,
