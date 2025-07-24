@@ -593,7 +593,7 @@ export function updateSystems(state: GameState): void {
           age: 0,
           maxAge: 60,
         });
-        state.audio.play?.("homingExplode");
+        state.audio.play?.("homingExplSfx");
       }
       return false;
     }
