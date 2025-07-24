@@ -570,9 +570,20 @@ export function useGameEngine() {
             state.current.activePowerups.bomb.expires =
               state.current.frameCount + 1;
           } else if (ANTI_POWERUP_TYPES.includes(p.type as AntiPowerupType)) {
-            if (["sticky", "heavy", "windy"].includes(p.type)) {
+            if (["sticky", "heavy", "windy", "turbulence"].includes(p.type)) {
               // sticky and heavy powerups expire at POWERUP_DURATION
               state.current.activePowerups[p.type].expires = POWERUP_DURATION;
+              if (p.type === "turbulence") {
+                makeText(
+                  "Turbulence!",
+                  1,
+                  true,
+                  true,
+                  dims.width - 800,
+                  dims.height * 0.8,
+                  120
+                );
+              }
             } else {
               // other anti-powerups expire immediately
               state.current.activePowerups[p.type].expires =
@@ -1634,6 +1645,12 @@ export function useGameEngine() {
       if (!state.current.crashed) {
         state.current.vy += gravity;
         state.current.y += state.current.vy;
+
+        if (state.current.isActive("turbulence", state.current.frameCount)) {
+          state.current.vy += (Math.random() * 2 - 1) * 0.5;
+          state.current.y += (Math.random() * 2 - 1) * SCRAMBLE_INTENSITY;
+          state.current.planeAngle += (Math.random() * 2 - 1) * 0.2;
+        }
 
         // collision with ground
         if (state.current.y + PLANE_HEIGHT >= groundY) {

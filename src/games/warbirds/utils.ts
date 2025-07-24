@@ -48,6 +48,7 @@ export function initState(
     laserbeam: { expires: 0 },
     thunderstrike: { expires: 0 },
     windy: { expires: 0 },
+    turbulence: { expires: 0 },
     wings: { expires: 0 },
   };
 
