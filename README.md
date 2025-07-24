@@ -84,14 +84,14 @@ cleaner import statements.
 
 ### Key Points for New Contributors
 
-1. **Game Loop** – Most gameplay logic lives in `src/games/warbirds/useGameEngine.ts`. Understanding its state structure and render/update loops is crucial.
+1. **Game Loop** – Most gameplay logic lives in `src/games/warbirds/hooks/useGameEngine.ts`. Understanding its state structure and render/update loops is crucial.
 2. **Asset Management** – Assets load via hooks in `src/hooks`. `useGameAssets` handles images, while `useGameAudio` manages sound effects.
 3. **Constants and Types** – Values under `src/constants` and interfaces under `src/types` define gameplay tuning and object shapes.
 4. **Next.js Setup** – Game pages reside in `src/app`, with `/main` serving as the entry point for the main game.
 
 ### Suggested Next Steps
 
-- Review `useGameEngine.ts` and `games/warbirds/utils.ts` to see how spawning, physics, and rendering are implemented.
+- Review `src/games/warbirds/hooks/useGameEngine.ts` and `src/games/warbirds/utils.ts` to see how spawning, physics, and rendering are implemented.
 - Explore the `src/constants` directory to understand configurable gameplay values.
 - Inspect assets in `public/` so you can extend graphics and audio.
 - Familiarize yourself with React hooks and the Next.js app router.
