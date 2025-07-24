@@ -750,7 +750,7 @@ export function useGameEngine() {
                   ]
                 : types[Math.floor(Math.random() * types.length)];
 
-            // increase the chance of a anti-powerup
+            // increase the chance of an anti-powerup
             // if the type is not an anti-powerup, randomly change it to one
             // with a 50% chance
             // this is to encourage players to avoid anti-powerups
