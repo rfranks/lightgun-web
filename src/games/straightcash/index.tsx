@@ -22,6 +22,7 @@ export default function Game() {
     startSpins,
     spinning,
     locked,
+    dieActive,
     handleReelClick,
     handleSpinEnd,
     wheelSpinning,
@@ -53,6 +54,7 @@ export default function Game() {
       startSpins={startSpins}
       spinning={spinning}
       locked={locked}
+      showDie={dieActive}
       handleReelClick={handleReelClick}
       onSpinEnd={handleSpinEnd}
       wheelSpinning={wheelSpinning}

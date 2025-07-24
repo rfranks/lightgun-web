@@ -20,6 +20,7 @@ export default function useStraightCashGameEngine() {
   const [spinSpeed, setSpinSpeed] = useState<number>(0);
   const [locked, setLocked] = useState<boolean[]>([false, false, false]);
   const [spinning, setSpinning] = useState<boolean[]>([false, false, false]);
+  const [dieActive, setDieActive] = useState<boolean[]>([false, false, false]);
   const [reelClicks, setReelClicks] = useState<({ x: number; y: number } | null)[]>([
     null,
     null,
@@ -78,7 +79,8 @@ export default function useStraightCashGameEngine() {
   }, []);
 
   const cardValue = useCallback((rank: string) => {
-    if (rank === "wheel" || rank === "blank" || rank === "Joker") return 0;
+    if (rank === "wheel" || rank === "blank" || rank === "Joker" || rank === "+spin")
+      return 0;
     if (rank === "A") return 50;
     if (rank === "K") return 30;
     if (rank === "Q") return 20;
@@ -101,6 +103,18 @@ export default function useStraightCashGameEngine() {
         arr[index] = val;
         return arr;
       });
+      if (result === "+spin") {
+        setLocked((prev) => {
+          const arr = [...prev];
+          arr[index] = true;
+          return arr;
+        });
+        setDieActive((prev) => {
+          const arr = [...prev];
+          arr[index] = true;
+          return arr;
+        });
+      }
       const click = reelClicks[index];
       if (val > 0 && click) {
         makeText(`${val}`, 0.5, click.x, click.y, 60);
@@ -118,11 +132,31 @@ export default function useStraightCashGameEngine() {
         arr[index] = pos;
         return arr;
       });
-      if (!locked[index]) {
+      if (dieActive[index]) {
+        setDieActive((prev) => {
+          const arr = [...prev];
+          arr[index] = false;
+          return arr;
+        });
+        setLocked((prev) => {
+          const arr = [...prev];
+          arr[index] = false;
+          return arr;
+        });
+        setSpinning((prev) => {
+          const arr = [...prev];
+          arr[index] = true;
+          return arr;
+        });
+        if (autoStopRefs.current[index]) {
+          clearTimeout(autoStopRefs.current[index]!);
+        }
+        autoStopRefs.current[index] = setTimeout(() => stopReel(index), 30000);
+      } else if (!locked[index]) {
         stopReel(index);
       }
     },
-    [locked, stopReel]
+    [locked, dieActive, stopReel]
   );
 
   const startSpins = useCallback(
@@ -194,6 +228,7 @@ export default function useStraightCashGameEngine() {
     setLocked([false, false, false]);
     setSpinning([false, false, false]);
     setReelClicks([null, null, null]);
+    setDieActive([false, false, false]);
     autoStopRefs.current.forEach((t) => {
       if (t) clearTimeout(t);
     });
@@ -235,6 +270,7 @@ export default function useStraightCashGameEngine() {
     spinSpeed,
     spinning,
     locked,
+    dieActive,
     wheelSpinning,
     handleWheelFinish,
     bet,
