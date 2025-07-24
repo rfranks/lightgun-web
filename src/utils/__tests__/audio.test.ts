@@ -26,6 +26,19 @@ describe('audio utils', () => {
     expect(audioElement.play).toHaveBeenCalled();
   });
 
+  test('rewindAndPlayAudio applies loop option and defaults volume', () => {
+    const audioElement = document.createElement('audio');
+    audioElement.play = jest.fn();
+    const ref: RefObject<HTMLAudioElement> = { current: audioElement };
+
+    rewindAndPlayAudio(ref, { loop: true });
+
+    expect(audioElement.loop).toBe(true);
+    expect(audioElement.volume).toBe(1);
+    expect(audioElement.currentTime).toBe(0);
+    expect(audioElement.play).toHaveBeenCalled();
+  });
+
   test('pauseAudio calls pause on existing element', () => {
     const audioElement = document.createElement('audio');
     audioElement.pause = jest.fn();
