@@ -5,6 +5,7 @@ import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import Reel from "./Reel";
 import BonusWheel from "./BonusWheel";
+import JackpotDisplay from "./JackpotDisplay";
 
 export interface GameUIProps {
   cursor: string;
@@ -18,6 +19,7 @@ export interface GameUIProps {
   onSpinEnd: (index: number, isWheel: boolean) => void;
   wheelSpinning: boolean;
   onWheelFinish: (reward: string) => void;
+  bet: number;
 }
 
 export default function GameUI({
@@ -32,6 +34,7 @@ export default function GameUI({
   onSpinEnd,
   wheelSpinning,
   onWheelFinish,
+  bet,
 }: GameUIProps) {
   const [tokenValue, setTokenValue] = useState<number>(1);
 
@@ -43,6 +46,7 @@ export default function GameUI({
 
   return (
     <Box position="relative" width="100vw" height="100dvh" display="flex" flexDirection="column" alignItems="center" justifyContent="center">
+      <JackpotDisplay bet={bet} />
       <BonusWheel spinning={wheelSpinning} onFinish={onWheelFinish} />
       <Box display="flex" gap={2} mb={2}>
         {spinning.map((spin, i) => (

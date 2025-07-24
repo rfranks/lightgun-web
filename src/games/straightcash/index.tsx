@@ -26,6 +26,7 @@ export default function Game() {
     handleSpinEnd,
     wheelSpinning,
     handleWheelFinish,
+    bet,
   } = useStraightCashGameEngine();
 
   if (phase === "title") {
@@ -56,6 +57,7 @@ export default function Game() {
       onSpinEnd={handleSpinEnd}
       wheelSpinning={wheelSpinning}
       onWheelFinish={handleWheelFinish}
+      bet={bet}
     />
   );
 }
