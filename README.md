@@ -25,7 +25,7 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+You can start editing the page by modifying `src/app/page.tsx`. The page auto-updates as you edit the file.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
@@ -84,14 +84,14 @@ cleaner import statements.
 
 ### Key Points for New Contributors
 
-1. **Game Loop** – Most gameplay logic lives in `src/games/warbirds/useGameEngine.ts`. Understanding its state structure and render/update loops is crucial.
+1. **Game Loop** – Most gameplay logic lives in `src/games/warbirds/hooks/useGameEngine.ts`. Understanding its state structure and render/update loops is crucial.
 2. **Asset Management** – Assets load via hooks in `src/hooks`. `useGameAssets` handles images, while `useGameAudio` manages sound effects.
 3. **Constants and Types** – Values under `src/constants` and interfaces under `src/types` define gameplay tuning and object shapes.
 4. **Next.js Setup** – Game pages reside in `src/app`, with `/main` serving as the entry point for the main game.
 
 ### Suggested Next Steps
 
-- Review `useGameEngine.ts` and `games/warbirds/utils.ts` to see how spawning, physics, and rendering are implemented.
+- Review `src/games/warbirds/hooks/useGameEngine.ts` and `src/games/warbirds/utils.ts` to see how spawning, physics, and rendering are implemented.
 - Explore the `src/constants` directory to understand configurable gameplay values.
 - Inspect assets in `public/` so you can extend graphics and audio.
 - Familiarize yourself with React hooks and the Next.js app router.

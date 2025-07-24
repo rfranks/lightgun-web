@@ -451,7 +451,7 @@ export function updateSystems(state: GameState): void {
   if (state.y + PLANE_HEIGHT > groundY && !state.crashed) {
     state.y = groundY - PLANE_HEIGHT;
     state.vy = -FLAP_STRENGTH;
-    state.audio.play?.("groundTouch");
+    state.audio.play?.("groundTouchSfx");
   }
   state.groundOffset =
     (state.groundOffset + state.groundSpeed(state.frameCount)) %
@@ -557,7 +557,7 @@ export function updateSystems(state: GameState): void {
           age: 0,
           maxAge: 60,
         });
-        state.audio.play?.("artilleryExplode");
+        state.audio.play?.("artilleryExplodeSfx");
         cb.vx = Infinity;
       }
     });
@@ -616,7 +616,7 @@ export function updateSystems(state: GameState): void {
           size: 64,
         });
       }
-      state.audio.play?.("artilleryExplode");
+      state.audio.play?.("artilleryExplodeSfx");
       return false;
     }
     return true;
