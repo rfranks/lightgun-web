@@ -14,6 +14,7 @@ export interface ReelProps {
   onStop: (e: React.MouseEvent<HTMLDivElement>) => void;
   onSpinEnd?: (result: string) => void;
   cursor: string;
+  stopResult?: string | null;
 }
 
 const ITEM_SIZE = 120;
@@ -26,6 +27,7 @@ export const Reel: React.FC<ReelProps> = ({
   onStop,
   onSpinEnd,
   cursor,
+  stopResult,
 }) => {
   const { assetRefs, ready } = useStraightCashAssets();
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -69,6 +71,13 @@ export const Reel: React.FC<ReelProps> = ({
 
   const [index, setIndex] = useState(0);
   const prevSpinning = useRef(spinning);
+
+  useEffect(() => {
+    if (!spinning && stopResult && items.length > 0) {
+      const idx = items.findIndex((it) => it.rank === stopResult);
+      if (idx >= 0) setIndex(idx);
+    }
+  }, [spinning, stopResult, items]);
   useEffect(() => {
     if (!showDie) return;
     const ctx = canvasRef.current?.getContext("2d");

@@ -20,6 +20,7 @@ export interface GameUIProps {
   showDie: boolean[];
   handleReelClick: (index: number, e: React.MouseEvent<HTMLDivElement>) => void;
   onSpinEnd: (index: number, result: string) => void;
+  forcedResults: (string | null)[];
   wheelSpinning: boolean;
   onWheelFinish: (reward: string) => void;
   wheelReady: boolean;
@@ -39,6 +40,7 @@ export default function GameUI({
   showDie,
   handleReelClick,
   onSpinEnd,
+  forcedResults,
   wheelSpinning,
   onWheelFinish,
   wheelReady,
@@ -101,6 +103,7 @@ export default function GameUI({
             showDie={showDie[i]}
             onStop={(e) => handleReelClick(i, e)}
             onSpinEnd={(result) => onSpinEnd(i, result)}
+            stopResult={forcedResults[i] ?? undefined}
             cursor={cursor}
           />
         ))}
