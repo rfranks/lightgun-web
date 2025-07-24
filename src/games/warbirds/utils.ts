@@ -557,7 +557,7 @@ export function updateSystems(state: GameState): void {
           age: 0,
           maxAge: 60,
         });
-        state.audio.play?.("artilleryExplode");
+        state.audio.play?.("artilleryExplodeSfx");
         cb.vx = Infinity;
       }
     });
@@ -616,7 +616,7 @@ export function updateSystems(state: GameState): void {
           size: 64,
         });
       }
-      state.audio.play?.("artilleryExplode");
+      state.audio.play?.("artilleryExplodeSfx");
       return false;
     }
     return true;
