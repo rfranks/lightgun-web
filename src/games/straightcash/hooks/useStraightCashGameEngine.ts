@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { DEFAULT_CURSOR } from "../constants";
 import { AudioMgr } from "@/types/audio";
 import { TextLabel } from "@/types/ui";
@@ -52,6 +52,23 @@ export default function useStraightCashGameEngine() {
   const textLabels = useRef<TextLabel[]>([]);
 
   const audioMgr: AudioMgr = useStraightCashAudio();
+
+  // card slide sound cycling
+  const slideKeys = useMemo(
+    () => [
+      "cardSlide1Sfx",
+      "cardSlide2Sfx",
+      "cardSlide3Sfx",
+      "cardSlide4Sfx",
+      "cardSlide5Sfx",
+      "cardSlide6Sfx",
+      "cardSlide7Sfx",
+      "cardSlide8Sfx",
+    ],
+    []
+  );
+  const slideIdxRef = useRef(0);
+  const slideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const ui = { cursor: DEFAULT_CURSOR };
 
@@ -197,6 +214,26 @@ export default function useStraightCashGameEngine() {
     e.preventDefault();
   }, []);
 
+  // play sliding sounds while any reel spins
+  useEffect(() => {
+    if (spinning.some((s) => s)) {
+      const playNext = () => {
+        const key = slideKeys[slideIdxRef.current % slideKeys.length];
+        audioMgr.play(key);
+        slideIdxRef.current = (slideIdxRef.current + 1) % slideKeys.length;
+        slideTimerRef.current = window.setTimeout(playNext, 100);
+      };
+      playNext();
+      return () => {
+        if (slideTimerRef.current) {
+          clearTimeout(slideTimerRef.current);
+          slideTimerRef.current = null;
+        }
+        slideKeys.forEach((k) => audioMgr.pause(k));
+      };
+    }
+  }, [spinning, audioMgr, slideKeys]);
+
   useEffect(() => {
     if (spinning.some((s) => s)) {
       const id = setInterval(() => {
@@ -228,10 +265,13 @@ export default function useStraightCashGameEngine() {
           }
         }
         const payout = finalTotal * tokenValue;
+        if (payout > 0) {
+          audioMgr.play("payoutSfx");
+        }
         setTokens((t) => t + payout);
       }
     }
-  }, [spinning, reelResults, reelValues, tokenValue, isReelDisabled]);
+  }, [spinning, reelResults, reelValues, tokenValue, isReelDisabled, audioMgr]);
 
   const resetGame = useCallback(() => {
     setPhase("title");
@@ -248,8 +288,10 @@ export default function useStraightCashGameEngine() {
     setBet(1);
     setTokens(100);
     setWheelReady(false);
+    audioMgr.pause("wheelSpinSfx");
+    slideKeys.forEach((k) => audioMgr.pause(k));
     textLabels.current = [];
-  }, []);
+  }, [audioMgr, slideKeys]);
 
   const getImg = useCallback(() => undefined, []);
 
@@ -262,15 +304,16 @@ export default function useStraightCashGameEngine() {
     setWheelReady(false);
     setWheelSpinning(true);
     setPhase("wheel");
-    audioMgr.play("chipLay1Sfx");
+    audioMgr.play("wheelSpinSfx", { loop: true });
   }, [wheelReady, audioMgr]);
 
   const handleWheelFinish = useCallback((reward: string) => {
     setWheelSpinning(false);
     setPhase("playing");
     setReelResults([false, false, false]);
+    audioMgr.pause("wheelSpinSfx");
     // placeholder: reward handling could modify tokens
-  }, []);
+  }, [audioMgr]);
 
   return {
     phase,
