@@ -337,7 +337,7 @@ export default function useStraightCashGameEngine() {
   }, [phase, resetGame]);
 
   useEffect(() => {
-    if (spinning.every((s) => !s)) {
+    if (spinning.every((s) => !s) && spinStartRef.current !== null) {
       const activeIndices = [0, 1, 2].filter((i) => !isReelDisabled(i));
       if (activeIndices.every((i) => reelResults[i])) {
         setWheelReady(true);
