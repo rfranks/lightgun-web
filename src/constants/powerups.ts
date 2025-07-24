@@ -31,6 +31,7 @@ export const POWERUP_TYPES: PowerupType[] = [
   "laserbeam",
   "thunderstrike",
   "windy",
+  "turbulence",
   "wings",
 ];
 
@@ -41,6 +42,7 @@ export const ANTI_POWERUP_TYPES: AntiPowerupType[] = [
   "sticky",
   "heavy",
   "windy",
+  "turbulence",
 ];
 
 /** High power, rare powerups that provide significant advantages */

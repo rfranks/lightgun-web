@@ -27,12 +27,19 @@ export type PowerupType =
   | "laserbeam"
   | "thunderstrike"
   | "windy"
+  | "turbulence"
   | "wings";
 
 /**
  * Types of anti-powerups (negative effects).
  */
-export type AntiPowerupType = "skull" | "gunjam" | "sticky" | "heavy" | "windy";
+export type AntiPowerupType =
+  | "skull"
+  | "gunjam"
+  | "sticky"
+  | "heavy"
+  | "windy"
+  | "turbulence";
 
 /**
  * Extra-strong, rare powerup types.
