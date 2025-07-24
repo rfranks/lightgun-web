@@ -15,6 +15,17 @@ describe('audio utils', () => {
     expect(audioElement.play).toHaveBeenCalled();
   });
 
+  test('rewindAndPlayAudio defaults volume to 1 when no options provided', () => {
+    const audioElement = document.createElement('audio');
+    audioElement.play = jest.fn();
+    const ref: RefObject<HTMLAudioElement> = { current: audioElement };
+
+    rewindAndPlayAudio(ref);
+
+    expect(audioElement.volume).toBe(1);
+    expect(audioElement.play).toHaveBeenCalled();
+  });
+
   test('pauseAudio calls pause on existing element', () => {
     const audioElement = document.createElement('audio');
     audioElement.pause = jest.fn();
@@ -25,6 +36,12 @@ describe('audio utils', () => {
     expect(audioElement.pause).toHaveBeenCalled();
   });
 
+  test('pauseAudio safely handles missing elements', () => {
+    const nullRef: RefObject<HTMLAudioElement> = { current: null };
+    expect(() => pauseAudio(nullRef)).not.toThrow();
+    expect(() => pauseAudio(undefined)).not.toThrow();
+  });
+  
   test('rewindAndPlayAudio uses defaults when options omitted', () => {
     const audioElement = document.createElement('audio');
     audioElement.play = jest.fn();
