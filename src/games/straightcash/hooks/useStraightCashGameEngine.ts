@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
-import { DEFAULT_CURSOR } from "../constants";
+import { DEFAULT_CURSOR, SHOT_CURSOR } from "../constants";
 import { AudioMgr } from "@/types/audio";
 import { TextLabel } from "@/types/ui";
 import useStraightCashAudio from "./useStraightCashAudio";
@@ -70,7 +70,13 @@ export default function useStraightCashGameEngine() {
   const slideIdxRef = useRef(0);
   const slideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const ui = { cursor: DEFAULT_CURSOR };
+  const [cursor, setCursor] = useState<string>(DEFAULT_CURSOR);
+  const triggerShotCursor = useCallback(() => {
+    setCursor(SHOT_CURSOR);
+    setTimeout(() => setCursor(DEFAULT_CURSOR), 100);
+  }, []);
+
+  const ui = { cursor };
 
   const makeText = useCallback(
     (text: string, scale: number, x?: number, y?: number, maxAge = 60) => {
@@ -350,5 +356,6 @@ export default function useStraightCashGameEngine() {
     makeText,
     textLabels: textLabels.current,
     audioMgr,
+    triggerShotCursor,
   };
 }

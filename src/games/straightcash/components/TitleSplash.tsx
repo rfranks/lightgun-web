@@ -6,6 +6,7 @@ export interface TitleSplashProps {
   titleSrc: string;
   backgroundColor: string;
   cursor: string;
+  onShot: () => void;
 }
 
 export const TitleSplash: React.FC<TitleSplashProps> = ({
@@ -13,16 +14,20 @@ export const TitleSplash: React.FC<TitleSplashProps> = ({
   titleSrc,
   backgroundColor,
   cursor,
+  onShot,
 }) => (
   <Box
     position="relative"
     width="100vw"
     height="100dvh"
-    sx={{ backgroundColor, cursor: "pointer" }}
+    sx={{ backgroundColor, cursor }}
     display="flex"
     justifyContent="center"
     alignItems="center"
-    onClick={onStart}
+    onClick={() => {
+      onShot();
+      onStart();
+    }}
   >
     <Box
       component="img"
