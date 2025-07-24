@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import Box from "@mui/material/Box";
 import useStraightCashAssets from "../hooks/useStraightCashAssets";
 
@@ -6,11 +6,17 @@ export interface ReelProps {
   spinning: boolean;
   locked: boolean;
   onStop: () => void;
+  onSpinEnd?: (isWheel: boolean) => void;
 }
 
 const ITEM_SIZE = 120;
 
-export const Reel: React.FC<ReelProps> = ({ spinning, locked, onStop }) => {
+export const Reel: React.FC<ReelProps> = ({
+  spinning,
+  locked,
+  onStop,
+  onSpinEnd,
+}) => {
   const { assetRefs, ready } = useStraightCashAssets();
 
   const items = useMemo(() => {
@@ -45,6 +51,7 @@ export const Reel: React.FC<ReelProps> = ({ spinning, locked, onStop }) => {
   }, [ready, assetRefs]);
 
   const [index, setIndex] = useState(0);
+  const prevSpinning = useRef(spinning);
 
   useEffect(() => {
     if (!spinning || items.length === 0) return;
@@ -53,6 +60,14 @@ export const Reel: React.FC<ReelProps> = ({ spinning, locked, onStop }) => {
     }, 100);
     return () => clearInterval(id);
   }, [spinning, items.length]);
+
+  useEffect(() => {
+    if (prevSpinning.current && !spinning && onSpinEnd) {
+      const wheelIndex = items.length - 1;
+      onSpinEnd(index === wheelIndex);
+    }
+    prevSpinning.current = spinning;
+  }, [spinning, index, onSpinEnd, items.length]);
 
   const handleClick = () => {
     if (!locked) {

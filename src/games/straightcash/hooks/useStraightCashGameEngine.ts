@@ -27,6 +27,8 @@ export default function useStraightCashGameEngine() {
   ]);
   const [bet, setBet] = useState<number>(1);
   const [tokens, setTokens] = useState<number>(100);
+  const [reelResults, setReelResults] = useState<boolean[]>([false, false, false]);
+  const [wheelSpinning, setWheelSpinning] = useState(false);
 
   const autoStopRefs = useRef<(ReturnType<typeof setTimeout> | null)[]>([
     null,
@@ -72,6 +74,17 @@ export default function useStraightCashGameEngine() {
       autoStopRefs.current[index] = null;
     }
   }, []);
+
+  const handleSpinEnd = useCallback(
+    (index: number, isWheel: boolean) => {
+      setReelResults((prev) => {
+        const arr = [...prev];
+        arr[index] = isWheel;
+        return arr;
+      });
+    },
+    []
+  );
 
   const handleReelClick = useCallback(
     (index: number, e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -125,6 +138,13 @@ export default function useStraightCashGameEngine() {
     }
   }, [spinning]);
 
+  useEffect(() => {
+    if (spinning.every((s) => !s) && reelResults.every((r) => r)) {
+      setPhase("wheel");
+      setWheelSpinning(true);
+    }
+  }, [spinning, reelResults]);
+
   const resetGame = useCallback(() => {
     setPhase("title");
     setReelPos([0, 0, 0]);
@@ -147,6 +167,13 @@ export default function useStraightCashGameEngine() {
     setPhase("playing");
   }, []);
 
+  const handleWheelFinish = useCallback((reward: string) => {
+    setWheelSpinning(false);
+    setPhase("playing");
+    setReelResults([false, false, false]);
+    // placeholder: reward handling could modify tokens
+  }, []);
+
   return {
     phase,
     countdown,
@@ -159,12 +186,15 @@ export default function useStraightCashGameEngine() {
     startSplash,
     startSpins,
     stopReel,
+    handleSpinEnd,
     handleReelClick,
     reelPos,
     reelClicks,
     spinSpeed,
     spinning,
     locked,
+    wheelSpinning,
+    handleWheelFinish,
     bet,
     tokens,
     setReelPos,
