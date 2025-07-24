@@ -32,6 +32,7 @@ export default function useStraightCashGameEngine() {
   const [reelValues, setReelValues] = useState<number[]>([0, 0, 0]);
   const [tokenValue, setTokenValue] = useState<number>(1);
   const [wheelSpinning, setWheelSpinning] = useState(false);
+  const [wheelReady, setWheelReady] = useState(false);
 
   const isReelDisabled = useCallback(
     (index: number) => {
@@ -211,8 +212,7 @@ export default function useStraightCashGameEngine() {
     if (spinning.every((s) => !s)) {
       const activeIndices = [0, 1, 2].filter((i) => !isReelDisabled(i));
       if (activeIndices.every((i) => reelResults[i])) {
-        setPhase("wheel");
-        setWheelSpinning(true);
+        setWheelReady(true);
       } else {
         const totalValue = reelValues.reduce(
           (sum, val, i) => (isReelDisabled(i) ? sum : sum + val),
@@ -247,6 +247,7 @@ export default function useStraightCashGameEngine() {
     autoStopRefs.current = [null, null, null];
     setBet(1);
     setTokens(100);
+    setWheelReady(false);
     textLabels.current = [];
   }, []);
 
@@ -255,6 +256,14 @@ export default function useStraightCashGameEngine() {
   const startSplash = useCallback(() => {
     setPhase("playing");
   }, []);
+
+  const handleWheelStart = useCallback(() => {
+    if (!wheelReady) return;
+    setWheelReady(false);
+    setWheelSpinning(true);
+    setPhase("wheel");
+    audioMgr.play("chipLay1Sfx");
+  }, [wheelReady, audioMgr]);
 
   const handleWheelFinish = useCallback((reward: string) => {
     setWheelSpinning(false);
@@ -283,7 +292,9 @@ export default function useStraightCashGameEngine() {
     spinning,
     locked,
     dieActive,
+    wheelReady,
     wheelSpinning,
+    handleWheelStart,
     handleWheelFinish,
     bet,
     tokens,
