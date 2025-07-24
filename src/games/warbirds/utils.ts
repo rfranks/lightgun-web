@@ -451,7 +451,7 @@ export function updateSystems(state: GameState): void {
   if (state.y + PLANE_HEIGHT > groundY && !state.crashed) {
     state.y = groundY - PLANE_HEIGHT;
     state.vy = -FLAP_STRENGTH;
-    state.audio.play?.("groundTouch");
+    state.audio.play?.("groundTouchSfx");
   }
   state.groundOffset =
     (state.groundOffset + state.groundSpeed(state.frameCount)) %
