@@ -241,9 +241,24 @@ export default function useStraightCashGameEngine() {
           return arr;
         });
         stopReel(index);
+
+        // stop disabled reels if this was the last active reel
+        const upcomingSpinning = spinning.map((s, i) =>
+          i === index ? false : s
+        );
+        const anyActiveSpinning = upcomingSpinning.some(
+          (spin, i) => !isReelDisabled(i) && spin
+        );
+        if (!anyActiveSpinning) {
+          for (let i = 0; i < upcomingSpinning.length; i++) {
+            if (isReelDisabled(i) && upcomingSpinning[i]) {
+              stopReel(i);
+            }
+          }
+        }
       }
     },
-    [locked, dieActive, stopReel]
+    [locked, dieActive, stopReel, spinning, isReelDisabled]
   );
 
   const startSpins = useCallback(
