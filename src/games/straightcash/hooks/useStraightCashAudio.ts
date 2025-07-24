@@ -33,6 +33,10 @@ export function useStraightCashAudio(): AudioMgr {
   const cardsPackTakeOut1Sfx = useAudio("/audio/cards-pack-take-out-1.ogg");
   const cardsPackTakeOut2Sfx = useAudio("/audio/cards-pack-take-out-2.ogg");
 
+  // ─── WHEEL & PAYOUT SFX ──────────────────────────────────────────────
+  const wheelSpinSfx = useAudio("/audio/whoosh.ogg", true);
+  const payoutSfx = useAudio("/audio/confirmation_003.ogg");
+
   // ─── CHIP SFX ─────────────────────────────────────────────────────────
   const chipLay1Sfx = useAudio("/audio/chip-lay-1.ogg");
   const chipLay2Sfx = useAudio("/audio/chip-lay-2.ogg");
@@ -90,6 +94,8 @@ export function useStraightCashAudio(): AudioMgr {
       cardsPackOpen2Sfx,
       cardsPackTakeOut1Sfx,
       cardsPackTakeOut2Sfx,
+      wheelSpinSfx,
+      payoutSfx,
       chipLay1Sfx,
       chipLay2Sfx,
       chipLay3Sfx,
@@ -142,6 +148,8 @@ export function useStraightCashAudio(): AudioMgr {
       cardsPackOpen2Sfx,
       cardsPackTakeOut1Sfx,
       cardsPackTakeOut2Sfx,
+      wheelSpinSfx,
+      payoutSfx,
       chipLay1Sfx,
       chipLay2Sfx,
       chipLay3Sfx,
@@ -169,6 +177,8 @@ export function useStraightCashAudio(): AudioMgr {
       diceThrow1Sfx,
       diceThrow2Sfx,
       diceThrow3Sfx,
+      wheelSpinSfx,
+      payoutSfx,
     ]
   );
 
