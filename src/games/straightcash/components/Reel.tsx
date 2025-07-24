@@ -70,7 +70,17 @@ export const Reel: React.FC<ReelProps> = ({
   }, [ready, assetRefs]);
 
   const [index, setIndex] = useState(0);
+  const initializedRef = useRef(false);
   const prevSpinning = useRef(spinning);
+
+  // Set a random starting position for the very first spin
+  useEffect(() => {
+    if (items.length > 0 && !initializedRef.current) {
+      const idx = Math.floor(Math.random() * items.length);
+      setIndex(idx);
+      initializedRef.current = true;
+    }
+  }, [items]);
 
   useEffect(() => {
     if (!spinning && stopResult && items.length > 0) {
