@@ -5,6 +5,11 @@ import useStraightCashAssets from "../hooks/useStraightCashAssets";
 export interface ReelProps {
   spinning: boolean;
   locked: boolean;
+  /**
+   * When true, the reel is visible but not interactive and
+   * should be ignored for scoring. It still animates.
+   */
+  disabled?: boolean;
   showDie?: boolean;
   onStop: (e: React.MouseEvent<HTMLDivElement>) => void;
   onSpinEnd?: (result: string) => void;
@@ -15,6 +20,7 @@ const ITEM_SIZE = 120;
 export const Reel: React.FC<ReelProps> = ({
   spinning,
   locked,
+  disabled = false,
   showDie,
   onStop,
   onSpinEnd,
@@ -99,7 +105,7 @@ export const Reel: React.FC<ReelProps> = ({
   }, [spinning, index, onSpinEnd, items]);
 
   const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!locked) {
+    if (!locked && !disabled) {
       onStop(e);
     }
   };
@@ -111,7 +117,10 @@ export const Reel: React.FC<ReelProps> = ({
       overflow="hidden"
       position="relative"
       onClick={handleClick}
-      sx={{ cursor: locked ? "default" : "pointer" }}
+      sx={{
+        cursor: locked || disabled ? "default" : "pointer",
+        pointerEvents: disabled ? "none" : "auto",
+      }}
     >
       <Box
         position="absolute"
@@ -137,7 +146,7 @@ export const Reel: React.FC<ReelProps> = ({
           />
         )}
       </Box>
-      {locked && (
+      {(locked || disabled) && (
         <Box
           position="absolute"
           top={0}
