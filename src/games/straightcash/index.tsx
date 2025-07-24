@@ -6,7 +6,7 @@ import { withBasePath } from "@/utils/basePath";
 import TitleSplash from "./components/TitleSplash";
 import GameUI from "./components/GameUI";
 import ReadyGoSplash from "./components/ReadyGoSplash";
-import useGameEngine from "./hooks/useGameEngine";
+import useStraightCashGameEngine from "./hooks/useStraightCashGameEngine";
 
 export default function Game() {
   const {
@@ -19,7 +19,7 @@ export default function Game() {
     resetGame,
     getImg,
     startSplash,
-  } = useGameEngine();
+  } = useStraightCashGameEngine();
 
   if (phase === "title") {
     return (
@@ -32,8 +32,8 @@ export default function Game() {
     );
   }
 
-  if (phase === "ready" || phase === "go") {
-    return <ReadyGoSplash phase={phase} countdown={countdown} />;
+  if (phase === "ready") {
+    return <ReadyGoSplash phase="ready" countdown={countdown} />;
   }
 
   return (
