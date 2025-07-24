@@ -1430,7 +1430,7 @@ export function useGameEngine() {
             }
           }
 
-          // when not looping, occasionally do a small climb/diver stepwise
+          // when not looping, occasionally do a small climb/dive stepwise
           if (e.loopProgress < 0) {
             // kick off a new random altitude step?
             if (e.stepProgress < 0 && Math.random() < ENEMY_STEP_PROB) {
@@ -1451,7 +1451,7 @@ export function useGameEngine() {
               const t2 = e.stepProgress / ENEMY_STEP_DURATION;
               e.y = e.baseY + e.stepDelta * t2;
 
-              // pitch the plane to match climb/diver
+              // pitch the plane to match climb/dive
               const dy = e.stepDelta / ENEMY_STEP_DURATION;
               // angle in radians: up → negative, down → positive
               e.rotation =
