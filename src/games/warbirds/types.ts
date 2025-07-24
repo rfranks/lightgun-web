@@ -64,6 +64,14 @@ export interface GameState {
   napalmMissiles: NapalmMissile[];
   napalmTiles: NapalmTile[];
   artilleryShells: ArtilleryShell[];
+  laserBeams: {
+    x: number;
+    y: number;
+    frame: 0 | 1;
+    frameCounter: number;
+  }[];
+  laserBurstRemaining: number;
+  laserBurstCooldown: number;
   burstRemaining: number;
   burstCooldown: number;
 

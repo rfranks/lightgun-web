@@ -34,6 +34,9 @@ import {
   NAPALM_END_EXPLODE_X,
   CANNONBALL_SPEED,
   MACHINE_GUN_SHOT_INTERVAL,
+  LASER_BEAM_BURST_COUNT,
+  LASER_BEAM_SHOT_INTERVAL,
+  LASER_BEAM_SPEED,
   SCRAMBLE_INTENSITY,
   SCORE_ARTILLERY_BONUS,
   NAPALM_FLAME_LENGTH,
@@ -1095,6 +1098,28 @@ export function useGameEngine() {
             NAPALM_BEGIN_EXPLODE_X +
             Math.random() * (NAPALM_END_EXPLODE_X - NAPALM_BEGIN_EXPLODE_X),
         });
+      }
+
+      // ─── LASERBEAM AUTO-FIRE ──────────────────────────────────────────
+      if (state.current.isActive("laserbeam", state.current.frameCount)) {
+        if (state.current.laserBurstRemaining === 0 && Math.random() < 0.01) {
+          state.current.laserBurstRemaining = LASER_BEAM_BURST_COUNT;
+          state.current.laserBurstCooldown = 0;
+        }
+        if (state.current.laserBurstRemaining > 0) {
+          if (state.current.laserBurstCooldown === 0) {
+            state.current.laserBeams.push({
+              x: PLANE_OFFSET_X + PLANE_WIDTH,
+              y: state.current.y + PLANE_HEIGHT / 2,
+              frame: 0,
+              frameCounter: 0,
+            });
+            state.current.laserBurstRemaining--;
+            state.current.laserBurstCooldown = LASER_BEAM_SHOT_INTERVAL;
+          } else {
+            state.current.laserBurstCooldown--;
+          }
+        }
       }
 
       // ─── MACHINE-GUN AUTO-FIRE ────────────────────────────────────────
@@ -2738,6 +2763,45 @@ export function useGameEngine() {
         });
         // remove if off-screen
         if (cb.x > width + 50) state.current.cannonballs.splice(i, 1);
+      });
+
+      // ─── UPDATE & DRAW LASER BEAMS ─────────────────────────────────────
+      const laserImgs = getImg("laserBeamImgs") as HTMLImageElement[];
+      state.current.laserBeams = state.current.laserBeams.filter((b) => {
+        b.x += LASER_BEAM_SPEED;
+        if (++b.frameCounter >= 4) {
+          b.frameCounter = 0;
+          b.frame = ((b.frame + 1) % laserImgs.length) as 0 | 1;
+        }
+        const img = laserImgs[b.frame];
+        ctx.save();
+        ctx.translate(b.x, b.y);
+        ctx.rotate(Math.PI / 2);
+        ctx.drawImage(img, -img.width / 2, -img.height / 2, img.width, img.height);
+        ctx.restore();
+
+        state.current.enemies.forEach((e) => {
+          if (
+            e.alive &&
+            b.x >= e.x &&
+            b.x <= e.x + ENEMY_WIDTH &&
+            b.y >= e.y &&
+            b.y <= e.y + ENEMY_HEIGHT
+          ) {
+            e.alive = false;
+            changeScore(SCORE_HIT);
+            state.current.floatingScores.push({
+              x: e.x + ENEMY_WIDTH / 2,
+              y: e.y + ENEMY_HEIGHT / 2,
+              vy: -1,
+              amount: SCORE_HIT,
+              age: 0,
+              maxAge: 60,
+            });
+            state.current.enemyCount++;
+          }
+        });
+        return b.x < width + 50;
       });
 
       // trailing smoke after ground crash

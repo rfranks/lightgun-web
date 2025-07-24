@@ -27,6 +27,7 @@ export const POWERUP_TYPES: PowerupType[] = [
   "heavy",
   "spray",
   "supermag",
+  "laserbeam",
   "thunderstrike",
   "windy",
   "wings",
@@ -48,6 +49,7 @@ export const SUPER_POWERUP_TYPES: SuperPowerupType[] = [
   "supermag",
   "megaducks",
   "napalm",
+  "laserbeam",
   "thunderstrike",
 ];
 
@@ -58,6 +60,11 @@ export const SCORE_MACHINE_GUN_BONUS = 50;
 export const MACHINE_GUN_BURST_COUNT = 5; // number of shots per burst
 export const MACHINE_GUN_SHOT_INTERVAL = 5; // frames between shots in burst
 export const CANNONBALL_SPEED = 12; // pixels per frame
+
+// laser beam super powerup constants
+export const LASER_BEAM_BURST_COUNT = 15; // number of beams per burst
+export const LASER_BEAM_SHOT_INTERVAL = 2; // frames between beams in burst
+export const LASER_BEAM_SPEED = 20; // pixels per frame
 
 // homing missile related constants
 export const SCORE_HOMING_BONUS = 100;

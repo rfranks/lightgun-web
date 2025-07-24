@@ -209,6 +209,16 @@ export function useGameAssets(): {
       loadImg(`/assets/particles/PNG (Transparent)/spark_0${i + 1}.png`)
     );
 
+    // LASER BEAM
+    assetRefs.current.laserBeamImgs = [
+      loadImg(
+        "/assets/space-shooter-redux/PNG/Lasers/laserRed04.png"
+      ),
+      loadImg(
+        "/assets/space-shooter-redux/PNG/Lasers/laserRed04.png"
+      ),
+    ];
+
     // STICK
     assetRefs.current.stickImg = loadImg(
       "/assets/shooting-gallery/PNG/Objects/stick_wood.png"
