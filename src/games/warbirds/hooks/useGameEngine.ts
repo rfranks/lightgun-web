@@ -1114,6 +1114,7 @@ export function useGameEngine() {
               frame: 0,
               frameCounter: 0,
             });
+            play("laserBeamFireSfx");
             state.current.laserBurstRemaining--;
             state.current.laserBurstCooldown = LASER_BEAM_SHOT_INTERVAL;
           } else {
