@@ -23,6 +23,9 @@ export default function Game() {
     spinning,
     locked,
     stopReel,
+    handleSpinEnd,
+    wheelSpinning,
+    handleWheelFinish,
   } = useStraightCashGameEngine();
 
   if (phase === "title") {
@@ -50,6 +53,9 @@ export default function Game() {
       spinning={spinning}
       locked={locked}
       stopReel={stopReel}
+      onSpinEnd={handleSpinEnd}
+      wheelSpinning={wheelSpinning}
+      onWheelFinish={handleWheelFinish}
     />
   );
 }
