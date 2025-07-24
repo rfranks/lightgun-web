@@ -23,6 +23,7 @@ export type PowerupType =
   | "heavy"
   | "spray"
   | "supermag"
+  | "laserbeam"
   | "thunderstrike"
   | "windy"
   | "wings";
@@ -41,6 +42,7 @@ export type SuperPowerupType =
   | "megaducks"
   | "napalm"
   | "artillery"
+  | "laserbeam"
   | "thunderstrike";
 
 /**
