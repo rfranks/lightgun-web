@@ -24,4 +24,22 @@ describe('audio utils', () => {
 
     expect(audioElement.pause).toHaveBeenCalled();
   });
+
+  test('rewindAndPlayAudio uses defaults when options omitted', () => {
+    const audioElement = document.createElement('audio');
+    audioElement.play = jest.fn();
+    const ref: RefObject<HTMLAudioElement> = { current: audioElement };
+
+    rewindAndPlayAudio(ref);
+
+    expect(audioElement.loop).toBe(false);
+    expect(audioElement.volume).toBe(1);
+    expect(audioElement.currentTime).toBe(0);
+    expect(audioElement.play).toHaveBeenCalled();
+  });
+
+  test('audio functions ignore undefined refs', () => {
+    expect(() => pauseAudio(undefined)).not.toThrow();
+    expect(() => rewindAndPlayAudio(undefined)).not.toThrow();
+  });
 });
