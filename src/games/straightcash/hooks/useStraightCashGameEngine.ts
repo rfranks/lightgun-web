@@ -35,9 +35,8 @@ const RESULT_POOL = (() => {
  */
 export default function useStraightCashGameEngine() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [phase, setPhase] = useState<"title" | "ready" | "playing" | "wheel">(
-    "title"
-  );
+  const [phase, setPhase] =
+    useState<"title" | "ready" | "playing" | "wheel" | "score">("title");
   const [countdown] = useState<number | null>(null);
 
   // simple slot machine state
@@ -58,6 +57,7 @@ export default function useStraightCashGameEngine() {
   const [tokenValue, setTokenValue] = useState<number>(1);
   const [wheelSpinning, setWheelSpinning] = useState(false);
   const [wheelReady, setWheelReady] = useState(false);
+  const [scoreReward, setScoreReward] = useState<string | number | null>(null);
   const [forcedResults, setForcedResults] = useState<(string | null)[]>([
     null,
     null,
@@ -308,6 +308,13 @@ export default function useStraightCashGameEngine() {
   }, [spinning]);
 
   useEffect(() => {
+    if (phase === "score") {
+      const id = window.setTimeout(() => resetGame(), 3000);
+      return () => window.clearTimeout(id);
+    }
+  }, [phase, resetGame]);
+
+  useEffect(() => {
     if (spinning.every((s) => !s)) {
       const activeIndices = [0, 1, 2].filter((i) => !isReelDisabled(i));
       if (activeIndices.every((i) => reelResults[i])) {
@@ -333,6 +340,8 @@ export default function useStraightCashGameEngine() {
           audioMgr.play("payoutSfx");
         }
         setTokens((t) => t + finalPayout);
+        setScoreReward(finalPayout);
+        setPhase("score");
       }
     }
   }, [spinning, reelResults, reelValues, tokenValue, isReelDisabled, audioMgr]);
@@ -373,13 +382,22 @@ export default function useStraightCashGameEngine() {
     audioMgr.play("wheelSpinSfx", { loop: true });
   }, [wheelReady, audioMgr]);
 
-  const handleWheelFinish = useCallback((reward: string) => {
-    setWheelSpinning(false);
-    setPhase("playing");
-    setReelResults([false, false, false]);
-    audioMgr.pause("wheelSpinSfx");
-    // placeholder: reward handling could modify tokens
-  }, [audioMgr]);
+  const handleWheelFinish = useCallback(
+    (reward: string) => {
+      setWheelSpinning(false);
+      setReelResults([false, false, false]);
+      audioMgr.pause("wheelSpinSfx");
+      const numeric = parseInt(reward, 10);
+      if (!Number.isNaN(numeric)) {
+        setTokens((t) => t + numeric);
+        setScoreReward(numeric);
+      } else {
+        setScoreReward(reward);
+      }
+      setPhase("score");
+    },
+    [audioMgr]
+  );
 
   return {
     phase,
@@ -406,6 +424,7 @@ export default function useStraightCashGameEngine() {
     wheelSpinning,
     handleWheelStart,
     handleWheelFinish,
+    scoreReward,
     bet,
     tokens,
     tokenValue,
