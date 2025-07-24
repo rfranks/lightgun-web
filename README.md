@@ -106,3 +106,8 @@ npm test
 
 This will run all tests under `src/**/__tests__` and output the results in your terminal.
 
+
+### Linting and Building
+
+Run `npm run lint` to check code style.
+Use `npm run build` to generate the static export.
