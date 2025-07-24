@@ -20,6 +20,7 @@ export const POWERUP_TYPES: PowerupType[] = [
   "napalm",
   "magnet",
   "shield",
+  "supershield",
   "shrink",
   "skull",
   "gunjam",
@@ -49,6 +50,7 @@ export const SUPER_POWERUP_TYPES: SuperPowerupType[] = [
   "supermag",
   "megaducks",
   "napalm",
+  "supershield",
   "laserbeam",
   "thunderstrike",
 ];

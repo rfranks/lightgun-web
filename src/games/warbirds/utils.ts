@@ -39,6 +39,7 @@ export function initState(
     magnet: { expires: 0 },
     napalm: { expires: 0 },
     shield: { expires: 0 },
+    supershield: { expires: 0 },
     shrink: { expires: 0 },
     skull: { expires: 0 },
     spray: { expires: 0 },
