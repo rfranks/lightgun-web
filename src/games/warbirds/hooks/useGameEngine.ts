@@ -217,7 +217,7 @@ export function useGameEngine() {
         state.current.isActive("coin2x", state.current.frameCount) && delta > 0;
       const final = doubleScore ? delta * 2 : delta;
 
-      state.current.score += final;
+      state.current.score += Math.max(final, 0);
     },
     [state]
   );
