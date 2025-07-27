@@ -121,6 +121,7 @@ import {
   randomTree,
   randomWater,
 } from "@/utils/environment";
+import { drawTextLabels, newTextLabel } from "@/utils/ui";
 
 export function useGameEngine() {
   // splash countdown 3→2→1
@@ -244,49 +245,23 @@ export function useGameEngine() {
       y?: number,
       maxAge?: number
     ) => {
-      // measure total width, accounting for spaces
-      let totalWidth = 0;
-      // give spaces a width roughly matching a digit
-      const spaceGap = SCORE_DIGIT_WIDTH * 1.5 * scale;
-      Array.from(text).forEach((ch) => {
-        if (ch === " ") {
-          totalWidth += spaceGap;
-        } else {
-          // use letterImgs, numberImgs, or digitImgs based on character type
-          const letterImgs = getImg("letterImgs") as Record<
-            string,
-            HTMLImageElement
-          >;
-          const numberImgs = getImg("numberImgs") as Record<
-            string,
-            HTMLImageElement
-          >;
-          const digitImgs = getImg("digitImgs") as Record<
-            string,
-            HTMLImageElement
-          >;
-          const img =
-            letterImgs[ch.toUpperCase()] || numberImgs[ch] || digitImgs[ch];
-          if (img) {
-            totalWidth += img.width * scale + 2;
-          }
-        }
-      });
-      const posX = x ?? (dims.width - totalWidth) / 2;
-      const posY = y ?? dims.height * 0.2;
+      const newLabel = newTextLabel(
+        {
+          text,
+          scale,
+          fixed,
+          fade,
+          x,
+          y,
+          maxAge,
+        },
+        assetMgr,
+        dims
+      );
 
-      state.current.textLabels.push({
-        text,
-        scale,
-        fixed,
-        fade,
-        x: posX,
-        y: posY,
-        age: 0,
-        maxAge: maxAge ? maxAge : fade ? 60 : Infinity,
-      });
+      state.current.textLabels.push(newLabel);
     },
-    [dims.width, dims.height, getImg]
+    [assetMgr, dims]
   );
 
   const spawnNapalmEllipse = useCallback(
@@ -1373,47 +1348,12 @@ export function useGameEngine() {
         state.current.whooshPlaying = false;
       }
 
-      // draw text labels
-      state.current.textLabels.forEach((lbl) => {
-        const alpha = lbl.fade ? 1 - lbl.age / lbl.maxAge : 1;
-        ctx.globalAlpha = alpha;
-
-        const drawX = lbl.fixed ? lbl.x : lbl.x - state.current.groundOffset;
-        let dx = drawX;
-        // same spaceGap you used when measuring
-        const spaceGap = SCORE_DIGIT_WIDTH * lbl.scale;
-        for (const ch of lbl.text) {
-          if (ch === " ") {
-            dx += spaceGap;
-          } else {
-            const letterImgs = getImg("letterImgs") as Record<
-              string,
-              HTMLImageElement
-            >;
-            const numberImgs = getImg("numberImgs") as Record<
-              string,
-              HTMLImageElement
-            >;
-            const digitImgs = getImg("digitImgs") as Record<
-              string,
-              HTMLImageElement
-            >;
-            const img =
-              letterImgs[ch.toUpperCase()] || numberImgs[ch] || digitImgs[ch];
-            if (img) {
-              const w = img.width * lbl.scale;
-              ctx.drawImage(img, dx, lbl.y, w, img.height * lbl.scale);
-              dx += w + 2;
-            }
-          }
-        }
-        ctx.globalAlpha = 1;
-        lbl.age++;
+      state.current.textLabels = drawTextLabels({
+        textLabels: state.current.textLabels,
+        ctx,
+        offsetX: state.current.groundOffset,
+        cull: true,
       });
-      // remove expired
-      state.current.textLabels = state.current.textLabels.filter(
-        (l) => l.age < l.maxAge
-      );
 
       // draw bullet holes on background
       state.current.bulletHoles.forEach((h) => {

@@ -46,7 +46,10 @@ export interface Dims {
  * Floating label for scores, streaks, or other feedback.
  */
 export interface TextLabel {
+  /** The text for the label */
   text: string;
+  /** The images that represent the label */
+  imgs: (HTMLImageElement | null)[];
   /** Display scale (font/asset scaling) */
   scale: number;
   /** If true, position is fixed (not moving with camera/world) */
@@ -61,6 +64,8 @@ export interface TextLabel {
   age: number;
   /** Maximum age before removal */
   maxAge: number;
+  /** Space between characters */
+  spaceGap: number;
 }
 
 /**
