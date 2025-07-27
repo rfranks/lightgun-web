@@ -72,4 +72,19 @@ describe('audio utils', () => {
     expect(() => pauseAudio(undefined)).not.toThrow();
     expect(() => rewindAndPlayAudio(undefined)).not.toThrow();
   });
+
+  test('rewindAndPlayAudio switches to mp3 when ogg unsupported', () => {
+    const audioElement = document.createElement('audio');
+    audioElement.play = jest.fn();
+    audioElement.canPlayType = jest.fn((type: string) => {
+      if (type === 'audio/ogg') return '';
+      if (type === 'audio/mpeg') return 'maybe';
+      return '';
+    });
+    const ref: RefObject<HTMLAudioElement> = { current: audioElement };
+
+    rewindAndPlayAudio(ref, '/sound.ogg');
+
+    expect(audioElement.src.endsWith('/sound.mp3')).toBe(true);
+  });
 });
