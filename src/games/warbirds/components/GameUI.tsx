@@ -152,7 +152,7 @@ export function GameUI({
         >
           <Box
             component="img"
-            src={ENEMY_COLORS[0]}
+            src={withBasePath(ENEMY_COLORS[0])}
             width={48}
             height={48}
             sx={{ mr: 2 }}
