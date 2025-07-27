@@ -18,7 +18,6 @@ export default function Game() {
     handleClick,
     handleContext,
     resetRound,
-    getImg,
     startSplash,
     startSpins,
     spinning,

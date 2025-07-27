@@ -177,8 +177,6 @@ export function useStraightCashAudio(): AudioMgr {
       diceThrow1Sfx,
       diceThrow2Sfx,
       diceThrow3Sfx,
-      wheelSpinSfx,
-      payoutSfx,
     ]
   );
 
