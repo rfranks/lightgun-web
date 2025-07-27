@@ -2,11 +2,11 @@ import { AssetMgr, Dims, TextLabel } from "@/types/ui";
 
 /**
  * Draws an array of text labels on the given canvas context.
- * @param param.textLabels - The text labels to draw.
- * @param param.ctx - The canvas rendering context to draw on.
- * @param param.offsetX - Optional horizontal offset for the labels.
- * @param param.offsetY - Optional vertical offset for the labels.
- * @param param.cull - If true, removes labels that have reached their max age.
+ * @param textLabels - The text labels to draw.
+ * @param ctx - The canvas rendering context to draw on.
+ * @param offsetX - Optional horizontal offset for the labels.
+ * @param offsetY - Optional vertical offset for the labels.
+ * @param cull - If true, removes labels that have reached their max age.
  * @returns The array of drawn text labels.
  */
 export function drawTextLabels({
