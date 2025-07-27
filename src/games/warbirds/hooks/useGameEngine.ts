@@ -3225,7 +3225,7 @@ export function useGameEngine() {
 
   // ─── START LOOP ON "playing" ─────────────────────────────────────────────
   useEffect(() => {
-    if (state.current.phase === "playing" && state.current.frameCount === 0) {
+    if (ui.phase === "playing" && state.current.frameCount === 0) {
       loopStartedRef.current = false; // <-- RESET guard on new game
       initLoop();
 
@@ -3237,11 +3237,11 @@ export function useGameEngine() {
       }, 45000);
       return () => clearInterval(interval);
     }
-  }, [state.current.phase, initLoop]);
+  }, [ui.phase, initLoop]);
 
   // ─── SIMPLE LOOP FOR READY/GO SPLASH ──────────────────────────────────────
   useEffect(() => {
-    if (state.current.phase === "ready" || state.current.phase === "go") {
+    if (ui.phase === "ready" || ui.phase === "go") {
       const canvas = canvasRef.current;
       const ctx = canvas?.getContext("2d");
       if (!canvas || !ctx) return;
@@ -3259,7 +3259,7 @@ export function useGameEngine() {
       render();
       return () => cancelAnimationFrame(raf);
     }
-  }, [state.current.phase, dims]);
+  }, [ui.phase, dims]);
 
   // ─── CLICK TO FLAP & FIRE ─────────────────────────────────────────────────
   const handleClick = (e: React.MouseEvent) => {
