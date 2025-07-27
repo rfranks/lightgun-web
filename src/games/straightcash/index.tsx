@@ -5,14 +5,12 @@ import { SKY_COLOR } from "./constants";
 import { withBasePath } from "@/utils/basePath";
 import TitleSplash from "./components/TitleSplash";
 import GameUI from "./components/GameUI";
-import ReadyGoSplash from "./components/ReadyGoSplash";
 import ScoreSplash from "./components/ScoreSplash";
 import useStraightCashGameEngine from "./hooks/useStraightCashGameEngine";
 
 export default function Game() {
   const {
     phase,
-    countdown,
     ui,
     canvasRef,
     handleClick,
@@ -47,9 +45,6 @@ export default function Game() {
     );
   }
 
-  if (phase === "ready") {
-    return <ReadyGoSplash phase="ready" countdown={countdown} />;
-  }
 
   if (phase === "score") {
     return <ScoreSplash reward={scoreReward} onReset={resetRound} />;
