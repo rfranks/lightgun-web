@@ -124,6 +124,10 @@ export interface GameState {
   readyTimeout: number;
   goTimeout: number;
   beepTimeouts: number[];
+  /** Current countdown digit during the ready splash */
+  countdown: number | null;
+  /** Timeout handles for resetting the countdown */
+  countdownTimeouts: number[];
 
   isActive: (t: PowerupType, frameCount: number) => boolean;
   enemySpeed: (frameCount: number) => number;

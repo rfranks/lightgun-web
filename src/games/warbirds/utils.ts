@@ -137,6 +137,8 @@ export function initState(
     readyTimeout: 0,
     goTimeout: 0,
     beepTimeouts: [],
+    countdown: null,
+    countdownTimeouts: [],
 
     isActive,
     enemySpeed: (frameCount: number) =>
