@@ -3243,6 +3243,28 @@ export function useGameEngine() {
     }
   }, [phase, initLoop]);
 
+  // ─── SIMPLE LOOP FOR READY/GO SPLASH ──────────────────────────────────────
+  useEffect(() => {
+    if (phase === "ready" || phase === "go") {
+      const canvas = canvasRef.current;
+      const ctx = canvas?.getContext("2d");
+      if (!canvas || !ctx) return;
+      let raf: number;
+      const render = () => {
+        ctx.fillStyle = SKY_COLOR;
+        ctx.fillRect(0, 0, dims.width, dims.height);
+        state.current.textLabels = drawTextLabels({
+          textLabels: state.current.textLabels,
+          ctx,
+          cull: true,
+        });
+        raf = requestAnimationFrame(render);
+      };
+      render();
+      return () => cancelAnimationFrame(raf);
+    }
+  }, [phase, dims]);
+
   // ─── CLICK TO FLAP & FIRE ─────────────────────────────────────────────────
   const handleClick = (e: React.MouseEvent) => {
     // out of play or no ammo → reload flash
