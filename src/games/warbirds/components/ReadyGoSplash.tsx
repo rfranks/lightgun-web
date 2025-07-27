@@ -5,7 +5,6 @@ import {
   SCORE_DIGIT_WIDTH,
   SCORE_DIGIT_HEIGHT,
 } from "@/constants/ui";
-import { SKY_COLOR } from "../constants";
 import { withBasePath } from "@/utils/basePath";
 
 /**
@@ -36,11 +35,12 @@ export const ReadyGoSplash: React.FC<ReadyGoSplashProps> = ({
       position="relative"
       width="100vw"
       height="100dvh"
-      sx={{ backgroundColor: SKY_COLOR }}
+      sx={{ backgroundColor: "transparent" }}
       display="flex"
       flexDirection="column"
       justifyContent="center"
       alignItems="center"
+      zIndex={10} // Ensure it overlays the game canvas
     >
       <Box
         component="img"

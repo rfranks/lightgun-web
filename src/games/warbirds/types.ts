@@ -15,6 +15,8 @@ import type { Tree, Mountain, Cloud, Water } from "@/types/environment";
 import type { Powerup, PowerupType, Medal, Duck } from "@/types/objects";
 import { AudioMgr } from "@/types/audio";
 
+export type GamePhase = "title" | "ready" | "go" | "playing";
+
 /**
  * All mutable gameplay state, lifted out of index.tsx refs & useState.
  */
@@ -126,4 +128,18 @@ export interface GameState {
   isActive: (t: PowerupType, frameCount: number) => boolean;
   enemySpeed: (frameCount: number) => number;
   groundSpeed: (frameCount: number) => number;
+}
+
+export interface GameUIState {
+  score: number;
+  medalCount: number;
+  duckCount: number;
+  enemyCount: number;
+  ammo: number;
+  crashed: boolean;
+  frameCount: number;
+  activePowerups: Record<PowerupType, { expires: number }>;
+  cursor: string;
+  countdown: number | null;
+  phase: GamePhase;
 }

@@ -110,16 +110,16 @@ import {
   ENEMY_DENSITY_STEP,
   SHOT_CURSOR,
 } from "../constants";
-import { GameState } from "../types";
+import { GamePhase, GameState, GameUIState } from "../types";
 import { initState } from "../utils";
 import { useGameAssets } from "./useGameAssets";
 import { useGameAudio } from "./useGameAudio";
 import { Cloud, Mountain, Tree, Water } from "@/types/environment";
 import {
-  drawRandomCloud,
-  drawRandomMountainRange,
-  drawRandomTree,
-  drawRandomWater,
+  randomCloud,
+  randomMountainRange,
+  randomTree,
+  randomWater,
 } from "@/utils/environment";
 
 export function useGameEngine() {
@@ -130,9 +130,7 @@ export function useGameEngine() {
   // ─── REFS & STATE ─────────────────────────────────────────────────────────
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationFrameRef = useRef<number | null>(null);
-  const [phase, setPhase] = useState<"title" | "ready" | "go" | "playing">(
-    "title"
-  );
+  const [phase, setPhase] = useState<GamePhase>("title");
 
   const audioMgr: AudioMgr = useGameAudio();
   const { play, pause } = audioMgr;
@@ -147,7 +145,7 @@ export function useGameEngine() {
 
   const loopStartedRef = useRef(false);
 
-  const [ui, setUI] = useState({
+  const [ui, setUI] = useState<GameUIState>({
     score: 0,
     medalCount: 0,
     duckCount: 0,
@@ -159,6 +157,8 @@ export function useGameEngine() {
       POWERUP_TYPES.map((type) => [type, { expires: 0 }])
     ) as Record<PowerupType, { expires: number }>,
     cursor: DEFAULT_CURSOR,
+    countdown: 0,
+    phase: "title",
   });
 
   // --- Helper Functions ---
@@ -194,9 +194,23 @@ export function useGameEngine() {
         ) as Record<PowerupType, { expires: number }>,
         frameCount: cur.frameCount,
         cursor: cur.cursor,
+        countdown,
+        phase,
       });
     }
-  }, [ui, setUI, state]);
+  }, [
+    ui.score,
+    ui.medalCount,
+    ui.duckCount,
+    ui.enemyCount,
+    ui.ammo,
+    ui.crashed,
+    ui.frameCount,
+    ui.activePowerups,
+    ui.cursor,
+    countdown,
+    phase,
+  ]);
 
   const changeScore = useCallback(
     (delta: number) => {
@@ -327,7 +341,7 @@ export function useGameEngine() {
   // spawn a new, randomly-shaped cloud
   const makeRandomCloud = useCallback(
     (canvasWidth: number, canvasHeight: number): Cloud => {
-      return drawRandomCloud(
+      return randomCloud(
         canvasWidth,
         canvasHeight,
         getImg("whitePuffImgs") as HTMLImageElement[],
@@ -339,7 +353,7 @@ export function useGameEngine() {
 
   const makeRandomMountainRange = useCallback(
     (canvasWidth: number, canvasHeight: number): Mountain[] => {
-      return drawRandomMountainRange(
+      return randomMountainRange(
         canvasWidth,
         canvasHeight,
         getImg("rockImgs") as HTMLImageElement[],
@@ -353,7 +367,7 @@ export function useGameEngine() {
 
   const makeRandomTree = useCallback(
     (canvasWidth: number, canvasHeight: number, forcedScale?: number): Tree => {
-      return drawRandomTree(
+      return randomTree(
         canvasWidth,
         canvasHeight,
         getImg("treeImgs") as HTMLImageElement[],
@@ -369,7 +383,7 @@ export function useGameEngine() {
     groundY: number,
     size?: number
   ): Water {
-    return drawRandomWater(
+    return randomWater(
       canvasWidth,
       groundY,
       WATER_MIN_SIZE,
@@ -1419,7 +1433,7 @@ export function useGameEngine() {
       ctx.globalAlpha = 1;
 
       // update + draw enemies
-            const freezeActive = state.current.isActive(
+      const freezeActive = state.current.isActive(
         "freeze",
         state.current.frameCount
       );
@@ -1434,7 +1448,7 @@ export function useGameEngine() {
 
         if (!e.alive) return;
 
-        if (!freezeActive &&!e.glide) {
+        if (!freezeActive && !e.glide) {
           // flappers obey gravity + flap
           if (state.current.frameCount % ENEMY_FLAP_INTERVAL === 0) {
             e.vy = e.flapStrength;
@@ -1527,7 +1541,10 @@ export function useGameEngine() {
         }
 
         // if windy effect is active, add a little random jitter:
-        if (!freezeActive && state.current.isActive("windy", state.current.frameCount)) {
+        if (
+          !freezeActive &&
+          state.current.isActive("windy", state.current.frameCount)
+        ) {
           e.x += (Math.random() * 2 - 1) * SCRAMBLE_INTENSITY;
           e.y += (Math.random() * 2 - 1) * SCRAMBLE_INTENSITY;
           // optional: randomize their flapStrength too
@@ -1543,7 +1560,7 @@ export function useGameEngine() {
           const facing = Math.cos(e.rotation || 0);
           e.x -= state.current.enemySpeed(state.current.frameCount) * facing;
         }
-        
+
         // draw flipped horizontally *around its center*
         // advance propeller
         e.frameCounter++;
@@ -2805,7 +2822,13 @@ export function useGameEngine() {
         ctx.save();
         ctx.translate(b.x, b.y);
         ctx.rotate(Math.PI / 2);
-        ctx.drawImage(img, -img.width / 2, -img.height / 2, img.width, img.height);
+        ctx.drawImage(
+          img,
+          -img.width / 2,
+          -img.height / 2,
+          img.width,
+          img.height
+        );
         ctx.restore();
 
         state.current.enemies.forEach((e) => {

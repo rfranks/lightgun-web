@@ -1,6 +1,6 @@
 import { Cloud, Mountain, Tree, Water } from "@/types/environment";
 
-export function drawRandomCloud(
+export function randomCloud(
   canvasWidth: number,
   canvasHeight: number,
   whitePuffImgs: HTMLImageElement[],
@@ -25,7 +25,7 @@ export function drawRandomCloud(
 }
 
 // Helper for mountains
-export function drawRandomMountain(
+export function randomMountain(
   canvasWidth: number,
   canvasHeight: number,
   rockImgs: HTMLImageElement[],
@@ -57,7 +57,7 @@ export function drawRandomMountain(
 }
 
 // Helper for ranges
-export function drawRandomMountainRange(
+export function randomMountainRange(
   canvasWidth: number,
   canvasHeight: number,
   rockImgs: HTMLImageElement[],
@@ -69,7 +69,7 @@ export function drawRandomMountainRange(
   const startX = canvasWidth + Math.random() * 300;
   const spacing = 200 + Math.random() * 100;
   return Array.from({ length: count }).map((_, i) => {
-    const m = drawRandomMountain(
+    const m = randomMountain(
       canvasWidth,
       canvasHeight,
       rockImgs,
@@ -83,7 +83,7 @@ export function drawRandomMountainRange(
 }
 
 // Trees
-export function drawRandomTree(
+export function randomTree(
   canvasWidth: number,
   canvasHeight: number,
   treeImgs: HTMLImageElement[],
@@ -109,7 +109,7 @@ export function drawRandomTree(
 }
 
 // Water
-export function drawRandomWater(
+export function randomWater(
   canvasWidth: number,
   groundY: number,
   WATER_MIN_SIZE: number,

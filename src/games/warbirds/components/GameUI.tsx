@@ -10,20 +10,14 @@ import {
 import { ENEMY_COLORS } from "@/constants/vehicles";
 import { MAX_AMMO, DEFAULT_CURSOR } from "../constants";
 import { withBasePath } from "@/utils/basePath";
+import { ReadyGoSplash } from "./ReadyGoSplash";
+import { GameUIState } from "../types";
 
 /**
  * Props for GameUI component.
  */
 export interface GameUIProps {
-  ammo: number;
-  medalCount: number;
-  duckCount: number;
-  enemyCount: number;
-  score: number;
-  crashed: boolean;
-  frameCount: number;
-  activePowerups: Record<PowerupType, { expires: number }>;
-  cursor: string;
+  ui: GameUIState;
   canvasRef: React.RefObject<HTMLCanvasElement | null>;
   handleClick: (e: React.MouseEvent) => void;
   handleContext: (e: React.MouseEvent) => void;
@@ -43,24 +37,27 @@ export interface GameUIProps {
  * Renders the main in-game UI overlay: ammo, medals, ducks, enemies, score, powerups, and game-over.
  */
 export function GameUI({
-  ammo,
-  medalCount,
-  duckCount,
-  enemyCount,
-  score,
-  crashed,
-  frameCount,
-  activePowerups,
-
-  cursor,
-
+  ui,
   canvasRef,
-
   handleClick,
   handleContext,
   resetGame,
   getImg,
 }: GameUIProps) {
+  const {
+    ammo,
+    medalCount,
+    duckCount,
+    enemyCount,
+    score,
+    crashed,
+    frameCount,
+    activePowerups,
+    cursor,
+    countdown,
+    phase,
+  } = ui;
+
   const medalFrames = getImg("medalFrames") as HTMLImageElement[][];
 
   return (
@@ -208,6 +205,10 @@ export function GameUI({
           cursor,
         }}
       />
+      {(phase === "ready" || phase === "go") && (
+        <ReadyGoSplash phase={phase} countdown={countdown} />
+      )}
+      {/* Game Over overlay */}
       {crashed && (
         <Box
           component="img"
