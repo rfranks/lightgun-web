@@ -92,7 +92,7 @@ export const NAPALM_TILE_SIZE = 72;
 export const NAPALM_FLAME_LENGTH = 20;
 export const NAPALM_BURN_DURATION = 10 * 60; // 10s @60fps
 export const NAPALM_EXPLODE_NOT_DROP = true;
-export const NAPALM_BEGIN_EXPLODE_X = 400; // minimum x‐position before explosion
+export const NAPALM_BEGIN_EXPLODE_X = 400; // minimum x-position before explosion
 export const NAPALM_END_EXPLODE_X = 1000;
 export const NAPALM_EXPLODE_RADIUS = 200;
 
