@@ -124,9 +124,6 @@ import {
 import { drawTextLabels, newTextLabel } from "@/utils/ui";
 
 export function useGameEngine() {
-  // splash countdown 3→2→1
-  const [countdown, setCountdown] = useState<number | null>(null);
-  const countdownTimeoutsRef = useRef<number[]>([]);
 
   // ─── REFS & STATE ─────────────────────────────────────────────────────────
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -158,7 +155,7 @@ export function useGameEngine() {
       POWERUP_TYPES.map((type) => [type, { expires: 0 }])
     ) as Record<PowerupType, { expires: number }>,
     cursor: DEFAULT_CURSOR,
-    countdown: 0,
+    countdown: state.current.countdown,
     phase: "title",
   });
 
@@ -195,7 +192,7 @@ export function useGameEngine() {
         ) as Record<PowerupType, { expires: number }>,
         frameCount: cur.frameCount,
         cursor: cur.cursor,
-        countdown,
+        countdown: cur.countdown,
         phase,
       });
     }
@@ -209,7 +206,6 @@ export function useGameEngine() {
     ui.frameCount,
     ui.activePowerups,
     ui.cursor,
-    countdown,
     phase,
   ]);
 
@@ -881,16 +877,26 @@ export function useGameEngine() {
     if (animationFrameRef.current)
       cancelAnimationFrame(animationFrameRef.current);
 
-    countdownTimeoutsRef.current.forEach(clearTimeout);
-    countdownTimeoutsRef.current = [];
+    state.current.countdownTimeouts.forEach(clearTimeout);
+    state.current.countdownTimeouts = [];
 
     setPhase("ready");
-    setCountdown(3);
+    state.current.countdown = 3;
+    setUI((u) => ({ ...u, countdown: 3 }));
 
-    countdownTimeoutsRef.current.push(
-      window.setTimeout(() => setCountdown(2), 1000),
-      window.setTimeout(() => setCountdown(1), 2000),
-      window.setTimeout(() => setCountdown(null), 3000),
+    state.current.countdownTimeouts.push(
+      window.setTimeout(() => {
+        state.current.countdown = 2;
+        setUI((u) => ({ ...u, countdown: 2 }));
+      }, 1000),
+      window.setTimeout(() => {
+        state.current.countdown = 1;
+        setUI((u) => ({ ...u, countdown: 1 }));
+      }, 2000),
+      window.setTimeout(() => {
+        state.current.countdown = null;
+        setUI((u) => ({ ...u, countdown: null }));
+      }, 3000),
       window.setTimeout(() => setPhase("go"), 3000),
       window.setTimeout(() => {
         setPhase("playing");
@@ -900,6 +906,8 @@ export function useGameEngine() {
           groundIndex: Math.floor(
             Math.random() * (getImg("groundImgs") as HTMLImageElement[]).length
           ),
+          countdown: null,
+          countdownTimeouts: [],
         };
       }, 3500)
     );
@@ -3293,7 +3301,7 @@ export function useGameEngine() {
     isActive,
     resetGame,
     resetState,
-    countdown,
+    countdown: state.current.countdown,
   };
 }
 
