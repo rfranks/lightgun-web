@@ -882,24 +882,75 @@ export function useGameEngine() {
     state.current.countdownTimeouts.forEach(clearTimeout);
     state.current.countdownTimeouts = [];
 
+    // display "READY" text in the center of the canvas
+    const readyLabel = newTextLabel(
+      {
+        text: "READY",
+        scale: 4,
+        fixed: true,
+        fade: true,
+        y: dims.height * 0.4,
+        maxAge: 180,
+      },
+      assetMgr,
+      dims
+    );
+    state.current.textLabels.push(readyLabel);
+
+    // helper to show the countdown digits just below the ready text
+    const spawnCountdown = (n: number) => {
+      const lbl = newTextLabel(
+        {
+          text: `${n}`,
+          scale: 3,
+          fixed: true,
+          fade: true,
+          y: dims.height * 0.55,
+          maxAge: 60,
+        },
+        assetMgr,
+        dims
+      );
+      state.current.textLabels.push(lbl);
+    };
+
     setPhase("ready");
     state.current.countdown = 3;
     setUI((u) => ({ ...u, countdown: 3 }));
+
+    spawnCountdown(3);
 
     state.current.countdownTimeouts.push(
       window.setTimeout(() => {
         state.current.countdown = 2;
         setUI((u) => ({ ...u, countdown: 2 }));
+        spawnCountdown(2);
       }, 1000),
       window.setTimeout(() => {
         state.current.countdown = 1;
         setUI((u) => ({ ...u, countdown: 1 }));
+        spawnCountdown(1);
       }, 2000),
       window.setTimeout(() => {
         state.current.countdown = null;
         setUI((u) => ({ ...u, countdown: null }));
       }, 3000),
-      window.setTimeout(() => setPhase("go"), 3000),
+      window.setTimeout(() => {
+        setPhase("go");
+        const goLabel = newTextLabel(
+          {
+            text: "GO",
+            scale: 4,
+            fixed: true,
+            fade: true,
+            y: dims.height * 0.4,
+            maxAge: 60,
+          },
+          assetMgr,
+          dims
+        );
+        state.current.textLabels.push(goLabel);
+      }, 3000),
       window.setTimeout(() => {
         setPhase("playing");
         // Do your full game state reset **here**

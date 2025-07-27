@@ -10,7 +10,6 @@ import {
 import { ENEMY_COLORS } from "@/constants/vehicles";
 import { MAX_AMMO, DEFAULT_CURSOR } from "../constants";
 import { withBasePath } from "@/utils/basePath";
-import { ReadyGoSplash } from "./ReadyGoSplash";
 import { GameUIState } from "../types";
 
 /**
@@ -54,8 +53,6 @@ export function GameUI({
     frameCount,
     activePowerups,
     cursor,
-    countdown,
-    phase,
   } = ui;
 
   const medalFrames = getImg("medalFrames") as HTMLImageElement[][];
@@ -205,9 +202,6 @@ export function GameUI({
           cursor,
         }}
       />
-      {(phase === "ready" || phase === "go") && (
-        <ReadyGoSplash phase={phase} countdown={countdown} />
-      )}
       {/* Game Over overlay */}
       {crashed && (
         <Box
