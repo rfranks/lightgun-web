@@ -11,7 +11,6 @@ export default function Game() {
   const engine = useGameEngine();
 
   const {
-    phase,
     ui,
     canvasRef,
     handleClick,
@@ -20,6 +19,8 @@ export default function Game() {
     getImg,
     startSplash,
   } = engine;
+
+  const { phase } = ui;
 
   // ─── RENDER SPLASH ────────────────────────────────────────────────────────
   if (phase === "title") {

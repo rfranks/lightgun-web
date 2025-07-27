@@ -145,5 +145,7 @@ export function initState(
       isActive("hourglass", frameCount) ? ENEMY_SPEED * 0.5 : ENEMY_SPEED,
     groundSpeed: (frameCount: number) =>
       isActive("hourglass", frameCount) ? GROUND_SPEED * 0.5 : GROUND_SPEED,
+
+    phase: "title",
   };
 }

@@ -110,7 +110,7 @@ import {
   ENEMY_DENSITY_STEP,
   SHOT_CURSOR,
 } from "../constants";
-import { GamePhase, GameState, GameUIState } from "../types";
+import { GameState, GameUIState } from "../types";
 import { initState } from "../utils";
 import { useGameAssets } from "./useGameAssets";
 import { useGameAudio } from "./useGameAudio";
@@ -124,11 +124,9 @@ import {
 import { drawTextLabels, newTextLabel } from "@/utils/ui";
 
 export function useGameEngine() {
-
   // ─── REFS & STATE ─────────────────────────────────────────────────────────
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationFrameRef = useRef<number | null>(null);
-  const [phase, setPhase] = useState<GamePhase>("title");
 
   const audioMgr: AudioMgr = useGameAudio();
   const { play, pause } = audioMgr;
@@ -144,20 +142,8 @@ export function useGameEngine() {
   const loopStartedRef = useRef(false);
 
   const [ui, setUI] = useState<GameUIState>({
-    score: 0,
-    medalCount: 0,
-    duckCount: 0,
-    enemyCount: 0,
-    ammo: MAX_AMMO,
-    crashed: false,
-    frameCount: 0,
-    activePowerups: Object.fromEntries(
-      POWERUP_TYPES.map((type) => [type, { expires: 0 }])
-    ) as Record<PowerupType, { expires: number }>,
-    cursor: DEFAULT_CURSOR,
-    countdown: state.current.countdown,
-    phase: "title",
-  });
+    ...state.current,
+  } as GameUIState);
 
   // --- Helper Functions ---
 
@@ -176,7 +162,8 @@ export function useGameEngine() {
       JSON.stringify(ui.activePowerups) !==
         JSON.stringify(cur.activePowerups) ||
       ui.cursor !== cur.cursor ||
-      ui.countdown !== cur.countdown
+      ui.countdown !== cur.countdown ||
+      ui.phase !== cur.phase
     ) {
       setUI({
         score: cur.score,
@@ -194,7 +181,7 @@ export function useGameEngine() {
         frameCount: cur.frameCount,
         cursor: cur.cursor,
         countdown: cur.countdown,
-        phase,
+        phase: cur.phase,
       });
     }
   }, [
@@ -208,7 +195,7 @@ export function useGameEngine() {
     ui.activePowerups,
     ui.cursor,
     ui.countdown,
-    phase,
+    ui.phase,
   ]);
 
   const changeScore = useCallback(
@@ -914,9 +901,11 @@ export function useGameEngine() {
       state.current.textLabels.push(lbl);
     };
 
-    setPhase("ready");
-    state.current.countdown = 3;
-    setUI((u) => ({ ...u, countdown: 3 }));
+    const phase = "ready";
+    const countdown = 3;
+    state.current.phase = phase;
+    state.current.countdown = countdown;
+    setUI((u) => ({ ...u, countdown, phase }));
 
     spawnCountdown(3);
 
@@ -936,7 +925,6 @@ export function useGameEngine() {
         setUI((u) => ({ ...u, countdown: null }));
       }, 3000),
       window.setTimeout(() => {
-        setPhase("go");
         const goLabel = newTextLabel(
           {
             text: "GO",
@@ -950,9 +938,14 @@ export function useGameEngine() {
           dims
         );
         state.current.textLabels.push(goLabel);
+
+        const phase = "go";
+        state.current.phase = phase;
+        setUI((u) => ({ ...u, phase }));
       }, 3000),
       window.setTimeout(() => {
-        setPhase("playing");
+        const phase = "playing";
+
         // Do your full game state reset **here**
         state.current = {
           ...initState(dims, assetMgr, audioMgr),
@@ -961,7 +954,10 @@ export function useGameEngine() {
           ),
           countdown: null,
           countdownTimeouts: [],
+          phase,
         };
+
+        setUI((u) => ({ ...u, phase }));
       }, 3500)
     );
     play("flightSfx");
@@ -3229,7 +3225,7 @@ export function useGameEngine() {
 
   // ─── START LOOP ON "playing" ─────────────────────────────────────────────
   useEffect(() => {
-    if (phase === "playing" && state.current.frameCount === 0) {
+    if (state.current.phase === "playing" && state.current.frameCount === 0) {
       loopStartedRef.current = false; // <-- RESET guard on new game
       initLoop();
 
@@ -3241,11 +3237,11 @@ export function useGameEngine() {
       }, 45000);
       return () => clearInterval(interval);
     }
-  }, [phase, initLoop]);
+  }, [state.current.phase, initLoop]);
 
   // ─── SIMPLE LOOP FOR READY/GO SPLASH ──────────────────────────────────────
   useEffect(() => {
-    if (phase === "ready" || phase === "go") {
+    if (state.current.phase === "ready" || state.current.phase === "go") {
       const canvas = canvasRef.current;
       const ctx = canvas?.getContext("2d");
       if (!canvas || !ctx) return;
@@ -3263,12 +3259,12 @@ export function useGameEngine() {
       render();
       return () => cancelAnimationFrame(raf);
     }
-  }, [phase, dims]);
+  }, [state.current.phase, dims]);
 
   // ─── CLICK TO FLAP & FIRE ─────────────────────────────────────────────────
   const handleClick = (e: React.MouseEvent) => {
     // out of play or no ammo → reload flash
-    if (phase !== "playing" || ui.crashed || ui.ammo <= 0) {
+    if (ui.phase !== "playing" || ui.crashed || ui.ammo <= 0) {
       if (state.current.ammo <= 1) {
         const x = 100,
           y = dims.height / 2;
@@ -3325,7 +3321,7 @@ export function useGameEngine() {
   const handleContext = (e: React.MouseEvent) => {
     e.preventDefault();
     if (
-      phase === "playing" &&
+      state.current.phase === "playing" &&
       !state.current.crashed &&
       state.current.ammo < MAX_AMMO
     ) {
@@ -3363,8 +3359,6 @@ export function useGameEngine() {
 
   // ─── PUBLIC API: EXPORTED VALUES AND CALLBACKS ───────────────
   return {
-    phase,
-    setPhase,
     ui,
     setUI,
     canvasRef,

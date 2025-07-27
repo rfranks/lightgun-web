@@ -17,33 +17,35 @@ import { AudioMgr } from "@/types/audio";
 
 export type GamePhase = "title" | "ready" | "go" | "playing";
 
+export interface GameUIState {
+  score: number;
+  medalCount: number;
+  duckCount: number;
+  enemyCount: number;
+  ammo: number;
+  crashed: boolean;
+  frameCount: number;
+  activePowerups: Record<PowerupType, { expires: number }>;
+  cursor: string;
+  countdown: number | null;
+  phase: GamePhase;
+}
+
 /**
  * All mutable gameplay state, lifted out of index.tsx refs & useState.
  */
-export interface GameState {
+export interface GameState extends GameUIState {
   // wiring
   dims: Dims;
   assets: AssetMgr;
   audio: AudioMgr;
 
-  // current cursor
-  cursor: string;
-
-  // loop control
-  frameCount: number;
   gameOver: boolean;
 
   // player physics & position
   y: number;
   vy: number;
   groundOffset: number;
-
-  // player stats
-  score: number;
-  ammo: number;
-  medalCount: number;
-  duckCount: number;
-  enemyCount: number;
 
   // spawn density
   dynamicDensity: number;
@@ -92,7 +94,6 @@ export interface GameState {
   falling: { x: number; y: number; vy: number; img: HTMLImageElement }[];
 
   // power‐up timers & flags
-  activePowerups: Record<PowerupType, { expires: number }>;
   shieldFlash: number;
   screenShake: number;
   thunderCooldown: number;
@@ -106,7 +107,6 @@ export interface GameState {
   groundContactFrames: number; // frames since last ground contact
 
   // crash flags
-  crashed: boolean;
   crashHandled: boolean;
   groundCrashPuffsLeft: number;
 
@@ -124,26 +124,10 @@ export interface GameState {
   readyTimeout: number;
   goTimeout: number;
   beepTimeouts: number[];
-  /** Current countdown digit during the ready splash */
-  countdown: number | null;
   /** Timeout handles for resetting the countdown */
   countdownTimeouts: number[];
 
   isActive: (t: PowerupType, frameCount: number) => boolean;
   enemySpeed: (frameCount: number) => number;
   groundSpeed: (frameCount: number) => number;
-}
-
-export interface GameUIState {
-  score: number;
-  medalCount: number;
-  duckCount: number;
-  enemyCount: number;
-  ammo: number;
-  crashed: boolean;
-  frameCount: number;
-  activePowerups: Record<PowerupType, { expires: number }>;
-  cursor: string;
-  countdown: number | null;
-  phase: GamePhase;
 }
