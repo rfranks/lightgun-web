@@ -175,7 +175,8 @@ export function useGameEngine() {
       ui.frameCount !== cur.frameCount ||
       JSON.stringify(ui.activePowerups) !==
         JSON.stringify(cur.activePowerups) ||
-      ui.cursor !== cur.cursor
+      ui.cursor !== cur.cursor ||
+      ui.countdown !== cur.countdown
     ) {
       setUI({
         score: cur.score,
@@ -206,6 +207,7 @@ export function useGameEngine() {
     ui.frameCount,
     ui.activePowerups,
     ui.cursor,
+    ui.countdown,
     phase,
   ]);
 
@@ -3301,7 +3303,6 @@ export function useGameEngine() {
     isActive,
     resetGame,
     resetState,
-    countdown: state.current.countdown,
   };
 }
 
