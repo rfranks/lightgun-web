@@ -18,9 +18,40 @@ export const pauseAudio = (audioRef?: RefObject<HTMLAudioElement | null>) => {
  */
 export const rewindAndPlayAudio = (
   audioRef?: RefObject<HTMLAudioElement | null>,
-  options: { loop?: boolean; volume?: number } = {}
+  srcOrOptions?: string | { loop?: boolean; volume?: number },
+  maybeOptions: { loop?: boolean; volume?: number } = {}
 ) => {
   if (!audioRef || !audioRef.current) return;
+
+  let src: string | undefined;
+  let options: { loop?: boolean; volume?: number };
+
+  if (typeof srcOrOptions === "string") {
+    src = srcOrOptions;
+    options = maybeOptions;
+  } else {
+    options = srcOrOptions || {};
+  }
+
+  if (src) {
+    const ext = src.split(".").pop()?.toLowerCase() ?? "";
+    const mime = ext === "mp3" ? "audio/mpeg" : `audio/${ext}`;
+
+    if (
+      audioRef.current.canPlayType &&
+      audioRef.current.canPlayType(mime) === "" &&
+      ext !== "mp3" &&
+      audioRef.current.canPlayType("audio/mpeg") !== ""
+    ) {
+      src = src.replace(/\.[^/.]+$/, ".mp3");
+    }
+
+    audioRef.current.src = src;
+    if (audioRef.current.load) {
+      audioRef.current.load();
+    }
+  }
+
   if (options.loop) {
     audioRef.current.loop = true;
   } else {
