@@ -137,7 +137,13 @@ export function useGameEngine() {
   // ─── WINDOW RESIZE ────────────────────────────────────────────────────────
   const dims = useWindowSize();
 
-  const state = useRef<GameState>(initState(dims, assetMgr, audioMgr));
+  const initialDims =
+    dims.width > 0 && dims.height > 0
+      ? dims
+      : { width: typeof window !== "undefined" ? window.innerWidth : 0,
+          height: typeof window !== "undefined" ? window.innerHeight : 0 };
+
+  const state = useRef<GameState>(initState(initialDims, assetMgr, audioMgr));
 
   const loopStartedRef = useRef(false);
 
@@ -869,6 +875,12 @@ export function useGameEngine() {
     state.current.countdownTimeouts.forEach(clearTimeout);
     state.current.countdownTimeouts = [];
 
+    // Fallback for cases where window size hasn't initialized yet
+    const safeDims =
+      dims.width > 0 && dims.height > 0
+        ? dims
+        : { width: window.innerWidth, height: window.innerHeight };
+
     // display "READY" text in the center of the canvas
     const readyLabel = newTextLabel(
       {
@@ -876,11 +888,11 @@ export function useGameEngine() {
         scale: 4,
         fixed: true,
         fade: true,
-        y: dims.height * 0.4,
+        y: safeDims.height * 0.4,
         maxAge: 180,
       },
       assetMgr,
-      dims
+      safeDims
     );
     state.current.textLabels.push(readyLabel);
 
@@ -892,11 +904,11 @@ export function useGameEngine() {
           scale: 3,
           fixed: true,
           fade: true,
-          y: dims.height * 0.55,
+          y: safeDims.height * 0.55,
           maxAge: 60,
         },
         assetMgr,
-        dims
+        safeDims
       );
       state.current.textLabels.push(lbl);
     };
@@ -931,11 +943,11 @@ export function useGameEngine() {
             scale: 4,
             fixed: true,
             fade: true,
-            y: dims.height * 0.4,
+            y: safeDims.height * 0.4,
             maxAge: 60,
           },
           assetMgr,
-          dims
+          safeDims
         );
         state.current.textLabels.push(goLabel);
 
@@ -948,7 +960,7 @@ export function useGameEngine() {
 
         // Do your full game state reset **here**
         state.current = {
-          ...initState(dims, assetMgr, audioMgr),
+          ...initState(safeDims, assetMgr, audioMgr),
           groundIndex: Math.floor(
             Math.random() * (getImg("groundImgs") as HTMLImageElement[]).length
           ),
