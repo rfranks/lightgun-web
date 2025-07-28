@@ -3261,7 +3261,7 @@ export function useGameEngine() {
       render();
       return () => cancelAnimationFrame(raf);
     }
-  }, [ui.phase, dims]);
+  }, [ui.phase, dims, canvasRef.current]);
 
   // ─── CLICK TO FLAP & FIRE ─────────────────────────────────────────────────
   const handleClick = (e: React.MouseEvent) => {
