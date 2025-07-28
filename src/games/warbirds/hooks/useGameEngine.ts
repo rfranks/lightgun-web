@@ -986,6 +986,8 @@ export function useGameEngine() {
     canvas.height = height;
 
     resetState();
+    // ensure we stay in the playing phase after resetting state
+    state.current.phase = "playing";
 
     // flight hum
     play("flightSfx");
