@@ -35,8 +35,9 @@ const RESULT_POOL = (() => {
  */
 export default function useStraightCashGameEngine() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [phase, setPhase] =
-    useState<"title" | "ready" | "playing" | "wheel" | "score">("title");
+  const [phase, setPhase] = useState<
+    "title" | "ready" | "playing" | "wheel" | "score"
+  >("title");
   const [countdown] = useState<number | null>(null);
 
   // simple slot machine state
@@ -45,14 +46,16 @@ export default function useStraightCashGameEngine() {
   const [locked, setLocked] = useState<boolean[]>([false, false, false]);
   const [spinning, setSpinning] = useState<boolean[]>([false, false, false]);
   const [dieActive, setDieActive] = useState<boolean[]>([false, false, false]);
-  const [reelClicks, setReelClicks] = useState<({ x: number; y: number } | null)[]>([
-    null,
-    null,
-    null,
-  ]);
+  const [reelClicks, setReelClicks] = useState<
+    ({ x: number; y: number } | null)[]
+  >([null, null, null]);
   const [bet, setBet] = useState<number>(1);
   const [tokens, setTokens] = useState<number>(100);
-  const [reelResults, setReelResults] = useState<boolean[]>([false, false, false]);
+  const [reelResults, setReelResults] = useState<boolean[]>([
+    false,
+    false,
+    false,
+  ]);
   const [reelValues, setReelValues] = useState<number[]>([0, 0, 0]);
   const [tokenValue, setTokenValue] = useState<number>(1);
   const [wheelSpinning, setWheelSpinning] = useState(false);
@@ -99,7 +102,7 @@ export default function useStraightCashGameEngine() {
     []
   );
   const slideIdxRef = useRef(0);
-  const slideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const slideTimerRef = useRef<number | null>(null);
 
   const [cursor, setCursor] = useState<string>(DEFAULT_CURSOR);
   const triggerShotCursor = useCallback(() => {
@@ -120,12 +123,14 @@ export default function useStraightCashGameEngine() {
         y: y ?? 0,
         age: 0,
         maxAge,
+        imgs: [],
+        spaceGap: 0,
       });
     },
     []
   );
 
-  const handleClick = useCallback((e: React.MouseEvent) => {
+  const handleClick = useCallback(() => {
     // placeholder for gameplay interaction
   }, []);
 
@@ -156,7 +161,12 @@ export default function useStraightCashGameEngine() {
   );
 
   const cardValue = useCallback((rank: string) => {
-    if (rank === "wheel" || rank === "blank" || rank === "Joker" || rank === "+spin")
+    if (
+      rank === "wheel" ||
+      rank === "blank" ||
+      rank === "Joker" ||
+      rank === "+spin"
+    )
       return 0;
     if (rank === "A") return 50;
     if (rank === "K") return 30;
@@ -303,7 +313,7 @@ export default function useStraightCashGameEngine() {
         }
       }
     },
-    [locked, dieActive, stopReel, spinning, isReelDisabled]
+    [dieActive, locked, autoStop, stopReel, spinning, isReelDisabled]
   );
 
   const startSpins = useCallback(
@@ -317,9 +327,7 @@ export default function useStraightCashGameEngine() {
       setReelResults([false, false, false]);
       setForcedResults([null, null, null]);
       setSpinSpeed(1);
-      setSpinning((prev) =>
-        prev.map((_, i) => (locked[i] ? false : true))
-      );
+      setSpinning((prev) => prev.map((_, i) => (locked[i] ? false : true)));
       for (let i = 0; i < 3; i++) {
         if (!locked[i]) {
           if (autoStopRefs.current[i]) {
@@ -429,7 +437,11 @@ export default function useStraightCashGameEngine() {
         const maxTotal = Math.floor(10500 / tokenValue);
         let finalTotal = totalValue;
         if (finalTotal > maxTotal) {
-          for (let i = reelValues.length - 1; i >= 0 && finalTotal > maxTotal; i--) {
+          for (
+            let i = reelValues.length - 1;
+            i >= 0 && finalTotal > maxTotal;
+            i--
+          ) {
             if (isReelDisabled(i)) continue;
             const reduce = Math.min(reelValues[i], finalTotal - maxTotal);
             finalTotal -= reduce;
@@ -447,7 +459,6 @@ export default function useStraightCashGameEngine() {
       }
     }
   }, [spinning, reelResults, reelValues, tokenValue, isReelDisabled, audioMgr]);
-
 
   const getImg = useCallback(() => undefined, []);
 
