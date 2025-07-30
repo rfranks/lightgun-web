@@ -132,7 +132,7 @@ export function useGameEngine() {
   const { play, pause } = audioMgr;
 
   const assetMgr: AssetMgr = useGameAssets();
-  const { getImg } = assetMgr;
+  const { getImg, ready: assetsReady } = assetMgr;
 
   // ─── WINDOW RESIZE ────────────────────────────────────────────────────────
   const dims = useWindowSize();
@@ -3387,6 +3387,7 @@ export function useGameEngine() {
     isActive,
     resetGame,
     resetState,
+    assetsReady,
   };
 }
 
