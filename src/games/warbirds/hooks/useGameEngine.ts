@@ -140,8 +140,10 @@ export function useGameEngine() {
   const initialDims =
     dims.width > 0 && dims.height > 0
       ? dims
-      : { width: typeof window !== "undefined" ? window.innerWidth : 0,
-          height: typeof window !== "undefined" ? window.innerHeight : 0 };
+      : {
+          width: typeof window !== "undefined" ? window.innerWidth : 0,
+          height: typeof window !== "undefined" ? window.innerHeight : 0,
+        };
 
   const state = useRef<GameState>(initState(initialDims, assetMgr, audioMgr));
 
@@ -552,7 +554,8 @@ export function useGameEngine() {
           } else if (ANTI_POWERUP_TYPES.includes(p.type as AntiPowerupType)) {
             if (["sticky", "heavy", "windy", "turbulence"].includes(p.type)) {
               // sticky and heavy powerups expire at POWERUP_DURATION
-              state.current.activePowerups[p.type].expires = POWERUP_DURATION;
+              state.current.activePowerups[p.type].expires =
+                state.current.frameCount + POWERUP_DURATION;
               if (p.type === "turbulence") {
                 makeText(
                   "Turbulence!",
@@ -887,8 +890,8 @@ export function useGameEngine() {
         text: "READY",
         scale: 4,
         fixed: true,
-        fade: true,
-        y: safeDims.height * 0.4,
+        fade: false,
+        y: safeDims.height * 0.3,
         maxAge: 180,
       },
       assetMgr,
@@ -3273,7 +3276,7 @@ export function useGameEngine() {
       render();
       return () => cancelAnimationFrame(raf);
     }
-  }, [ui.phase, dims, canvasRef.current]);
+  }, [ui.phase, dims]);
 
   // ─── CLICK TO FLAP & FIRE ─────────────────────────────────────────────────
   const handleClick = (e: React.MouseEvent) => {
