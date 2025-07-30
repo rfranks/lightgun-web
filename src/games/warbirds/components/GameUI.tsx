@@ -53,6 +53,7 @@ export function GameUI({
     frameCount,
     activePowerups,
     cursor,
+    phase,
   } = ui;
 
   const medalFrames = getImg("medalFrames") as HTMLImageElement[][];
@@ -203,7 +204,7 @@ export function GameUI({
         }}
       />
       {/* Game Over overlay */}
-      {crashed && (
+      {crashed && phase === "playing" && (
         <Box
           component="img"
           src={withBasePath(
