@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { DEFAULT_CURSOR, SKY_COLOR } from "./constants";
 import { withBasePath } from "@/utils/basePath";
 import { TitleSplash } from "./components/TitleSplash";
@@ -18,7 +18,25 @@ export default function Game() {
     resetGame,
     getImg,
     startSplash,
+    assetsReady,
   } = engine;
+
+  const [startRequested, setStartRequested] = useState(false);
+
+  const handleStart = useCallback(() => {
+    if (assetsReady) {
+      startSplash();
+    } else {
+      setStartRequested(true);
+    }
+  }, [assetsReady, startSplash]);
+
+  useEffect(() => {
+    if (assetsReady && startRequested) {
+      startSplash();
+      setStartRequested(false);
+    }
+  }, [assetsReady, startRequested, startSplash]);
 
   const { phase } = ui;
 
@@ -26,7 +44,7 @@ export default function Game() {
   if (phase === "title") {
     return (
       <TitleSplash
-        onStart={startSplash}
+        onStart={handleStart}
         titleSrc={withBasePath("/assets/titles/warbirds_title.png")}
         backgroundColor={SKY_COLOR}
         cursor={DEFAULT_CURSOR}
