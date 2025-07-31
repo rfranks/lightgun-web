@@ -30,6 +30,7 @@ export interface AssetMgr {
     | Record<string, HTMLImageElement>
     | Record<string, HTMLImageElement[]>
   >;
+  ready: boolean;
 }
 
 /**

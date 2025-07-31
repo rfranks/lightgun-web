@@ -133,7 +133,7 @@ export function useGameEngine() {
   const { play, pause } = audioMgr;
 
   const assetMgr: AssetMgr = useGameAssets();
-  const { getImg } = assetMgr;
+  const { getImg, ready } = assetMgr;
 
   // ─── WINDOW RESIZE ────────────────────────────────────────────────────────
   const dims = useWindowSize();
@@ -553,7 +553,11 @@ export function useGameEngine() {
             state.current.activePowerups.bomb.expires =
               state.current.frameCount + 1;
           } else if (ANTI_POWERUP_TYPES.includes(p.type as AntiPowerupType)) {
-            if (["sticky", "heavy", "windy", "turbulence", "blindfold"].includes(p.type)) {
+            if (
+              ["sticky", "heavy", "windy", "turbulence", "blindfold"].includes(
+                p.type
+              )
+            ) {
               // sticky and heavy powerups expire at POWERUP_DURATION
               state.current.activePowerups[p.type].expires =
                 state.current.frameCount + POWERUP_DURATION;
@@ -3439,6 +3443,7 @@ export function useGameEngine() {
     isActive,
     resetGame,
     resetState,
+    ready,
   };
 }
 

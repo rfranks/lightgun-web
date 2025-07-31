@@ -18,7 +18,7 @@ export default function Game() {
     resetGame,
     getImg,
     startSplash,
-    assetsReady,
+    ready: assetsReady,
   } = engine;
 
   const [startRequested, setStartRequested] = useState(false);
