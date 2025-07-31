@@ -187,7 +187,7 @@ export const Reel: React.FC<ReelProps> = ({
           right={4}
           width={32}
           height={32}
-          pointerEvents="none"
+          sx={{ pointerEvents: "none" }}
         >
           <canvas ref={canvasRef} width={32} height={32} />
         </Box>

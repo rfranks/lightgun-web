@@ -27,7 +27,7 @@ export interface GameUIProps {
   wheelReady: boolean;
   onWheelStart: () => void;
   bet: number;
-  jackpotRef: React.RefObject<JackpotHandle>;
+  jackpotRef: React.RefObject<JackpotHandle | null>;
   tokenValue: number;
   setTokenValue: React.Dispatch<React.SetStateAction<number>>;
   tokens: number;
@@ -56,7 +56,6 @@ export default function GameUI({
   setTokenValue,
   tokens,
 }: GameUIProps) {
-
   const handleBet = (amount: number) => {
     startSpins(amount, tokenValue);
   };
