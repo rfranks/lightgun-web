@@ -552,13 +552,23 @@ export function useGameEngine() {
             state.current.activePowerups.bomb.expires =
               state.current.frameCount + 1;
           } else if (ANTI_POWERUP_TYPES.includes(p.type as AntiPowerupType)) {
-            if (["sticky", "heavy", "windy", "turbulence"].includes(p.type)) {
+            if (["sticky", "heavy", "windy", "turbulence", "blindfold"].includes(p.type)) {
               // sticky and heavy powerups expire at POWERUP_DURATION
               state.current.activePowerups[p.type].expires =
                 state.current.frameCount + POWERUP_DURATION;
               if (p.type === "turbulence") {
                 makeText(
                   "Turbulence!",
+                  1,
+                  true,
+                  true,
+                  dims.width - 800,
+                  dims.height * 0.8,
+                  120
+                );
+              } else if (p.type === "blindfold") {
+                makeText(
+                  "Blinded!",
                   1,
                   true,
                   true,
@@ -1011,7 +1021,24 @@ export function useGameEngine() {
     const groundImgs = getImg("groundImgs") as HTMLImageElement[];
     const tileW = groundImgs[0].width;
 
+    let blindfoldWasActive = false;
+    let blindfoldPrevCursor = DEFAULT_CURSOR;
+
     const render = () => {
+      const blindActive = state.current.isActive(
+        "blindfold",
+        state.current.frameCount
+      );
+      if (blindActive) {
+        if (!blindfoldWasActive) {
+          blindfoldPrevCursor = state.current.cursor;
+          blindfoldWasActive = true;
+        }
+        state.current.cursor = "none";
+      } else if (blindfoldWasActive) {
+        state.current.cursor = blindfoldPrevCursor;
+        blindfoldWasActive = false;
+      }
       // if shrink is active, scale enemies to 40%
       const enemyScale = state.current.isActive(
         "shrink",
@@ -3308,10 +3335,20 @@ export function useGameEngine() {
       : Math.max(0, state.current.ammo - decrement);
 
     state.current.ammo = newAmmo;
-    state.current.cursor = SHOT_CURSOR;
+    const blindActive = state.current.isActive(
+      "blindfold",
+      state.current.frameCount
+    );
+    if (!blindActive) {
+      state.current.cursor = SHOT_CURSOR;
 
-    // reset cursor after a short delay
-    setTimeout(() => (state.current.cursor = DEFAULT_CURSOR), 100);
+      // reset cursor after a short delay
+      setTimeout(() => {
+        if (!state.current.isActive("blindfold", state.current.frameCount)) {
+          state.current.cursor = DEFAULT_CURSOR;
+        }
+      }, 100);
+    }
 
     // compute base click coords
     const rect = canvasRef.current!.getBoundingClientRect();
