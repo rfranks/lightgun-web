@@ -145,7 +145,10 @@ export const Reel: React.FC<ReelProps> = ({
     >
       <Box
         position="absolute"
-        sx={{ transform: `translateY(${-index * ITEM_SIZE}px)` }}
+        sx={{
+          transform: `translateY(${-index * ITEM_SIZE}px)`,
+          transition: spinning ? undefined : "transform 0.2s ease-out",
+        }}
       >
         {items.map((item, i) => (
           <Box
