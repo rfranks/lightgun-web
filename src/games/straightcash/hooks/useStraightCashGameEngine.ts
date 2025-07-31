@@ -78,7 +78,11 @@ export default function useStraightCashGameEngine() {
     false,
   ]);
   const [reelValues, setReelValues] = useState<number[]>([0, 0, 0]);
-  const [reelRanks, setReelRanks] = useState<string[]>(["blank", "blank", "blank"]);
+  const [reelRanks, setReelRanks] = useState<string[]>([
+    "blank",
+    "blank",
+    "blank",
+  ]);
   const [tokenValue, setTokenValue] = useState<number>(1);
   const [wheelSpinning, setWheelSpinning] = useState(false);
   const [wheelReady, setWheelReady] = useState(false);
@@ -164,9 +168,7 @@ export default function useStraightCashGameEngine() {
 
   const nextLowerRank = useCallback((rank: string) => {
     const idx = RANK_ORDER.indexOf(rank);
-    return idx >= 0 && idx < RANK_ORDER.length - 1
-      ? RANK_ORDER[idx + 1]
-      : rank;
+    return idx >= 0 && idx < RANK_ORDER.length - 1 ? RANK_ORDER[idx + 1] : rank;
   }, []);
 
   const [cursor, setCursor] = useState<string>(DEFAULT_CURSOR);
@@ -384,7 +386,15 @@ export default function useStraightCashGameEngine() {
         }
       }
     },
-    [dieActive, locked, autoStop, stopReel, spinning, isReelDisabled]
+    [
+      triggerShotCursor,
+      dieActive,
+      locked,
+      autoStop,
+      stopReel,
+      spinning,
+      isReelDisabled,
+    ]
   );
 
   const startSpins = useCallback(
@@ -527,8 +537,8 @@ export default function useStraightCashGameEngine() {
           0
         );
         const maxTotal = Math.floor(10500 / tokenValue);
-        let finalRanks = [...reelRanks];
-        let finalValues = [...reelValues];
+        const finalRanks = [...reelRanks];
+        const finalValues = [...reelValues];
         let finalTotal = totalValue;
         let needsNudge = false;
         if (finalTotal > maxTotal) {
