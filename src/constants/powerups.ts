@@ -16,6 +16,7 @@ export const POWERUP_TYPES: PowerupType[] = [
   "hourglass",
   "infiniteAmmo",
   "machineGuns",
+  "autoReload",
   "megaducks",
   "napalm",
   "magnet",
@@ -69,6 +70,9 @@ export const CANNONBALL_SPEED = 12; // pixels per frame
 export const LASER_BEAM_BURST_COUNT = 15; // number of beams per burst
 export const LASER_BEAM_SHOT_INTERVAL = 2; // frames between beams in burst
 export const LASER_BEAM_SPEED = 20; // pixels per frame
+
+// auto reload powerup constants
+export const AUTO_RELOAD_INTERVAL = 15; // frames per ammo refill
 
 // homing missile related constants
 export const SCORE_HOMING_BONUS = 100;

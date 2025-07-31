@@ -35,6 +35,7 @@ export function initState(
     hourglass: { expires: 0 },
     infiniteAmmo: { expires: 0 },
     machineGuns: { expires: 0 },
+    autoReload: { expires: 0 },
     megaducks: { expires: 0 },
     magnet: { expires: 0 },
     napalm: { expires: 0 },
