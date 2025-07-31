@@ -104,6 +104,19 @@ export default function useStraightCashGameEngine() {
   const slideIdxRef = useRef(0);
   const slideTimerRef = useRef<number | null>(null);
 
+  // chip payout sound cycling
+  const chipKeys = useMemo(
+    () => [
+      "chipsHandle1Sfx",
+      "chipsHandle2Sfx",
+      "chipsHandle3Sfx",
+      "chipsHandle4Sfx",
+      "chipsHandle5Sfx",
+      "chipsHandle6Sfx",
+    ],
+    []
+  );
+
   const [cursor, setCursor] = useState<string>(DEFAULT_CURSOR);
   const triggerShotCursor = useCallback(() => {
     setCursor(SHOT_CURSOR);
@@ -451,14 +464,23 @@ export default function useStraightCashGameEngine() {
         const nudge = Math.random() * 2 - 1; // small payout adjustment
         const finalPayout = Math.max(0, Math.round(payout + nudge));
         if (finalPayout > 0) {
-          audioMgr.play("payoutSfx");
+          const chipKey = chipKeys[Math.floor(Math.random() * chipKeys.length)];
+          audioMgr.play(chipKey);
         }
         setTokens((t) => t + finalPayout);
         setScoreReward(finalPayout);
         setPhase("score");
       }
     }
-  }, [spinning, reelResults, reelValues, tokenValue, isReelDisabled, audioMgr]);
+  }, [
+    spinning,
+    reelResults,
+    reelValues,
+    tokenValue,
+    isReelDisabled,
+    audioMgr,
+    chipKeys,
+  ]);
 
   const getImg = useCallback(() => undefined, []);
 
@@ -481,6 +503,8 @@ export default function useStraightCashGameEngine() {
       audioMgr.pause("wheelSpinSfx");
       const numeric = parseInt(reward, 10);
       if (!Number.isNaN(numeric)) {
+        const chipKey = chipKeys[Math.floor(Math.random() * chipKeys.length)];
+        audioMgr.play(chipKey);
         setTokens((t) => t + numeric);
         setScoreReward(numeric);
       } else {
@@ -488,7 +512,7 @@ export default function useStraightCashGameEngine() {
       }
       setPhase("score");
     },
-    [audioMgr]
+    [audioMgr, chipKeys]
   );
 
   return {
