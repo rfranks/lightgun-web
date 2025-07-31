@@ -521,6 +521,7 @@ export default function useStraightCashGameEngine() {
     bet,
     tokens,
     tokenValue,
+    setTokenValue,
     setReelPos,
     setSpinSpeed,
     setLocked,

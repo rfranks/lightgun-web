@@ -29,6 +29,8 @@ export default function Game() {
     handleWheelStart,
     handleWheelFinish,
     bet,
+    tokenValue,
+    setTokenValue,
     scoreReward,
     triggerShotCursor,
   } = useStraightCashGameEngine();
@@ -69,6 +71,8 @@ export default function Game() {
       onWheelStart={handleWheelStart}
       onWheelFinish={handleWheelFinish}
       bet={bet}
+      tokenValue={tokenValue}
+      setTokenValue={setTokenValue}
     />
   );
 }
