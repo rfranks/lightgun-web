@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import ToggleButton from "@mui/material/ToggleButton";
@@ -27,6 +27,8 @@ export interface GameUIProps {
   wheelReady: boolean;
   onWheelStart: () => void;
   bet: number;
+  tokenValue: number;
+  setTokenValue: React.Dispatch<React.SetStateAction<number>>;
   tokens: number;
 }
 
@@ -48,9 +50,10 @@ export default function GameUI({
   wheelReady,
   onWheelStart,
   bet,
+  tokenValue,
+  setTokenValue,
   tokens,
 }: GameUIProps) {
-  const [tokenValue, setTokenValue] = useState<number>(1);
 
   const handleBet = (amount: number) => {
     startSpins(amount, tokenValue);
