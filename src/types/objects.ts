@@ -23,6 +23,7 @@ export type PowerupType =
   | "gunjam"
   | "sticky"
   | "heavy"
+  | "blindfold"
   | "spray"
   | "supermag"
   | "laserbeam"
@@ -40,7 +41,8 @@ export type AntiPowerupType =
   | "sticky"
   | "heavy"
   | "windy"
-  | "turbulence";
+  | "turbulence"
+  | "blindfold";
 
 /**
  * Extra-strong, rare powerup types.

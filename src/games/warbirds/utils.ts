@@ -50,6 +50,7 @@ export function initState(
     thunderstrike: { expires: 0 },
     windy: { expires: 0 },
     turbulence: { expires: 0 },
+    blindfold: { expires: 0 },
     wings: { expires: 0 },
   };
 
