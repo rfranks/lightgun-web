@@ -21,6 +21,23 @@ const REEL_RANKS = [
   "K",
 ];
 
+const RANK_ORDER = [
+  "A",
+  "K",
+  "Q",
+  "J",
+  "10",
+  "9",
+  "8",
+  "7",
+  "6",
+  "5",
+  "4",
+  "3",
+  "2",
+  "blank",
+];
+
 const RESULT_POOL = (() => {
   const arr = ["blank", "+spin"] as string[];
   for (const r of REEL_RANKS) {
@@ -59,6 +76,7 @@ export default function useStraightCashGameEngine() {
     false,
   ]);
   const [reelValues, setReelValues] = useState<number[]>([0, 0, 0]);
+  const [reelRanks, setReelRanks] = useState<string[]>(["blank", "blank", "blank"]);
   const [tokenValue, setTokenValue] = useState<number>(1);
   const [wheelSpinning, setWheelSpinning] = useState(false);
   const [wheelReady, setWheelReady] = useState(false);
@@ -105,6 +123,13 @@ export default function useStraightCashGameEngine() {
   );
   const slideIdxRef = useRef(0);
   const slideTimerRef = useRef<number | null>(null);
+
+  const nextLowerRank = useCallback((rank: string) => {
+    const idx = RANK_ORDER.indexOf(rank);
+    return idx >= 0 && idx < RANK_ORDER.length - 1
+      ? RANK_ORDER[idx + 1]
+      : rank;
+  }, []);
 
   const [cursor, setCursor] = useState<string>(DEFAULT_CURSOR);
   const triggerShotCursor = useCallback(() => {
@@ -228,6 +253,11 @@ export default function useStraightCashGameEngine() {
       setReelResults((prev) => {
         const arr = [...prev];
         arr[index] = isWheel;
+        return arr;
+      });
+      setReelRanks((prev) => {
+        const arr = [...prev];
+        arr[index] = result;
         return arr;
       });
       const val = cardValue(result);
@@ -437,30 +467,72 @@ export default function useStraightCashGameEngine() {
           0
         );
         const maxTotal = Math.floor(10500 / tokenValue);
+        let finalRanks = [...reelRanks];
+        let finalValues = [...reelValues];
         let finalTotal = totalValue;
+        let needsNudge = false;
         if (finalTotal > maxTotal) {
-          for (
-            let i = reelValues.length - 1;
-            i >= 0 && finalTotal > maxTotal;
-            i--
-          ) {
+          needsNudge = true;
+          let diff = finalTotal - maxTotal;
+          for (let i = finalRanks.length - 1; i >= 0 && diff > 0; i--) {
             if (isReelDisabled(i)) continue;
-            const reduce = Math.min(reelValues[i], finalTotal - maxTotal);
-            finalTotal -= reduce;
+            let rank = finalRanks[i];
+            let val = finalValues[i];
+            while (diff > 0) {
+              const lower = nextLowerRank(rank);
+              if (lower === rank) break;
+              const lowerVal = cardValue(lower);
+              diff -= val - lowerVal;
+              rank = lower;
+              val = lowerVal;
+            }
+            finalRanks[i] = rank;
+            finalValues[i] = val;
           }
+          finalTotal = finalValues.reduce(
+            (sum, val, i) => (isReelDisabled(i) ? sum : sum + val),
+            0
+          );
+          setTimeout(() => {
+            setReelRanks(finalRanks);
+            setReelValues(finalValues);
+            setForcedResults((prev) => {
+              const arr = [...prev];
+              for (let i = 0; i < arr.length; i++) arr[i] = finalRanks[i];
+              return arr;
+            });
+          }, 100);
         }
         const payout = finalTotal * tokenValue;
         const nudge = Math.random() * 2 - 1; // small payout adjustment
         const finalPayout = Math.max(0, Math.round(payout + nudge));
-        if (finalPayout > 0) {
-          audioMgr.play("payoutSfx");
+        const award = () => {
+          if (finalPayout > 0) {
+            audioMgr.play("payoutSfx");
+          }
+          setTokens((t) => t + finalPayout);
+          setScoreReward(finalPayout);
+          setPhase("score");
+          spinStartRef.current = null;
+        };
+        if (needsNudge) {
+          setTimeout(award, 400);
+        } else {
+          award();
         }
-        setTokens((t) => t + finalPayout);
-        setScoreReward(finalPayout);
-        setPhase("score");
       }
     }
-  }, [spinning, reelResults, reelValues, tokenValue, isReelDisabled, audioMgr]);
+  }, [
+    spinning,
+    reelResults,
+    reelValues,
+    reelRanks,
+    tokenValue,
+    isReelDisabled,
+    audioMgr,
+    cardValue,
+    nextLowerRank,
+  ]);
 
   const getImg = useCallback(() => undefined, []);
 
