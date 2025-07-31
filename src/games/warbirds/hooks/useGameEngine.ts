@@ -132,7 +132,7 @@ export function useGameEngine() {
   const { play, pause } = audioMgr;
 
   const assetMgr: AssetMgr = useGameAssets();
-  const { getImg, ready: assetsReady } = assetMgr;
+  const { getImg } = assetMgr;
 
   // ─── WINDOW RESIZE ────────────────────────────────────────────────────────
   const dims = useWindowSize();
@@ -3276,7 +3276,7 @@ export function useGameEngine() {
       render();
       return () => cancelAnimationFrame(raf);
     }
-  }, [ui.phase, dims, canvasRef.current]);
+  }, [ui.phase, dims, canvasRef]);
 
   // ─── CLICK TO FLAP & FIRE ─────────────────────────────────────────────────
   const handleClick = (e: React.MouseEvent) => {
@@ -3387,7 +3387,6 @@ export function useGameEngine() {
     isActive,
     resetGame,
     resetState,
-    assetsReady,
   };
 }
 
