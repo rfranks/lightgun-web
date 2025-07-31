@@ -257,6 +257,7 @@ export default function useStraightCashGameEngine() {
 
   const handleReelClick = useCallback(
     (index: number, e: React.MouseEvent<HTMLDivElement>) => {
+      triggerShotCursor();
       const rect = e.currentTarget.getBoundingClientRect();
       const pos = { x: e.clientX - rect.left, y: e.clientY - rect.top };
       setReelClicks((prev) => {
