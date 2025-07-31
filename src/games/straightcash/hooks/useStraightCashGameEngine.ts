@@ -70,6 +70,7 @@ export default function useStraightCashGameEngine() {
   >([null, null, null]);
   const [bet, setBet] = useState<number>(1);
   const [tokens, setTokens] = useState<number>(100);
+  const prevTokensRef = useRef<number>(100);
   const jackpotRef = useRef<JackpotHandle>(null);
   const [reelResults, setReelResults] = useState<boolean[]>([
     false,
@@ -124,6 +125,42 @@ export default function useStraightCashGameEngine() {
   );
   const slideIdxRef = useRef(0);
   const slideTimerRef = useRef<number | null>(null);
+
+  // chip award sounds
+  const chipAwardKeys = useMemo(
+    () => [
+      "chipsHandle1Sfx",
+      "chipsHandle2Sfx",
+      "chipsHandle3Sfx",
+      "chipsHandle4Sfx",
+      "chipsHandle5Sfx",
+      "chipsHandle6Sfx",
+      "chipsStack1Sfx",
+      "chipsStack2Sfx",
+      "chipsStack3Sfx",
+      "chipsStack4Sfx",
+      "chipsStack5Sfx",
+      "chipsStack6Sfx",
+      "chipLay1Sfx",
+      "chipLay2Sfx",
+      "chipLay3Sfx",
+      "chipsCollide1Sfx",
+      "chipsCollide2Sfx",
+      "chipsCollide3Sfx",
+      "chipsCollide4Sfx",
+    ],
+    []
+  );
+
+  // play chip sounds whenever tokens increase
+  useEffect(() => {
+    if (tokens > prevTokensRef.current) {
+      const key =
+        chipAwardKeys[Math.floor(Math.random() * chipAwardKeys.length)];
+      audioMgr.play(key);
+    }
+    prevTokensRef.current = tokens;
+  }, [tokens, chipAwardKeys, audioMgr]);
 
   const nextLowerRank = useCallback((rank: string) => {
     const idx = RANK_ORDER.indexOf(rank);
