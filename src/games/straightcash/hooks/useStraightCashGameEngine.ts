@@ -2,6 +2,7 @@ import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { DEFAULT_CURSOR, SHOT_CURSOR } from "../constants";
 import { AudioMgr } from "@/types/audio";
 import { TextLabel } from "@/types/ui";
+import { drawTextLabels } from "@/utils/ui";
 import useStraightCashAudio from "./useStraightCashAudio";
 
 const REEL_RANKS = [
@@ -423,6 +424,27 @@ export default function useStraightCashGameEngine() {
       return () => window.clearTimeout(id);
     }
   }, [phase, resetRound]);
+
+  // canvas render loop for floating text labels
+  useEffect(() => {
+    if (phase === "playing" || phase === "wheel") {
+      const canvas = canvasRef.current;
+      const ctx = canvas?.getContext("2d");
+      if (!canvas || !ctx) return;
+      let raf: number;
+      const render = () => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        textLabels.current = drawTextLabels({
+          textLabels: textLabels.current,
+          ctx,
+          cull: true,
+        });
+        raf = requestAnimationFrame(render);
+      };
+      render();
+      return () => cancelAnimationFrame(raf);
+    }
+  }, [phase]);
 
   useEffect(() => {
     if (spinning.every((s) => !s) && spinStartRef.current !== null) {
