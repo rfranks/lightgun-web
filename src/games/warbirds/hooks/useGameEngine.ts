@@ -50,6 +50,7 @@ import {
   SPRAY_COUNT,
   SPRAY_SPREAD,
   SPRAY_INTERVAL,
+  AUTO_RELOAD_INTERVAL,
 } from "@/constants/powerups";
 import { SCORE_DIGIT_WIDTH, SCORE_DIGIT_HEIGHT } from "@/constants/ui";
 import {
@@ -578,6 +579,10 @@ export function useGameEngine() {
             // reset burst count and cooldown
             state.current.burstRemaining = MACHINE_GUN_BURST_COUNT;
             state.current.burstCooldown = 0;
+          } else if (p.type === "autoReload") {
+            state.current.activePowerups.autoReload.expires =
+              state.current.frameCount + POWERUP_DURATION;
+            play("powerupSfx");
           } else if (p.type === "shrink") {
             state.current.activePowerups.shrink.expires =
               state.current.frameCount + POWERUP_DURATION;
@@ -1222,6 +1227,16 @@ export function useGameEngine() {
             state.current.burstCooldown--;
           }
         }
+      }
+
+      // ─── AUTO RELOAD ───────────────────────────────────────────────
+      if (
+        state.current.isActive("autoReload", state.current.frameCount) &&
+        state.current.ammo < MAX_AMMO &&
+        state.current.frameCount % AUTO_RELOAD_INTERVAL === 0
+      ) {
+        state.current.ammo = Math.min(MAX_AMMO, state.current.ammo + 1);
+        play("reloadSfx");
       }
 
       // advance player prop

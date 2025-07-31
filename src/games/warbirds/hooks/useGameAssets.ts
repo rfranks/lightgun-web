@@ -184,6 +184,9 @@ export function useGameAssets(): {
     assetRefs.current.powerupImgs.machineGuns = loadImg(
       "/assets/powerups/machine_guns.png"
     );
+    assetRefs.current.powerupImgs.autoReload = loadImg(
+      "/assets/powerups/autoReload.png"
+    );
     assetRefs.current.powerupImgs.shrink = loadImg(
       "/assets/powerups/shrink_effect.png"
     );

@@ -12,6 +12,7 @@ export type PowerupType =
   | "hourglass"
   | "infiniteAmmo"
   | "machineGuns"
+  | "autoReload"
   | "megaducks"
   | "napalm"
   | "magnet"
