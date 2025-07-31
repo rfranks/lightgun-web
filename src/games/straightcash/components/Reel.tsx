@@ -96,7 +96,7 @@ export const Reel: React.FC<ReelProps> = ({
     let frame = 0;
     let id: number;
     const draw = () => {
-      const img = diceImgs[`White_border${frame + 1}`];
+      const img = diceImgs[`Red_border${frame + 1}`];
       if (img) {
         ctx.clearRect(0, 0, 32, 32);
         ctx.drawImage(img, 0, 0, 32, 32);

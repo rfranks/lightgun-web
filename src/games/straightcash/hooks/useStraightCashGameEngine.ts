@@ -481,23 +481,19 @@ export default function useStraightCashGameEngine() {
       setWheelSpinning(false);
       setReelResults([false, false, false]);
       audioMgr.pause("wheelSpinSfx");
+      let payout = 0;
       if (reward === "Minor" || reward === "Major" || reward === "Grand") {
         const type = reward.toLowerCase() as "minor" | "major" | "grand";
-        const payout = jackpotRef.current?.awardJackpot(type) ?? 0;
-        setTokens((t) => t + payout);
-        setScoreReward(payout);
+        payout = jackpotRef.current?.awardJackpot(type) ?? 0;
       } else {
         const numeric = parseInt(reward, 10);
-        if (!Number.isNaN(numeric)) {
-          setTokens((t) => t + numeric);
-          setScoreReward(numeric);
-        } else {
-          setScoreReward(reward);
-        }
+        payout = numeric * bet * tokenValue;
       }
+      setTokens((t) => t + payout);
+      setScoreReward(reward);
       setPhase("score");
     },
-    [audioMgr]
+    [audioMgr, bet, tokenValue]
   );
 
   return {
@@ -530,6 +526,7 @@ export default function useStraightCashGameEngine() {
     bet,
     tokens,
     tokenValue,
+    setTokenValue,
     setReelPos,
     setSpinSpeed,
     setLocked,

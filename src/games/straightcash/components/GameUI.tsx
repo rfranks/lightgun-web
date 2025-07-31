@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
+import Typography from "@mui/material/Typography";
 import Reel from "./Reel";
 import BonusWheel from "./BonusWheel";
 import JackpotDisplay, { JackpotHandle } from "./JackpotDisplay";
@@ -27,6 +28,9 @@ export interface GameUIProps {
   onWheelStart: () => void;
   bet: number;
   jackpotRef: React.RefObject<JackpotHandle>;
+  tokenValue: number;
+  setTokenValue: React.Dispatch<React.SetStateAction<number>>;
+  tokens: number;
 }
 
 export default function GameUI({
@@ -48,8 +52,10 @@ export default function GameUI({
   onWheelStart,
   bet,
   jackpotRef,
+  tokenValue,
+  setTokenValue,
+  tokens,
 }: GameUIProps) {
-  const [tokenValue, setTokenValue] = useState<number>(1);
 
   const handleBet = (amount: number) => {
     startSpins(amount, tokenValue);
@@ -75,6 +81,9 @@ export default function GameUI({
       onClickCapture={onShot}
     >
       <JackpotDisplay bet={bet} ref={jackpotRef} />
+      <Typography variant="h6" color="white" sx={{ mb: 1 }}>
+        Tokens: {tokens}
+      </Typography>
       <Box position="relative">
         <BonusWheel spinning={wheelSpinning} onFinish={onWheelFinish} />
         {wheelReady && !wheelSpinning && (

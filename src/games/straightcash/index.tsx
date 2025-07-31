@@ -29,6 +29,9 @@ export default function Game() {
     handleWheelStart,
     handleWheelFinish,
     bet,
+    tokenValue,
+    setTokenValue,
+    tokens,
     scoreReward,
     triggerShotCursor,
     jackpotRef,
@@ -71,6 +74,9 @@ export default function Game() {
       onWheelFinish={handleWheelFinish}
       bet={bet}
       jackpotRef={jackpotRef}
+      tokenValue={tokenValue}
+      setTokenValue={setTokenValue}
+      tokens={tokens}
     />
   );
 }
