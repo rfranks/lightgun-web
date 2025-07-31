@@ -68,6 +68,18 @@ describe('audio utils', () => {
     expect(audioElement.play).toHaveBeenCalled();
   });
 
+  test('rewindAndPlayAudio rewinds from a nonzero time', () => {
+    const audioElement = document.createElement('audio');
+    audioElement.play = jest.fn();
+    audioElement.currentTime = 5;
+    const ref: RefObject<HTMLAudioElement> = { current: audioElement };
+
+    rewindAndPlayAudio(ref);
+
+    expect(audioElement.currentTime).toBe(0);
+    expect(audioElement.play).toHaveBeenCalled();
+  });
+
   test('audio functions ignore undefined refs', () => {
     expect(() => pauseAudio(undefined)).not.toThrow();
     expect(() => rewindAndPlayAudio(undefined)).not.toThrow();
