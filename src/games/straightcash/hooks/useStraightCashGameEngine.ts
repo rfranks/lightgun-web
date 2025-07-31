@@ -3,6 +3,7 @@ import { DEFAULT_CURSOR, SHOT_CURSOR } from "../constants";
 import { AudioMgr } from "@/types/audio";
 import { TextLabel } from "@/types/ui";
 import useStraightCashAudio from "./useStraightCashAudio";
+import type { JackpotHandle } from "../components/JackpotDisplay";
 
 const REEL_RANKS = [
   "A",
@@ -51,6 +52,7 @@ export default function useStraightCashGameEngine() {
   >([null, null, null]);
   const [bet, setBet] = useState<number>(1);
   const [tokens, setTokens] = useState<number>(100);
+  const jackpotRef = useRef<JackpotHandle>(null);
   const [reelResults, setReelResults] = useState<boolean[]>([
     false,
     false,
@@ -479,12 +481,19 @@ export default function useStraightCashGameEngine() {
       setWheelSpinning(false);
       setReelResults([false, false, false]);
       audioMgr.pause("wheelSpinSfx");
-      const numeric = parseInt(reward, 10);
-      if (!Number.isNaN(numeric)) {
-        setTokens((t) => t + numeric);
-        setScoreReward(numeric);
+      if (reward === "Minor" || reward === "Major" || reward === "Grand") {
+        const type = reward.toLowerCase() as "minor" | "major" | "grand";
+        const payout = jackpotRef.current?.awardJackpot(type) ?? 0;
+        setTokens((t) => t + payout);
+        setScoreReward(payout);
       } else {
-        setScoreReward(reward);
+        const numeric = parseInt(reward, 10);
+        if (!Number.isNaN(numeric)) {
+          setTokens((t) => t + numeric);
+          setScoreReward(numeric);
+        } else {
+          setScoreReward(reward);
+        }
       }
       setPhase("score");
     },
@@ -529,6 +538,7 @@ export default function useStraightCashGameEngine() {
     makeText,
     textLabels: textLabels.current,
     audioMgr,
+    jackpotRef,
     triggerShotCursor,
   };
 }

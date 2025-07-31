@@ -5,7 +5,7 @@ import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import Reel from "./Reel";
 import BonusWheel from "./BonusWheel";
-import JackpotDisplay from "./JackpotDisplay";
+import JackpotDisplay, { JackpotHandle } from "./JackpotDisplay";
 import { withBasePath } from "@/utils/basePath";
 
 export interface GameUIProps {
@@ -26,6 +26,7 @@ export interface GameUIProps {
   wheelReady: boolean;
   onWheelStart: () => void;
   bet: number;
+  jackpotRef: React.RefObject<JackpotHandle>;
 }
 
 export default function GameUI({
@@ -46,6 +47,7 @@ export default function GameUI({
   wheelReady,
   onWheelStart,
   bet,
+  jackpotRef,
 }: GameUIProps) {
   const [tokenValue, setTokenValue] = useState<number>(1);
 
@@ -72,7 +74,7 @@ export default function GameUI({
       justifyContent="center"
       onClickCapture={onShot}
     >
-      <JackpotDisplay bet={bet} />
+      <JackpotDisplay bet={bet} ref={jackpotRef} />
       <Box position="relative">
         <BonusWheel spinning={wheelSpinning} onFinish={onWheelFinish} />
         {wheelReady && !wheelSpinning && (

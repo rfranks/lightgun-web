@@ -1,9 +1,24 @@
-import React, { useEffect, useState } from "react";
+import React, {
+  useEffect,
+  useState,
+  useImperativeHandle,
+  forwardRef,
+  useRef,
+  useMemo,
+} from "react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 
 export interface JackpotDisplayProps {
   bet: number;
+}
+
+export interface JackpotHandle {
+  /**
+   * Award the specified jackpot, returning the payout amount and
+   * resetting the jackpot back to its base value.
+   */
+  awardJackpot: (type: "minor" | "major" | "grand") => number;
 }
 
 interface JackpotValues {
@@ -16,20 +31,29 @@ function randomInRange(min: number, max: number) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-export default function JackpotDisplay({ bet }: JackpotDisplayProps) {
-  const [values, setValues] = useState<JackpotValues>(() => ({
-    minor: randomInRange(bet * 50, bet * 100),
-    major: randomInRange(bet * 100, bet * 200),
-    grand: randomInRange(bet * 200, bet * 400),
-  }));
+function baseValues(bet: number): JackpotValues {
+  const base = Math.max(0, bet - 10);
+  return {
+    minor: base * 100,
+    major: base * 1000,
+    grand: base * 10000,
+  };
+}
+
+export default forwardRef<JackpotHandle, JackpotDisplayProps>(function JackpotDisplay(
+  { bet }: JackpotDisplayProps,
+  ref,
+) {
+  const base = useMemo(() => baseValues(bet), [bet]);
+  const [values, setValues] = useState<JackpotValues>(() => base);
+  const valuesRef = useRef(values);
+  useEffect(() => {
+    valuesRef.current = values;
+  }, [values]);
 
   useEffect(() => {
-    setValues({
-      minor: randomInRange(bet * 50, bet * 100),
-      major: randomInRange(bet * 100, bet * 200),
-      grand: randomInRange(bet * 200, bet * 400),
-    });
-  }, [bet]);
+    setValues(base);
+  }, [base]);
 
   useEffect(() => {
     const id = setInterval(() => {
@@ -42,6 +66,18 @@ export default function JackpotDisplay({ bet }: JackpotDisplayProps) {
     return () => clearInterval(id);
   }, []);
 
+  useImperativeHandle(
+    ref,
+    () => ({
+      awardJackpot(type) {
+        const payout = valuesRef.current[type];
+        setValues((v) => ({ ...v, [type]: base[type] }));
+        return payout;
+      },
+    }),
+    [base],
+  );
+
   return (
     <Box display="flex" gap={2} mb={1}>
       <Typography color="gold">Minor: {values.minor}</Typography>
@@ -49,4 +85,4 @@ export default function JackpotDisplay({ bet }: JackpotDisplayProps) {
       <Typography color="orange">Grand: {values.grand}</Typography>
     </Box>
   );
-}
+});
