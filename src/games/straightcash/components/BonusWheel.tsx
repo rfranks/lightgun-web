@@ -77,12 +77,31 @@ export default function BonusWheel({ spinning, onFinish }: BonusWheelProps) {
     const target = Math.floor(Math.random() * REWARDS.length);
     const finalAngle = spins * 360 + target * wedgeSize + wedgeSize / 2;
     const duration = 4000;
+
     setRotation(finalAngle);
-    const nudge = Math.random() * 10 - 5;
+
     const id = setTimeout(() => {
-      setRotation((r) => r + nudge);
-      setTimeout(() => onFinish(REWARDS[target]), 500);
+      let finalIndex = target;
+      if (Math.random() < 0.5) {
+        // 50% chance to adjust to an adjacent wedge
+        const increaseChance = 0.2; // usually decrease payout
+        if (target === 0) {
+          finalIndex = 1;
+        } else if (target === REWARDS.length - 1) {
+          finalIndex = target - 1;
+        } else if (Math.random() < increaseChance) {
+          finalIndex = target + 1;
+        } else {
+          finalIndex = target - 1;
+        }
+
+        const offset = (finalIndex - target) * wedgeSize;
+        setRotation((r) => r + offset);
+      }
+
+      setTimeout(() => onFinish(REWARDS[finalIndex]), 500);
     }, duration);
+
     return () => clearTimeout(id);
   }, [spinning, onFinish]);
 
