@@ -6,7 +6,7 @@ import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import Typography from "@mui/material/Typography";
 import Reel from "./Reel";
 import BonusWheel from "./BonusWheel";
-import JackpotDisplay from "./JackpotDisplay";
+import JackpotDisplay, { JackpotHandle } from "./JackpotDisplay";
 import { withBasePath } from "@/utils/basePath";
 
 export interface GameUIProps {
@@ -27,6 +27,7 @@ export interface GameUIProps {
   wheelReady: boolean;
   onWheelStart: () => void;
   bet: number;
+  jackpotRef: React.RefObject<JackpotHandle>;
   tokenValue: number;
   setTokenValue: React.Dispatch<React.SetStateAction<number>>;
   tokens: number;
@@ -50,6 +51,7 @@ export default function GameUI({
   wheelReady,
   onWheelStart,
   bet,
+  jackpotRef,
   tokenValue,
   setTokenValue,
   tokens,
@@ -78,7 +80,7 @@ export default function GameUI({
       justifyContent="center"
       onClickCapture={onShot}
     >
-      <JackpotDisplay bet={bet} />
+      <JackpotDisplay bet={bet} ref={jackpotRef} />
       <Typography variant="h6" color="white" sx={{ mb: 1 }}>
         Tokens: {tokens}
       </Typography>

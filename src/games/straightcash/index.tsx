@@ -34,6 +34,7 @@ export default function Game() {
     tokens,
     scoreReward,
     triggerShotCursor,
+    jackpotRef,
   } = useStraightCashGameEngine();
 
   if (phase === "title") {
@@ -72,6 +73,7 @@ export default function Game() {
       onWheelStart={handleWheelStart}
       onWheelFinish={handleWheelFinish}
       bet={bet}
+      jackpotRef={jackpotRef}
       tokenValue={tokenValue}
       setTokenValue={setTokenValue}
       tokens={tokens}
