@@ -3,6 +3,7 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
+import Typography from "@mui/material/Typography";
 import Reel from "./Reel";
 import BonusWheel from "./BonusWheel";
 import JackpotDisplay from "./JackpotDisplay";
@@ -28,6 +29,7 @@ export interface GameUIProps {
   bet: number;
   tokenValue: number;
   setTokenValue: React.Dispatch<React.SetStateAction<number>>;
+  tokens: number;
 }
 
 export default function GameUI({
@@ -50,6 +52,7 @@ export default function GameUI({
   bet,
   tokenValue,
   setTokenValue,
+  tokens,
 }: GameUIProps) {
 
   const handleBet = (amount: number) => {
@@ -76,6 +79,9 @@ export default function GameUI({
       onClickCapture={onShot}
     >
       <JackpotDisplay bet={bet} />
+      <Typography variant="h6" color="white" sx={{ mb: 1 }}>
+        Tokens: {tokens}
+      </Typography>
       <Box position="relative">
         <BonusWheel spinning={wheelSpinning} onFinish={onWheelFinish} />
         {wheelReady && !wheelSpinning && (

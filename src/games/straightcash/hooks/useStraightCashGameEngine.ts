@@ -481,14 +481,15 @@ export default function useStraightCashGameEngine() {
       audioMgr.pause("wheelSpinSfx");
       const numeric = parseInt(reward, 10);
       if (!Number.isNaN(numeric)) {
-        setTokens((t) => t + numeric);
-        setScoreReward(numeric);
+        const payout = numeric * bet * tokenValue;
+        setTokens((t) => t + payout);
+        setScoreReward(payout);
       } else {
         setScoreReward(reward);
       }
       setPhase("score");
     },
-    [audioMgr]
+    [audioMgr, bet, tokenValue]
   );
 
   return {

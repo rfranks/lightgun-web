@@ -31,6 +31,7 @@ export default function Game() {
     bet,
     tokenValue,
     setTokenValue,
+    tokens,
     scoreReward,
     triggerShotCursor,
   } = useStraightCashGameEngine();
@@ -73,6 +74,7 @@ export default function Game() {
       bet={bet}
       tokenValue={tokenValue}
       setTokenValue={setTokenValue}
+      tokens={tokens}
     />
   );
 }
