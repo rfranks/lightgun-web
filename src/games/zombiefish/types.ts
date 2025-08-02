@@ -11,6 +11,8 @@ export interface Fish {
   y: number;
   vx: number;
   vy: number;
+  /** Health points, used by skeleton fish. */
+  health?: number;
   /**
    * Optional identifier tying fish together when spawned in a group.
    * Special fish spawn without a groupId.
