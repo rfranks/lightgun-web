@@ -383,17 +383,19 @@ export default function useGameEngine() {
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");
     cur.fish.forEach((f) => {
-      if (f.pendingSkeleton) {
+      if (f.flashTimer && f.flashTimer > 0) {
         if (ctx && flashImg) {
           ctx.drawImage(flashImg, f.x, f.y, FISH_SIZE, FISH_SIZE);
         }
-        f.flashTimer = (f.flashTimer || 0) - 1;
+        f.flashTimer -= 1;
         if (f.flashTimer <= 0) {
-          f.isSkeleton = true;
-          f.health = 2;
-          f.hurtTimer = 0;
-          f.pendingSkeleton = undefined;
           f.flashTimer = undefined;
+          if (f.pendingSkeleton) {
+            f.isSkeleton = true;
+            f.health = 2;
+            f.hurtTimer = 0;
+            f.pendingSkeleton = undefined;
+          }
         }
       }
     });
@@ -885,7 +887,7 @@ export default function useGameEngine() {
           }
         }
         ctx.drawImage(img, drawX, drawY, FISH_SIZE, FISH_SIZE);
-        if (f.pendingSkeleton) {
+        if (f.flashTimer && f.flashTimer > 0) {
           const flash = getImg("fishFlashImg") as HTMLImageElement;
           if (flash) {
             ctx.drawImage(flash, drawX, drawY, FISH_SIZE, FISH_SIZE);
@@ -1368,10 +1370,11 @@ export default function useGameEngine() {
             if (!f.isSkeleton) {
               if (Math.random() < 0.5 && skeletonCount < MAX_SKELETONS) {
                 f.isSkeleton = true;
-                f.health = 1;
+                f.health = 2;
                 f.hurtTimer = 0;
                 f.frame = 0;
                 f.frameCounter = 0;
+                f.flashTimer = CONVERT_FLASH_FRAMES;
                 delete f.groupId;
                 audio.play("skeleton");
               } else {
