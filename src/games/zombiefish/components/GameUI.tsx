@@ -13,13 +13,14 @@ export function GameUI({
   handleClick,
   handleContext,
 }: GameUIProps) {
+
   return (
     <Box position="relative" width="100vw" height="100dvh">
       <canvas
         ref={canvasRef}
         onClick={handleClick}
         onContextMenu={handleContext}
-        style={{ display: "block", width: "100%", height: "100%" }}
+        style={{ display: "block", width: "100%", height: "100%", cursor }}
       />
     </Box>
   );
