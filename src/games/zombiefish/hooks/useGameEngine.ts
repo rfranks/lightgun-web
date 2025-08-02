@@ -6,6 +6,8 @@ import { drawTextLabels, newTextLabel } from "@/utils/ui";
 
 import type { GameState, GameUIState, Fish, Bubble } from "../types";
 import {
+  FISH_SPAWN_INTERVAL_MIN,
+  FISH_SPAWN_INTERVAL_MAX,
   SKELETON_SPEED,
   TIME_BONUS_BROWN_FISH,
   TIME_PENALTY_GREY_LONG,
@@ -840,7 +842,9 @@ export default function useGameEngine() {
     const basicKinds = ["blue", "green", "grey", "orange", "pink", "red"];
     let timer: ReturnType<typeof setTimeout>;
     const schedule = () => {
-      const delay = 1000 + Math.random() * 2000;
+      const minDelay = (FISH_SPAWN_INTERVAL_MIN / FPS) * 1000;
+      const maxDelay = (FISH_SPAWN_INTERVAL_MAX / FPS) * 1000;
+      const delay = minDelay + Math.random() * (maxDelay - minDelay);
       timer = setTimeout(() => {
         if (state.current.phase !== "playing") return;
         const kind = basicKinds[Math.floor(Math.random() * basicKinds.length)];
