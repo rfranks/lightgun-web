@@ -3,6 +3,8 @@ import Box from "@mui/material/Box";
 
 export interface GameUIProps {
   canvasRef: React.RefObject<HTMLCanvasElement | null>;
+  /** Current cursor style to display over the canvas */
+  cursor: string;
   handleClick: (e: React.MouseEvent) => void;
   handleContext: (e: React.MouseEvent) => void;
 }
@@ -10,6 +12,7 @@ export interface GameUIProps {
 // Minimal in-game UI
 export function GameUI({
   canvasRef,
+  cursor,
   handleClick,
   handleContext,
 }: GameUIProps) {
