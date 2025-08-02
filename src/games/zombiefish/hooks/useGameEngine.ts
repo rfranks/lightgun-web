@@ -44,8 +44,8 @@ const SKELETON_CONVERT_DISTANCE = FISH_SIZE / 2;
 const SKELETON_REPEL_DISTANCE = FISH_SIZE;
 const SKELETON_REPEL_FORCE = 0.05;
 const BUBBLE_BASE_SIZE = 64;
-const BUBBLE_MIN_SIZE = BUBBLE_BASE_SIZE * 0.5;
-const BUBBLE_MAX_SIZE = BUBBLE_BASE_SIZE * 1.5;
+const BUBBLE_MIN = BUBBLE_BASE_SIZE * 0.5;
+const BUBBLE_MAX = BUBBLE_BASE_SIZE * 1.5;
 const BUBBLE_VX_MAX = 0.5;
 const BUBBLE_VY_MIN = -1.5;
 const BUBBLE_VY_MAX = -0.5;
@@ -556,12 +556,11 @@ export default function useGameEngine() {
     const { width, height } = state.current.dims;
     const kinds = ["bubble_a", "bubble_b", "bubble_c"];
     const kind = kinds[Math.floor(Math.random() * kinds.length)];
-    const size =
-      Math.random() * (BUBBLE_MAX_SIZE - BUBBLE_MIN_SIZE) + BUBBLE_MIN_SIZE;
+    const size = Math.random() * (BUBBLE_MAX - BUBBLE_MIN) + BUBBLE_MIN;
     const x = Math.random() * (width - size);
     const y = height + size;
     const vx = Math.random() * (BUBBLE_VX_MAX * 2) - BUBBLE_VX_MAX;
-    const vy = Math.random() * (BUBBLE_VY_MAX - BUBBLE_VY_MIN) + BUBBLE_VY_MIN;
+    const vy = Math.random() * (BUBBLE_VY_MAX - BUBBLE_VY_MIN) + BUBBLE_VY_MIN; // upward
     const amp = Math.random() * 2 + 0.5;
     const freq = Math.random() * 0.05 + 0.01;
     const bubble = inactiveBubbles.current.pop() || ({} as Bubble);
@@ -625,12 +624,12 @@ export default function useGameEngine() {
         b.y += b.vy;
       });
       cur.bubbles = cur.bubbles.filter((b) => {
-        const on =
+        const onScreen =
           b.y + b.size > 0 &&
           b.x + b.size > 0 &&
           b.x - b.size < cur.dims.width;
-        if (!on) inactiveBubbles.current.push(b);
-        return on;
+        if (!onScreen) inactiveBubbles.current.push(b);
+        return onScreen;
       });
 
       // track frames and decrement the timer once per second
@@ -830,6 +829,7 @@ export default function useGameEngine() {
       ctx.fillStyle = "rgba(0,0,0,0.5)";
       ctx.fillRect(0, 0, barWidth, 8);
 
+      // draw bubbles beneath fish
       const bubbleImgs = getImg("bubbleImgs") as Record<string, HTMLImageElement>;
       cur.bubbles.forEach((b) => {
         const img = bubbleImgs[b.kind as keyof typeof bubbleImgs];
