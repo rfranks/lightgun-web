@@ -6,12 +6,10 @@ import { drawTextLabels, newTextLabel } from "@/utils/ui";
 
 import type { GameState, GameUIState, Fish, Bubble } from "../types";
 import {
-  FISH_SPEED_MIN,
-  FISH_SPEED_MAX,
   SKELETON_SPEED,
   TIME_BONUS_BROWN_FISH,
   TIME_PENALTY_GREY_LONG,
-  DEFAULT_CURSOR, 
+  DEFAULT_CURSOR,
   SHOT_CURSOR
 } from "../constants";
 import type { AssetMgr } from "@/types/ui";
@@ -837,7 +835,7 @@ export default function useGameEngine() {
   // spawn scheduler
   useEffect(() => {
     if (ui.phase !== "playing") return;
-    const basicKinds = ["blue", "green", "grey", "orange", "pink", "red"];
+    const basicKinds = ["blue", "green", "orange", "pink", "red"];
     let timer: ReturnType<typeof setTimeout>;
     const schedule = () => {
       const delay = 1000 + Math.random() * 2000;
