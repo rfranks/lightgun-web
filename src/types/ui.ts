@@ -67,6 +67,8 @@ export interface TextLabel {
   maxAge: number;
   /** Space between characters */
   spaceGap: number;
+  /** Optional click handler for interactive labels */
+  onClick?: () => void;
 }
 
 /**

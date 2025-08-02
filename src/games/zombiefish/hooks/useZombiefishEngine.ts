@@ -8,6 +8,8 @@ import type { AssetMgr } from "@/types/ui";
 import type { TextLabel } from "@/types/ui";
 import type { AudioMgr } from "@/types/audio";
 
+/* eslint-disable react-hooks/exhaustive-deps */
+
 // Initial timer value (in seconds)
 const GAME_TIME = 99;
 const FPS = 60; // assumed frame rate for requestAnimationFrame
@@ -209,6 +211,10 @@ export default function useZombiefishEngine() {
             fade: false,
             x: (cur.dims.width - totalWidth) / 2,
             y: cur.dims.height / 2,
+            onClick: () => {
+              resetGame();
+              startSplash();
+            },
           },
           assetMgr
         );
@@ -396,7 +402,7 @@ export default function useZombiefishEngine() {
           0
         );
         if (x >= lbl.x && x <= lbl.x + w && y >= lbl.y && y <= lbl.y + h) {
-          resetGame();
+          lbl.onClick?.();
         }
         return;
       }
@@ -466,7 +472,7 @@ export default function useZombiefishEngine() {
         accuracy: cur.accuracy,
       });
     },
-    [audio, makeText, resetGame]
+    [audio, makeText]
   );
 
   // suppress context menu
