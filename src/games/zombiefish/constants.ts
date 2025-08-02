@@ -24,6 +24,9 @@ export const FISH_SPEED_MAX = 3;
 // Speed at which skeleton fish chase others.
 export const SKELETON_SPEED = 2;
 
+// Maximum number of skeleton fish allowed simultaneously.
+export const MAX_SKELETONS = 20;
+
 // Time adjustments when hitting special fish (in seconds).
 export const TIME_BONUS_BROWN_FISH = 3;
 export const TIME_PENALTY_GREY_LONG = 5;
