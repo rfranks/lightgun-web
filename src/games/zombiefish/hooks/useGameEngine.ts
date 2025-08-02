@@ -96,6 +96,7 @@ export default function useGameEngine() {
     textLabels: [],
     missParticles: [],
     conversions: 0,
+    hitCounts: {},
     warningPlayed: false,
   });
 
@@ -701,6 +702,16 @@ export default function useGameEngine() {
         );
         gameoverShotsLabel.current = makeStat(`SHOTS ${cur.shots}`, baseY + 40);
         gameoverHitsLabel.current = makeStat(`HITS ${cur.hits}`, baseY + 80);
+
+        // create a label for each fish type hit
+        let y = baseY + 120;
+        Object.entries(cur.hitCounts)
+          .sort(([a], [b]) => a.localeCompare(b))
+          .forEach(([kind, count]) => {
+            const text = `${kind.replace(/_/g, " ")} ${count}`;
+            makeStat(text, y);
+            y += 40;
+          });
         gameoverScoreLabel.current = makeStat(`SCORE ${cur.score}`, baseY + 120);
       }
       if (!bestAccuracyLabel.current) {
@@ -1098,6 +1109,7 @@ export default function useGameEngine() {
     cur.score = 0;
     cur.accuracy = 0;
     cur.conversions = 0;
+    cur.hitCounts = {};
     inactiveFish.current.push(...cur.fish);
     cur.fish = [];
     cur.cursor = DEFAULT_CURSOR;
@@ -1329,6 +1341,7 @@ export default function useGameEngine() {
           canvasY <= f.y + FISH_SIZE
         ) {
           cur.hits += 1;
+          cur.hitCounts[f.kind] = (cur.hitCounts[f.kind] || 0) + 1;
           updateDigitLabel(hitsLabel.current, cur.hits);
           audio.play("hit");
           hit = true;

@@ -1,16 +1,12 @@
-import React, { useEffect, useRef } from "react";
+import React, { useRef } from "react";
 
 import Box from "@mui/material/Box";
-import { drawTextLabels, newTextLabel } from "@/utils/ui";
-import type { AssetMgr } from "@/types/ui";
-import { FISH_SPEED_MIN, FISH_SPEED_MAX } from "../constants";
 
 export interface TitleSplashProps {
   onStart: () => void;
   titleSrc: string;
   backgroundColor: string;
   cursor: string;
-  getImg: AssetMgr["getImg"];
 }
 
 export const TitleSplash: React.FC<TitleSplashProps> = ({
@@ -18,7 +14,6 @@ export const TitleSplash: React.FC<TitleSplashProps> = ({
   titleSrc,
   backgroundColor,
   cursor,
-  getImg,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animRef = useRef<number>(null);
