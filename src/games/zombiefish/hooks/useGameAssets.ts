@@ -142,6 +142,10 @@ export function useGameAssets(): {
       "seaweed_grass_b",
       "seaweed_grass_b_outline",
     ]);
+    assetRefs.current.seaGrassFgImgs = [
+      assetRefs.current.seaGrassImgs.seaweed_grass_a,
+      assetRefs.current.seaGrassImgs.seaweed_grass_b,
+    ];
 
     const seaweedNames: string[] = [];
     "abcdefgh".split("").forEach((l) => {
