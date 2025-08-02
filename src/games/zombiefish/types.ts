@@ -26,6 +26,8 @@ export interface Fish {
    * Special fish spawn without a groupId.
    */
   groupId?: number;
+  /** Identifier used to link special multi-segment fish pieces together. */
+  pairId?: number;
   /** Whether this fish should draw with a highlighted variant */
   highlight?: boolean;
   /** Whether this fish has turned into a skeleton */
