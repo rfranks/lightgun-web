@@ -27,6 +27,9 @@ const FPS = 60; // assumed frame rate for requestAnimationFrame
 const FISH_SIZE = 128;
 const SKELETON_CONVERT_DISTANCE = FISH_SIZE / 2;
 const BUBBLE_SIZE = 64;
+const ROCK_SPEED = 0.2;
+const SEAWEED_SPEED = 0.4;
+const MAX_BUBBLES = 20;
 
 export default function useGameEngine() {
   // canvas and animation frame refs
@@ -60,12 +63,15 @@ export default function useGameEngine() {
   const nextBubbleId = useRef(1);
   const bubbleSpawnRef = useRef(0);
   const frameRef = useRef(0); // track frames for one-second ticks
+  const rockOffset = useRef(0);
+  const seaweedOffset = useRef(0);
   const accuracyLabel = useRef<TextLabel | null>(null);
   const finalAccuracy = useRef(0);
   const displayAccuracy = useRef(0);
   const timerLabel = useRef<TextLabel | null>(null);
   const shotsLabel = useRef<TextLabel | null>(null);
   const hitsLabel = useRef<TextLabel | null>(null);
+  const pausedLabel = useRef<TextLabel | null>(null);
 
   // ui state that triggers re-renders
   const [ui, setUI] = useState<GameUIState>({
@@ -97,6 +103,10 @@ export default function useGameEngine() {
   const drawBackground = useCallback(
     (ctx: CanvasRenderingContext2D) => {
       const { width, height } = state.current.dims;
+      rockOffset.current -= ROCK_SPEED;
+      seaweedOffset.current -= SEAWEED_SPEED;
+      if (rockOffset.current <= -width) rockOffset.current += width;
+      if (seaweedOffset.current <= -width) seaweedOffset.current += width;
 
       const waterImgs = getImg("terrainWaterImgs") as
         | Record<string, HTMLImageElement>
@@ -142,10 +152,17 @@ export default function useGameEngine() {
       if (rockImgs) {
         const rA = rockImgs.background_rock_a;
         const rB = rockImgs.background_rock_b;
-        // Rock positions roughly match the layout in
-        // public/assets/fish/Sample.png
-        if (rA) ctx.drawImage(rA, width * 0.1, groundY - rA.height);
-        if (rB) ctx.drawImage(rB, width * 0.7, groundY - rB.height);
+        const rocks = [
+          { img: rA, x: width * 0.1 },
+          { img: rB, x: width * 0.7 },
+        ];
+        rocks.forEach(({ img, x }) => {
+          if (!img) return;
+          const y = groundY - img.height;
+          const drawX = x + rockOffset.current;
+          ctx.drawImage(img, drawX, y);
+          ctx.drawImage(img, drawX + width, y);
+        });
       }
 
       const seaweedImgs = getImg("seaweedImgs") as
@@ -158,10 +175,12 @@ export default function useGameEngine() {
           { img: seaweedImgs.background_seaweed_c, x: width * 0.5 },
           { img: seaweedImgs.background_seaweed_e, x: width * 0.8 },
         ];
-        // Seaweed clusters are placed near the rocks as seen in
-        // public/assets/fish/Sample.png
         sw.forEach(({ img, x }) => {
-          if (img) ctx.drawImage(img, x, bottom - img.height);
+          if (!img) return;
+          const y = bottom - img.height;
+          const drawX = x + seaweedOffset.current;
+          ctx.drawImage(img, drawX, y);
+          ctx.drawImage(img, drawX + width, y);
         });
       }
     },
@@ -206,6 +225,9 @@ export default function useGameEngine() {
 
     // skeleton behavior
     const immuneKinds = new Set(["brown", "grey_long_a", "grey_long_b"]);
+    const base = SKELETON_SPEED;
+    const extra = SKELETON_SPEED;
+    const skeletonSpeed = base + (1 - cur.timer / GAME_TIME) * extra;
     cur.fish.forEach((s) => {
       if (!s.isSkeleton) return;
 
@@ -229,13 +251,15 @@ export default function useGameEngine() {
         const dy = nearest.y - s.y;
         const dist = Math.hypot(dx, dy);
         if (dist > 0) {
-          s.vx = (dx / dist) * SKELETON_SPEED;
-          s.vy = (dy / dist) * SKELETON_SPEED;
+          s.vx = (dx / dist) * skeletonSpeed;
+          s.vy = (dy / dist) * skeletonSpeed;
         }
         if (
           dist < SKELETON_CONVERT_DISTANCE &&
           !immuneKinds.has(nearest.kind)
         ) {
+          // Spawn a brief text effect before converting the fish
+          makeText("POOF", nearest.x, nearest.y);
           nearest.isSkeleton = true;
           nearest.health = 2;
           nearest.vx = 0;
@@ -247,10 +271,10 @@ export default function useGameEngine() {
 
       // steer skeletons back onto the playfield if they hit an edge
       const { width, height } = cur.dims;
-      if (s.x < 0) s.vx = Math.abs(s.vx) || SKELETON_SPEED;
-      else if (s.x + FISH_SIZE > width) s.vx = -Math.abs(s.vx) || -SKELETON_SPEED;
-      if (s.y < 0) s.vy = Math.abs(s.vy) || SKELETON_SPEED;
-      else if (s.y + FISH_SIZE > height) s.vy = -Math.abs(s.vy) || -SKELETON_SPEED;
+      if (s.x < 0) s.vx = Math.abs(s.vx) || skeletonSpeed;
+      else if (s.x + FISH_SIZE > width) s.vx = -Math.abs(s.vx) || -skeletonSpeed;
+      if (s.y < 0) s.vy = Math.abs(s.vy) || skeletonSpeed;
+      else if (s.y + FISH_SIZE > height) s.vy = -Math.abs(s.vy) || -skeletonSpeed;
     });
 
     // move fish with a slight oscillation and update their angle
@@ -261,7 +285,7 @@ export default function useGameEngine() {
       f.y += vy;
       f.angle = Math.atan2(vy, Math.abs(f.vx));
     });
-  }, [audio]);
+  }, [audio, makeText]);
 
   const spawnBubble = useCallback(() => {
     const { width, height } = state.current.dims;
@@ -282,6 +306,9 @@ export default function useGameEngine() {
       vy,
       size,
     } as Bubble);
+    if (state.current.bubbles.length > MAX_BUBBLES) {
+      state.current.bubbles = state.current.bubbles.slice(-MAX_BUBBLES);
+    }
   }, []);
 
   // main loop updates timer and fish
@@ -306,6 +333,7 @@ export default function useGameEngine() {
       bubbleSpawnRef.current -= 1;
       if (bubbleSpawnRef.current <= 0) {
         spawnBubble();
+        cur.bubbles = cur.bubbles.slice(-MAX_BUBBLES);
         bubbleSpawnRef.current = Math.floor(Math.random() * 60) + 30;
       }
       cur.bubbles.forEach((b) => {
@@ -325,7 +353,12 @@ export default function useGameEngine() {
         if (cur.timer === 0) {
           cur.phase = "gameover";
           finalAccuracy.current = Math.round(cur.accuracy);
+          const best = Number(localStorage.bestAccuracy || 0);
+          if (finalAccuracy.current > best) {
+            localStorage.bestAccuracy = finalAccuracy.current.toString();
+          }
           displayAccuracy.current = 0;
+          audio.pause("bgm");
         }
       }
 
@@ -378,6 +411,7 @@ export default function useGameEngine() {
         const lbl = accuracyLabel.current;
         if (displayAccuracy.current < finalAccuracy.current) {
           displayAccuracy.current += 1;
+          audio.play("tick");
           const pct = Math.min(displayAccuracy.current, finalAccuracy.current);
           const str = pct.toString();
           const digitImgs = getImg("digitImgs") as Record<
@@ -418,22 +452,38 @@ export default function useGameEngine() {
       cull: true,
     });
 
-    // cull fish that have moved completely off-screen
-    const { width, height } = cur.dims;
-    const margin = FISH_SIZE * 2;
-    cur.fish = cur.fish.filter(
-      (f) =>
-        f.x > -margin &&
-        f.x < width + margin &&
-        f.y > -margin &&
-        f.y < height + margin
-    );
+      // cull fish that have moved completely off-screen
+      if (cur.phase === "playing") {
+        const { width, height } = cur.dims;
+        const margin = FISH_SIZE * 2;
+        cur.fish = cur.fish.filter(
+          (f) =>
+            f.x > -margin &&
+            f.x < width + margin &&
+            f.y > -margin &&
+            f.y < height + margin
+        );
+      }
 
-    // draw bubbles, fish and text labels
-    if (canvas && ctx) {
-      canvas.width = cur.dims.width;
-      canvas.height = cur.dims.height;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      if (cur.phase === "paused") {
+        if (!pausedLabel.current) {
+          pausedLabel.current = newTextLabel(
+            { text: "PAUSED", scale: 2, fixed: true, fade: false },
+            assetMgr,
+            cur.dims
+          );
+          cur.textLabels.push(pausedLabel.current);
+        }
+      } else if (pausedLabel.current) {
+        cur.textLabels = cur.textLabels.filter((l) => l !== pausedLabel.current);
+        pausedLabel.current = null;
+      }
+
+      // draw bubbles, fish and text labels
+      if (canvas && ctx) {
+        canvas.width = cur.dims.width;
+        canvas.height = cur.dims.height;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       drawBackground(ctx);
 
@@ -499,9 +549,33 @@ export default function useGameEngine() {
     accuracyLabel.current = null;
     finalAccuracy.current = 0;
     displayAccuracy.current = 0;
+    rockOffset.current = 0;
+    seaweedOffset.current = 0;
+    pausedLabel.current = null;
+
     const digitImgs = getImg("digitImgs") as Record<string, HTMLImageElement>;
     const digitHeight = digitImgs["0"]?.height || 0;
     const lineHeight = digitHeight + 8;
+
+    audio.play("bgm");
+
+    const labelWidth = (lbl: TextLabel) =>
+      lbl.imgs.reduce(
+        (sum, img) => sum + (img ? img.width + 2 : lbl.spaceGap),
+        0
+      );
+
+    const timeText = newTextLabel(
+      {
+        text: "TIME",
+        scale: 1,
+        fixed: true,
+        fade: false,
+        x: 16,
+        y: 16,
+      },
+      assetMgr
+    );
 
     timerLabel.current = newTextLabel(
       {
@@ -509,8 +583,20 @@ export default function useGameEngine() {
         scale: 1,
         fixed: true,
         fade: false,
-        x: 16,
+        x: 16 + labelWidth(timeText),
         y: 16,
+      },
+      assetMgr
+    );
+
+    const shotsText = newTextLabel(
+      {
+        text: "SHOTS",
+        scale: 1,
+        fixed: true,
+        fade: false,
+        x: 16,
+        y: 16 + lineHeight,
       },
       assetMgr
     );
@@ -520,8 +606,20 @@ export default function useGameEngine() {
         scale: 1,
         fixed: true,
         fade: false,
-        x: 16,
+        x: 16 + labelWidth(shotsText),
         y: 16 + lineHeight,
+      },
+      assetMgr
+    );
+
+    const hitsText = newTextLabel(
+      {
+        text: "HITS",
+        scale: 1,
+        fixed: true,
+        fade: false,
+        x: 16,
+        y: 16 + lineHeight * 2,
       },
       assetMgr
     );
@@ -531,7 +629,7 @@ export default function useGameEngine() {
         scale: 1,
         fixed: true,
         fade: false,
-        x: 16,
+        x: 16 + labelWidth(hitsText),
         y: 16 + lineHeight * 2,
       },
       assetMgr
@@ -539,8 +637,11 @@ export default function useGameEngine() {
     bubbleSpawnRef.current = 0;
 
     state.current.textLabels = [
+      timeText,
       timerLabel.current!,
+      shotsText,
       shotsLabel.current!,
+      hitsText,
       hitsLabel.current!,
     ];
     cur.cursor = DEFAULT_CURSOR;
@@ -579,6 +680,9 @@ export default function useGameEngine() {
     hitsLabel.current = null;
     state.current.textLabels = [];
     bubbleSpawnRef.current = 0;
+    rockOffset.current = 0;
+    seaweedOffset.current = 0;
+    pausedLabel.current = null;
 
     setUI({
       phase: cur.phase,
@@ -590,12 +694,28 @@ export default function useGameEngine() {
     });
     if (animationFrameRef.current)
       cancelAnimationFrame(animationFrameRef.current);
+    audio.pause("bgm");
   }, []);
 
   useEffect(() => {
     const handleKeydown = (e: KeyboardEvent) => {
-      if (state.current.phase === "gameover" && e.code === "Space") {
+      const cur = state.current;
+      if (e.code === "Escape" && (cur.phase === "playing" || cur.phase === "paused")) {
+        cur.phase = cur.phase === "playing" ? "paused" : "playing";
+        setUI({
+          phase: cur.phase,
+          timer: cur.timer,
+          shots: cur.shots,
+          hits: cur.hits,
+          accuracy: cur.accuracy,
+          cursor: cur.cursor,
+        });
+        return;
+      }
+      if (cur.phase === "gameover" && e.code === "Space") {
         resetGame();
+        startSplash();
+      } else if (state.current.phase === "title") {
         startSplash();
       }
     };
@@ -690,18 +810,25 @@ export default function useGameEngine() {
             makeText(`-${TIME_PENALTY_GREY_LONG}`, f.x, f.y);
             const gid = f.groupId;
             cur.fish = cur.fish.filter((fish) => fish.groupId !== gid);
-            audio.play("hit");
+            audio.play("penalty");
           } else {
             if (!f.isSkeleton) {
-              f.isSkeleton = true;
-              f.health = 2;
-            }
-            f.health = (f.health ?? 0) - 1;
-            if ((f.health ?? 0) <= 0) {
-              cur.fish.splice(i, 1);
-              audio.play("death");
+              if (Math.random() < 0.5) {
+                f.isSkeleton = true;
+                f.health = 1;
+                audio.play("skeleton");
+              } else {
+                cur.fish.splice(i, 1);
+                audio.play("death");
+              }
             } else {
-              audio.play("skeleton");
+              f.health = (f.health ?? 0) - 1;
+              if ((f.health ?? 0) <= 0) {
+                cur.fish.splice(i, 1);
+                audio.play("death");
+              } else {
+                audio.play("skeleton");
+              }
             }
           }
           break;
