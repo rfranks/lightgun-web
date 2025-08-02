@@ -234,6 +234,8 @@ export default function useGameEngine() {
           dist < SKELETON_CONVERT_DISTANCE &&
           !immuneKinds.has(nearest.kind)
         ) {
+          // Spawn a brief text effect before converting the fish
+          makeText("POOF", nearest.x, nearest.y);
           nearest.isSkeleton = true;
           nearest.health = 2;
           nearest.vx = 0;
@@ -259,7 +261,7 @@ export default function useGameEngine() {
       f.y += vy;
       f.angle = Math.atan2(vy, Math.abs(f.vx));
     });
-  }, [audio]);
+  }, [audio, makeText]);
 
   const spawnBubble = useCallback(() => {
     const { width, height } = state.current.dims;
