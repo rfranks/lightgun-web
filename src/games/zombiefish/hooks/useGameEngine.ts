@@ -209,10 +209,16 @@ export default function useGameEngine() {
   );
 
   const updateDigitLabel = useCallback(
-    (label: TextLabel | null, value: number, pad = 0) => {
+    (
+      label: TextLabel | null,
+      value: number,
+      pad = 0,
+      suffix = ""
+    ) => {
       if (!label) return;
       const str =
-        pad > 0 ? value.toString().padStart(pad, "0") : value.toString();
+        (pad > 0 ? value.toString().padStart(pad, "0") : value.toString()) +
+        suffix;
       const digitImgs = getImg("digitImgs") as Record<string, HTMLImageElement>;
       label.text = str;
       label.imgs = str.split("").map((ch) => digitImgs[ch]);
@@ -394,7 +400,7 @@ export default function useGameEngine() {
       if (frameRef.current >= FPS) {
         frameRef.current = 0;
         cur.timer = Math.max(0, cur.timer - 1);
-        updateDigitLabel(timerLabel.current, cur.timer, 2);
+        updateDigitLabel(timerLabel.current, cur.timer, 2, ":");
       }
 
       // check for game over once timer hits zero
@@ -716,7 +722,7 @@ export default function useGameEngine() {
 
     timerLabel.current = newTextLabel(
       {
-        text: cur.timer.toString().padStart(2, "0"),
+        text: `${cur.timer.toString().padStart(2, "0")}:`,
         scale: 1,
         fixed: true,
         fade: false,
@@ -996,13 +1002,13 @@ export default function useGameEngine() {
           audio.play("hit");
           if (f.kind === "brown") {
             cur.timer += TIME_BONUS_BROWN_FISH;
-            updateDigitLabel(timerLabel.current, cur.timer, 2);
+            updateDigitLabel(timerLabel.current, cur.timer, 2, ":");
             makeText(`+${TIME_BONUS_BROWN_FISH}`, f.x, f.y);
             cur.fish.splice(i, 1);
             audio.play("bonus");
           } else if (f.kind === "grey_long_a" || f.kind === "grey_long_b") {
             cur.timer = Math.max(0, cur.timer - TIME_PENALTY_GREY_LONG);
-            updateDigitLabel(timerLabel.current, cur.timer, 2);
+            updateDigitLabel(timerLabel.current, cur.timer, 2, ":");
             makeText(`-${TIME_PENALTY_GREY_LONG}`, f.x, f.y);
             const gid = f.groupId;
             cur.fish = cur.fish.filter((fish) => fish.groupId !== gid);
