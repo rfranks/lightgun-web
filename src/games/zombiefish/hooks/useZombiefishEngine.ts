@@ -29,6 +29,7 @@ export default function useZombiefishEngine() {
     timer: GAME_TIME,
     shots: 0,
     hits: 0,
+    accuracy: 0,
     dims,
     fish: [],
   });
@@ -42,6 +43,7 @@ export default function useZombiefishEngine() {
     timer: GAME_TIME,
     shots: 0,
     hits: 0,
+    accuracy: 0,
   });
 
   // sync dims when window size changes
@@ -125,7 +127,14 @@ export default function useZombiefishEngine() {
         f.y < height + margin
     );
 
-    setUI({ phase: cur.phase, timer: cur.timer, shots: cur.shots, hits: cur.hits });
+    cur.accuracy = cur.shots > 0 ? (cur.hits / cur.shots) * 100 : 0;
+    setUI({
+      phase: cur.phase,
+      timer: cur.timer,
+      shots: cur.shots,
+      hits: cur.hits,
+      accuracy: cur.accuracy,
+    });
     animationFrameRef.current = requestAnimationFrame(loop);
   }, [updateFish]);
 
@@ -136,7 +145,14 @@ export default function useZombiefishEngine() {
     cur.timer = GAME_TIME;
     cur.shots = 0;
     cur.hits = 0;
-    setUI({ phase: cur.phase, timer: cur.timer, shots: cur.shots, hits: cur.hits });
+    cur.accuracy = 0;
+    setUI({
+      phase: cur.phase,
+      timer: cur.timer,
+      shots: cur.shots,
+      hits: cur.hits,
+      accuracy: cur.accuracy,
+    });
     if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
     animationFrameRef.current = requestAnimationFrame(loop);
   }, [loop]);
@@ -151,7 +167,14 @@ export default function useZombiefishEngine() {
       cur.shots += 1;
       const canvas = canvasRef.current;
       if (!canvas) {
-        setUI({ phase: cur.phase, timer: cur.timer, shots: cur.shots, hits: cur.hits });
+        cur.accuracy = cur.shots > 0 ? (cur.hits / cur.shots) * 100 : 0;
+        setUI({
+          phase: cur.phase,
+          timer: cur.timer,
+          shots: cur.shots,
+          hits: cur.hits,
+          accuracy: cur.accuracy,
+        });
         return;
       }
 
@@ -184,11 +207,13 @@ export default function useZombiefishEngine() {
         }
       }
 
+      cur.accuracy = cur.shots > 0 ? (cur.hits / cur.shots) * 100 : 0;
       setUI({
         phase: cur.phase,
         timer: cur.timer,
         shots: cur.shots,
         hits: cur.hits,
+        accuracy: cur.accuracy,
       });
     },
     [killSfx]
@@ -206,8 +231,15 @@ export default function useZombiefishEngine() {
     cur.timer = GAME_TIME;
     cur.shots = 0;
     cur.hits = 0;
+    cur.accuracy = 0;
     cur.fish = [];
-    setUI({ phase: cur.phase, timer: cur.timer, shots: cur.shots, hits: cur.hits });
+    setUI({
+      phase: cur.phase,
+      timer: cur.timer,
+      shots: cur.shots,
+      hits: cur.hits,
+      accuracy: cur.accuracy,
+    });
     if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
   }, []);
 
