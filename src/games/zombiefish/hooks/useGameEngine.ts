@@ -871,8 +871,10 @@ export default function useGameEngine() {
           pivotX = f.x + (f.kind === "grey_long_a" ? FISH_SIZE : 0);
           drawX = f.kind === "grey_long_a" ? -FISH_SIZE : 0;
         }
+        // Rotate the fish based on its current velocity
+        const angle = Math.atan2(f.vy, f.vx);
         ctx.translate(pivotX, pivotY);
-        ctx.rotate(f.angle);
+        ctx.rotate(angle);
         if (f.highlight) {
           const fishImgs = getImg("fishImgs") as Record<string, HTMLImageElement>;
           const outline = fishImgs[
