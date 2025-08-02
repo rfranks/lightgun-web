@@ -35,6 +35,8 @@ export interface GameUIState {
   hits: number;
   /** Hit accuracy percentage */
   accuracy: number;
+  /** Current cursor style */
+  cursor: string;
 }
 
 // Internal game state tracked by the engine

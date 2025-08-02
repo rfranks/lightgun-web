@@ -3,6 +3,7 @@ import { useWindowSize } from "@/hooks/useWindowSize";
 import { useGameAssets } from "./useGameAssets";
 import { useGameAudio } from "./useGameAudio";
 import { drawTextLabels, newTextLabel } from "@/utils/ui";
+import { DEFAULT_CURSOR, SHOT_CURSOR } from "../constants";
 import type { GameState, GameUIState, Fish } from "../types";
 import type { AssetMgr } from "@/types/ui";
 import type { TextLabel } from "@/types/ui";
@@ -38,6 +39,7 @@ export default function useGameEngine() {
     shots: 0,
     hits: 0,
     accuracy: 0,
+    cursor: DEFAULT_CURSOR,
     dims,
     fish: [],
     textLabels: [],
@@ -57,6 +59,7 @@ export default function useGameEngine() {
     shots: 0,
     hits: 0,
     accuracy: 0,
+    cursor: DEFAULT_CURSOR,
   });
 
   // sync dims when window size changes
@@ -329,6 +332,7 @@ export default function useGameEngine() {
       shots: cur.shots,
       hits: cur.hits,
       accuracy: cur.accuracy,
+      cursor: cur.cursor,
     });
 
     animationFrameRef.current = requestAnimationFrame(loop);
@@ -360,12 +364,14 @@ export default function useGameEngine() {
         assetMgr
       ),
     ];
+    cur.cursor = DEFAULT_CURSOR;
     setUI({
       phase: cur.phase,
       timer: cur.timer,
       shots: cur.shots,
       hits: cur.hits,
       accuracy: cur.accuracy,
+      cursor: cur.cursor,
     });
 
     if (animationFrameRef.current)
@@ -382,6 +388,7 @@ export default function useGameEngine() {
     cur.hits = 0;
     cur.accuracy = 0;
     cur.fish = [];
+    cur.cursor = DEFAULT_CURSOR;
 
     accuracyLabel.current = null;
     finalAccuracy.current = 0;
@@ -394,6 +401,7 @@ export default function useGameEngine() {
       shots: cur.shots,
       hits: cur.hits,
       accuracy: cur.accuracy,
+      cursor: cur.cursor,
     });
     if (animationFrameRef.current)
       cancelAnimationFrame(animationFrameRef.current);
@@ -427,6 +435,19 @@ export default function useGameEngine() {
 
       if (cur.phase !== "playing") return;
 
+      cur.cursor = SHOT_CURSOR;
+      setTimeout(() => {
+        state.current.cursor = DEFAULT_CURSOR;
+        setUI({
+          phase: state.current.phase,
+          timer: state.current.timer,
+          shots: state.current.shots,
+          hits: state.current.hits,
+          accuracy: state.current.accuracy,
+          cursor: state.current.cursor,
+        });
+      }, 100);
+
       cur.shots += 1;
       audio.play("shoot");
       const canvas = canvasRef.current;
@@ -438,6 +459,7 @@ export default function useGameEngine() {
           shots: cur.shots,
           hits: cur.hits,
           accuracy: cur.accuracy,
+          cursor: cur.cursor,
         });
         return;
       }
@@ -488,6 +510,7 @@ export default function useGameEngine() {
         shots: cur.shots,
         hits: cur.hits,
         accuracy: cur.accuracy,
+        cursor: cur.cursor,
       });
     },
     [audio, makeText]
