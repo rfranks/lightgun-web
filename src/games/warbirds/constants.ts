@@ -55,7 +55,12 @@ export const SCORE_DUCK = 1000;
 export const MIN_STREAK = 3; // minimum streak to show label
 
 // Cursor styles
-export const DEFAULT_CURSOR =
+export let DEFAULT_CURSOR =
   `url('${BASE_PATH}/assets/shooting-gallery/PNG/HUD/crosshair_red_small.png') 16 16, auto`;
-export const SHOT_CURSOR =
+export let SHOT_CURSOR =
   `url('${BASE_PATH}/assets/shooting-gallery/PNG/Objects/shot_brown_large.png') 16 16, auto`;
+
+export const setCursorImgs = (cursorSrc: string, shotSrc: string) => {
+  DEFAULT_CURSOR = `url('${cursorSrc}') 16 16, auto`;
+  SHOT_CURSOR = `url('${shotSrc}') 16 16, auto`;
+};

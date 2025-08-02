@@ -23,6 +23,10 @@ import { SCORE_DIGIT_PATH } from "@/constants/ui";
 import { ENEMY_COLORS, AIRSHIP_COLORS } from "@/constants/vehicles";
 import { AssetMgr } from "@/types/ui";
 import { withBasePath } from "@/utils/basePath";
+import { setCursorImgs } from "../constants";
+
+export let cursorImg: HTMLImageElement | undefined;
+export let shotCursorImg: HTMLImageElement | undefined;
 
 /**
  * SSR-safe asset loader for browser games.
@@ -34,6 +38,8 @@ export function useGameAssets(): {
   getImg: AssetMgr["getImg"];
   assetRefs: AssetMgr["assetRefs"];
   ready: boolean;
+  cursorImg?: HTMLImageElement;
+  shotCursorImg?: HTMLImageElement;
 } {
   const [ready, setReady] = useState(false);
 
@@ -80,10 +86,17 @@ export function useGameAssets(): {
       "/assets/shooting-gallery/PNG/Objects/stick_wood_broken.png"
     );
 
-    // BULLET HOLE
-    assetRefs.current.bulletHoleImg = loadImg(
+    // CURSOR IMAGES
+    cursorImg = loadImg(
+      "/assets/shooting-gallery/PNG/HUD/crosshair_red_small.png"
+    );
+    shotCursorImg = loadImg(
       "/assets/shooting-gallery/PNG/Objects/shot_brown_large.png"
     );
+    assetRefs.current.cursorImg = cursorImg;
+    assetRefs.current.shotCursorImg = shotCursorImg;
+    assetRefs.current.bulletHoleImg = shotCursorImg;
+    setCursorImgs(cursorImg.src, shotCursorImg.src);
 
     // CANNONBALL
     assetRefs.current.cannonballImg = loadImg(
@@ -263,5 +276,12 @@ export function useGameAssets(): {
     []
   );
 
-  return { get, getImg, assetRefs: assetRefs.current, ready };
+  return {
+    get,
+    getImg,
+    assetRefs: assetRefs.current,
+    ready,
+    cursorImg,
+    shotCursorImg,
+  };
 }
