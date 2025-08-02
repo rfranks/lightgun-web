@@ -995,15 +995,18 @@ export default function useGameEngine() {
           updateDigitLabel(hitsLabel.current, cur.hits);
           audio.play("hit");
           if (f.kind === "brown") {
-            cur.timer += TIME_BONUS_BROWN_FISH;
-            updateDigitLabel(timerLabel.current, cur.timer, 2);
-            makeText(`+${TIME_BONUS_BROWN_FISH}`, f.x, f.y);
+            state.current.timer += TIME_BONUS_BROWN_FISH;
+            updateDigitLabel(timerLabel.current, state.current.timer, 2);
+            makeText("+3", f.x, f.y);
             cur.fish.splice(i, 1);
             audio.play("bonus");
-          } else if (f.kind === "grey_long_a" || f.kind === "grey_long_b") {
-            cur.timer = Math.max(0, cur.timer - TIME_PENALTY_GREY_LONG);
-            updateDigitLabel(timerLabel.current, cur.timer, 2);
-            makeText(`-${TIME_PENALTY_GREY_LONG}`, f.x, f.y);
+          } else if (f.kind.startsWith("grey_long")) {
+            state.current.timer = Math.max(
+              0,
+              state.current.timer - TIME_PENALTY_GREY_LONG
+            );
+            updateDigitLabel(timerLabel.current, state.current.timer, 2);
+            makeText("−5", f.x, f.y);
             const gid = f.groupId;
             cur.fish = cur.fish.filter((fish) => fish.groupId !== gid);
             audio.play("penalty");
