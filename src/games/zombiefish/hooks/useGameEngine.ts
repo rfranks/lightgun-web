@@ -91,7 +91,7 @@ export default function useGameEngine() {
   const makeText = useCallback(
     (text: string, x: number, y: number) => {
       const lbl = newTextLabel(
-        { text, scale: 1, fixed: true, fade: true, x, y },
+        { text, scale: 1, fixed: true, fade: true, x, y, vy: -0.5 },
         { getImg } as unknown as AssetMgr,
         state.current.dims
       );

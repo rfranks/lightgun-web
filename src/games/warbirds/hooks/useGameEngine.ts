@@ -247,6 +247,7 @@ export function useGameEngine() {
           fade,
           x,
           y,
+          vy: -0.5,
           maxAge,
         },
         assetMgr,
