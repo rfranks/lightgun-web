@@ -91,7 +91,7 @@ export function newTextLabel(
   dims?: Dims
 ): TextLabel {
   // destructure properties from textLabelProps
-  const { text, scale, fixed, fade, x, y, maxAge } = textLabelProps;
+  const { text, scale, fixed, fade, x, y, maxAge, onClick } = textLabelProps;
   let { spaceGap } = textLabelProps;
 
   // get images from asset manager
@@ -148,6 +148,7 @@ export function newTextLabel(
     age: 0,
     maxAge: maxAge ? maxAge : fade ? 60 : Infinity,
     spaceGap,
+    ...(onClick ? { onClick } : {}),
   };
 
   return newLabel;

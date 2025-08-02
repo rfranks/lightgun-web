@@ -11,6 +11,8 @@ export interface Fish {
   y: number;
   vx: number;
   vy: number;
+  /** Current drawing angle in radians based on velocity. */
+  angle: number;
   /** Health points, used by skeleton fish. */
   health?: number;
   /**

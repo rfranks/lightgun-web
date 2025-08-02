@@ -1,12 +1,14 @@
 import { useRef, useState, useEffect, useCallback } from "react";
 import { useWindowSize } from "@/hooks/useWindowSize";
 import { useGameAssets } from "./useGameAssets";
-import { useAudio } from "@/hooks/useAudio";
-import { rewindAndPlayAudio } from "@/utils/audio";
+import { useGameAudio } from "./useGameAudio";
 import { drawTextLabels, newTextLabel } from "@/utils/ui";
 import type { GameState, GameUIState, Fish } from "../types";
 import type { AssetMgr } from "@/types/ui";
 import type { TextLabel } from "@/types/ui";
+import type { AudioMgr } from "@/types/audio";
+
+/* eslint-disable react-hooks/exhaustive-deps */
 
 // Initial timer value (in seconds)
 const GAME_TIME = 99;
@@ -24,7 +26,7 @@ export default function useZombiefishEngine() {
   // assets
   const assetMgr = useGameAssets();
   const { getImg, ready } = assetMgr;
-  const killSfx = useAudio("/audio/splash.ogg");
+  const audio: AudioMgr = useGameAudio();
 
   // window dimensions
   const dims = useWindowSize();
@@ -77,10 +79,25 @@ export default function useZombiefishEngine() {
   const updateFish = useCallback(() => {
     const cur = state.current;
 
-    // move all fish
+    // For each group, nudge members toward the group's average velocity.
+    const groups: Record<number, { vx: number; vy: number; members: Fish[] }> = {};
     cur.fish.forEach((f) => {
-      f.x += f.vx;
-      f.y += f.vy;
+      if (f.groupId === undefined) return;
+      if (!groups[f.groupId]) {
+        groups[f.groupId] = { vx: 0, vy: 0, members: [] };
+      }
+      const g = groups[f.groupId];
+      g.vx += f.vx;
+      g.vy += f.vy;
+      g.members.push(f);
+    });
+    Object.values(groups).forEach((g) => {
+      const avgVx = g.vx / g.members.length;
+      const avgVy = g.vy / g.members.length;
+      g.members.forEach((f) => {
+        f.vx += (avgVx - f.vx) * 0.05;
+        f.vy += (avgVy - f.vy) * 0.05;
+      });
     });
 
     // skeleton behavior
@@ -115,10 +132,20 @@ export default function useZombiefishEngine() {
           nearest.vx = 0;
           nearest.vy = 0;
           delete nearest.groupId;
+          audio.play("skeleton");
         }
       }
     });
-  }, []);
+
+    // move fish with a slight oscillation and update their angle
+    cur.fish.forEach((f) => {
+      const osc = Math.sin((frameRef.current + f.id) / 20) * 0.5;
+      const vy = f.vy + osc;
+      f.x += f.vx;
+      f.y += vy;
+      f.angle = Math.atan2(vy, Math.abs(f.vx));
+    });
+  }, [audio]);
 
   // main loop updates timer and fish
   const loop = useCallback(() => {
@@ -148,7 +175,10 @@ export default function useZombiefishEngine() {
         if (lbl) {
           const t = cur.timer.toString().padStart(2, "0");
           lbl.text = t;
-          const digitImgs = getImg("digitImgs") as Record<string, HTMLImageElement>;
+          const digitImgs = getImg("digitImgs") as Record<
+            string,
+            HTMLImageElement
+          >;
           lbl.imgs = t.split("").map((ch) => digitImgs[ch]);
         }
 
@@ -175,7 +205,10 @@ export default function useZombiefishEngine() {
     if (cur.phase === "gameover") {
       if (!accuracyLabel.current) {
         const pctImg = getImg("pctImg") as HTMLImageElement;
-        const digitImgs = getImg("digitImgs") as Record<string, HTMLImageElement>;
+        const digitImgs = getImg("digitImgs") as Record<
+          string,
+          HTMLImageElement
+        >;
         const scale = 1;
         const initImgs = [digitImgs["0"], pctImg];
         const totalWidth = initImgs.reduce(
@@ -190,6 +223,10 @@ export default function useZombiefishEngine() {
             fade: false,
             x: (cur.dims.width - totalWidth) / 2,
             y: cur.dims.height / 2,
+            onClick: () => {
+              resetGame();
+              startSplash();
+            },
           },
           assetMgr
         );
@@ -203,12 +240,15 @@ export default function useZombiefishEngine() {
           displayAccuracy.current += 1;
           const pct = Math.min(displayAccuracy.current, finalAccuracy.current);
           const str = pct.toString();
-          const digitImgs = getImg("digitImgs") as Record<string, HTMLImageElement>;
+          const digitImgs = getImg("digitImgs") as Record<
+            string,
+            HTMLImageElement
+          >;
           const pctImg = getImg("pctImg") as HTMLImageElement;
           lbl.text = `${str}%`;
           lbl.imgs = [...str.split("").map((ch) => digitImgs[ch]), pctImg];
           const totalWidth = lbl.imgs.reduce(
-            (w, img) => w + img.width * lbl.scale + 2,
+            (w, img) => w + (img?.width || 0) * lbl.scale + 2,
             0
           );
           lbl.x = (cur.dims.width - totalWidth) / 2;
@@ -221,14 +261,64 @@ export default function useZombiefishEngine() {
         f.isSkeleton ? "skeletonImgs" : "fishImgs"
       ) as Record<string, HTMLImageElement>;
       const img = imgMap[f.kind as keyof typeof imgMap];
-      if (img) ctx.drawImage(img, f.x, f.y, FISH_SIZE, FISH_SIZE);
+      if (!img) return;
+      ctx.save();
+      ctx.translate(f.x + FISH_SIZE / 2, f.y + FISH_SIZE / 2);
+      if (f.vx < 0) ctx.scale(-1, 1);
+      ctx.rotate(f.angle);
+      ctx.drawImage(img, -FISH_SIZE / 2, -FISH_SIZE / 2, FISH_SIZE, FISH_SIZE);
+      ctx.restore();
     });
 
     cur.textLabels = drawTextLabels({
       textLabels: cur.textLabels,
       ctx,
       cull: true,
-    });
+    }); 
+    
+    // cull fish that have moved completely off-screen
+    const { width, height } = cur.dims;
+    const margin = FISH_SIZE * 2;
+    cur.fish = cur.fish.filter(
+      (f) =>
+        f.x > -margin &&
+        f.x < width + margin &&
+        f.y > -margin &&
+        f.y < height + margin
+    );
+
+    // draw fish and text labels
+    if (canvas && ctx) {
+      canvas.width = cur.dims.width;
+      canvas.height = cur.dims.height;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      cur.fish.forEach((f) => {
+        const imgMap = getImg(
+          f.isSkeleton ? "skeletonImgs" : "fishImgs"
+        ) as Record<string, HTMLImageElement>;
+        const img = imgMap[f.kind as keyof typeof imgMap];
+        if (!img) return;
+        ctx.save();
+        ctx.translate(f.x + FISH_SIZE / 2, f.y + FISH_SIZE / 2);
+        if (f.vx < 0) ctx.scale(-1, 1);
+        ctx.rotate(f.angle);
+        ctx.drawImage(
+          img,
+          -FISH_SIZE / 2,
+          -FISH_SIZE / 2,
+          FISH_SIZE,
+          FISH_SIZE
+        );
+        ctx.restore();
+      });
+
+      cur.textLabels = drawTextLabels({
+        textLabels: cur.textLabels,
+        ctx,
+        cull: true,
+      });
+    }
 
     cur.accuracy = cur.shots > 0 ? (cur.hits / cur.shots) * 100 : 0;
 
@@ -269,11 +359,45 @@ export default function useZombiefishEngine() {
         assetMgr
       ),
     ];
-    setUI({ phase: cur.phase, timer: cur.timer, shots: cur.shots, hits: cur.hits, accuracy: cur.accuracy });
+    setUI({
+      phase: cur.phase,
+      timer: cur.timer,
+      shots: cur.shots,
+      hits: cur.hits,
+      accuracy: cur.accuracy,
+    });
 
-    if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+    if (animationFrameRef.current)
+      cancelAnimationFrame(animationFrameRef.current);
     animationFrameRef.current = requestAnimationFrame(loop);
   }, [loop, assetMgr]);
+
+  // reset back to title screen
+  const resetGame = useCallback(() => {
+    const cur = state.current;
+    cur.phase = "title";
+    cur.timer = GAME_TIME;
+    cur.shots = 0;
+    cur.hits = 0;
+    cur.accuracy = 0;
+    cur.fish = [];
+
+    textLabels.current = [];
+    accuracyLabel.current = null;
+    finalAccuracy.current = 0;
+    displayAccuracy.current = 0;
+    frameRef.current = 0;
+
+    setUI({
+      phase: cur.phase,
+      timer: cur.timer,
+      shots: cur.shots,
+      hits: cur.hits,
+      accuracy: cur.accuracy,
+    });
+    if (animationFrameRef.current)
+      cancelAnimationFrame(animationFrameRef.current);
+  }, []);
 
   // handle left click – detect and affect fish
   const handleClick = useCallback(
@@ -285,20 +409,18 @@ export default function useZombiefishEngine() {
         const lbl = accuracyLabel.current;
         if (!canvas || !lbl) return;
         const rect = canvas.getBoundingClientRect();
-        const x =
-          ((e.clientX - rect.left) / rect.width) * cur.dims.width;
-        const y =
-          ((e.clientY - rect.top) / rect.height) * cur.dims.height;
+        const x = ((e.clientX - rect.left) / rect.width) * cur.dims.width;
+        const y = ((e.clientY - rect.top) / rect.height) * cur.dims.height;
         const w = lbl.imgs.reduce(
-          (sum, img) => sum + img.width * lbl.scale + 2,
+          (sum, img) => sum + (img?.width || 0) * lbl.scale + 2,
           0
         );
         const h = lbl.imgs.reduce(
-          (max, img) => Math.max(max, img.height * lbl.scale),
+          (max, img) => Math.max(max, (img?.height || 0) * lbl.scale || 0),
           0
         );
         if (x >= lbl.x && x <= lbl.x + w && y >= lbl.y && y <= lbl.y + h) {
-          resetGame();
+          lbl.onClick?.();
         }
         return;
       }
@@ -306,6 +428,7 @@ export default function useZombiefishEngine() {
       if (cur.phase !== "playing") return;
 
       cur.shots += 1;
+      audio.play("shoot");
       const canvas = canvasRef.current;
       if (!canvas) {
         cur.accuracy = cur.shots > 0 ? (cur.hits / cur.shots) * 100 : 0;
@@ -320,10 +443,8 @@ export default function useZombiefishEngine() {
       }
 
       const rect = canvas.getBoundingClientRect();
-      const x =
-        ((e.clientX - rect.left) / rect.width) * cur.dims.width;
-      const y =
-        ((e.clientY - rect.top) / rect.height) * cur.dims.height;
+      const x = ((e.clientX - rect.left) / rect.width) * cur.dims.width;
+      const y = ((e.clientY - rect.top) / rect.height) * cur.dims.height;
 
       for (let i = cur.fish.length - 1; i >= 0; i--) {
         const f = cur.fish[i];
@@ -338,22 +459,23 @@ export default function useZombiefishEngine() {
             cur.timer += 3 * 60;
             makeText("+3", f.x, f.y);
             cur.fish.splice(i, 1);
-            rewindAndPlayAudio(killSfx);
+            audio.play("bonus");
           } else if (f.kind === "grey_long_a" || f.kind === "grey_long_b") {
             cur.timer = Math.max(0, cur.timer - 5 * 60);
             makeText("-5", f.x, f.y);
             const gid = f.groupId;
             cur.fish = cur.fish.filter((fish) => fish.groupId !== gid);
-            rewindAndPlayAudio(killSfx);
+            audio.play("hit");
           } else if (f.isSkeleton) {
             f.health = (f.health ?? 0) - 1;
+            audio.play("skeleton");
             if ((f.health ?? 0) <= 0) {
               cur.fish.splice(i, 1);
-              rewindAndPlayAudio(killSfx);
             }
           } else {
             f.isSkeleton = true;
             f.health = 1;
+            audio.play("skeleton");
           }
           break;
         }
@@ -368,7 +490,7 @@ export default function useZombiefishEngine() {
         accuracy: cur.accuracy,
       });
     },
-    [killSfx, makeText, resetGame]
+    [audio, makeText]
   );
 
   // suppress context menu
@@ -376,100 +498,76 @@ export default function useZombiefishEngine() {
     e.preventDefault();
   }, []);
 
-  // reset back to title screen
-  const resetGame = useCallback(() => {
-    const cur = state.current;
-    cur.phase = "title";
-    cur.timer = GAME_TIME;
-    cur.shots = 0;
-    cur.hits = 0;
-    cur.accuracy = 0;
-    cur.fish = [];
-
-    state.current.textLabels = [];
-    accuracyLabel.current = null;
-    finalAccuracy.current = 0;
-    displayAccuracy.current = 0;
-    frameRef.current = 0;
-
-    setUI({
-      phase: cur.phase,
-      timer: cur.timer,
-      shots: cur.shots,
-      hits: cur.hits,
-      accuracy: cur.accuracy,
-    });
-    if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
-  }, []);
-
   // spawn a group of fish just outside the viewport edges
-  const spawnFish = useCallback(
-    (kind: string, count: number): Fish[] => {
-      const spawned: Fish[] = [];
-      const { width, height } = state.current.dims;
+  const spawnFish = useCallback((kind: string, count: number): Fish[] => {
+    const spawned: Fish[] = [];
+    const { width, height } = state.current.dims;
 
-      const specialSingles = ["brown", "grey_long_a", "grey_long_b"];
-      const specialPairs = ["grey_long"];
+    const specialSingles = ["brown", "grey_long_a", "grey_long_b"];
+    const specialPairs = ["grey_long"];
 
-      if (specialSingles.includes(kind) || specialPairs.includes(kind)) count = 1;
+    if (specialSingles.includes(kind) || specialPairs.includes(kind)) count = 1;
 
-      // decide side and velocity
-      const fromLeft = Math.random() < 0.5;
-      const baseVx = (Math.random() * 2 + 1) * (fromLeft ? 1 : -1);
-      const startX = fromLeft ? -FISH_SIZE : width + FISH_SIZE;
+    // decide side and velocity
+    const fromLeft = Math.random() < 0.5;
+    const baseVx = (Math.random() * 2 + 1) * (fromLeft ? 1 : -1);
+    const startX = fromLeft ? -FISH_SIZE : width + FISH_SIZE;
 
-      // helper to create a fish
-      const makeFish = (k: string, xOffset = 0, groupId?: number) => {
-        const y = Math.random() * height;
-        return {
+    // helper to create a fish
+    const makeFish = (k: string, xOffset = 0, groupId?: number) => {
+      const y = Math.random() * height;
+      return {
+        id: nextFishId.current++,
+        kind: k,
+        x: startX + xOffset,
+        y,
+        vx: baseVx,
+        vy: 0,
+        ...(k === "skeleton" ? { health: 2 } : {}),
+        isSkeleton: k === "skeleton",
+        ...(groupId !== undefined ? { groupId } : {}),
+      } as Fish;
+    };
+
+    if (specialPairs.includes(kind)) {
+      const groupId = nextGroupId.current++;
+      const pairStart = fromLeft ? -2 * FISH_SIZE : width + 2 * FISH_SIZE;
+      const y = Math.random() * height;
+      ["grey_long_a", "grey_long_b"].forEach((name, idx) => {
+        const x = pairStart + (fromLeft ? idx * FISH_SIZE : -idx * FISH_SIZE);
+        spawned.push({
           id: nextFishId.current++,
-          kind: k,
-          x: startX + xOffset,
+          kind: name,
+          x,
           y,
           vx: baseVx,
           vy: 0,
-          ...(k === "skeleton" ? { health: 2 } : {}),
-          isSkeleton: k === "skeleton",
+          angle: 0,
+          isSkeleton: false,
+          groupId,
+          ...(kind === "skeleton" ? { health: 2 } : {}),
+          isSkeleton: kind === "skeleton",
           ...(groupId !== undefined ? { groupId } : {}),
-        } as Fish;
-      };
-
-      if (specialPairs.includes(kind)) {
-        const groupId = nextGroupId.current++;
-        const pairStart = fromLeft ? -2 * FISH_SIZE : width + 2 * FISH_SIZE;
-        const y = Math.random() * height;
-        ["grey_long_a", "grey_long_b"].forEach((name, idx) => {
-          const x = pairStart + (fromLeft ? idx * FISH_SIZE : -idx * FISH_SIZE);
-          spawned.push({
-            id: nextFishId.current++,
-            kind: name,
-            x,
-            y,
-            vx: baseVx,
-            vy: 0,
-            groupId,
-            isSkeleton: false,
-          });
-        });
-      } else {
+        } as Fish);
+      });
+    } else {
         const groupId = specialSingles.includes(kind)
           ? undefined
           : nextGroupId.current++;
         for (let i = 0; i < count; i++) {
           spawned.push(makeFish(kind, 0, groupId));
         }
-      }
+    }
 
-      state.current.fish.push(...spawned);
-      return spawned;
-    },
-    []
-  );
+    state.current.fish.push(...spawned);
+    return spawned;
+  }, []);
 
   // cleanup on unmount
   useEffect(() => {
     return () => {
-      if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+      if (animationFrameRef.current)
+        cancelAnimationFrame(animationFrameRef.current);
     };
   }, []);
 
