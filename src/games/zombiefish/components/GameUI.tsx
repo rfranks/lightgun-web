@@ -7,7 +7,6 @@ export interface GameUIProps {
   canvasRef: React.RefObject<HTMLCanvasElement | null>;
   handleClick: (e: React.MouseEvent) => void;
   handleContext: (e: React.MouseEvent) => void;
-  resetGame: () => void;
   getImg: (
     key: string
   ) =>
@@ -25,9 +24,8 @@ export function GameUI({
   canvasRef,
   handleClick,
   handleContext,
-  resetGame,
 }: GameUIProps) {
-  const { phase, timer, shots, hits, accuracy } = ui;
+  const { timer, shots, hits } = ui;
 
   return (
     <Box position="relative" width="100vw" height="100dvh">
@@ -50,25 +48,6 @@ export function GameUI({
         <div>Hits: {hits}</div>
       </Box>
 
-      {/* Game over overlay */}
-      {phase === "gameover" && (
-        <Box
-          position="absolute"
-          top="50%"
-          left="50%"
-          sx={{
-            transform: "translate(-50%, -50%)",
-            color: "white",
-            fontSize: 48,
-            cursor: "pointer",
-            textAlign: "center",
-          }}
-          onClick={resetGame}
-        >
-          <div>Game Over</div>
-          <div style={{ fontSize: 24 }}>Accuracy: {accuracy.toFixed(0)}%</div>
-        </Box>
-      )}
     </Box>
   );
 }

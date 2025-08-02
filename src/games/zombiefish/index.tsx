@@ -15,7 +15,6 @@ export default function Game() {
     canvasRef,
     handleClick,
     handleContext,
-    resetGame,
     getImg,
     startSplash,
     ready: assetsReady,
@@ -58,7 +57,6 @@ export default function Game() {
       canvasRef={canvasRef}
       handleClick={handleClick}
       handleContext={handleContext}
-      resetGame={resetGame}
       getImg={getImg}
     />
   );
