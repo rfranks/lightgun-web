@@ -817,7 +817,7 @@ export default function useGameEngine() {
         const leader = makeFish(kind, x, y, groupId);
         spawned.push(leader);
         for (let i = 1; i < count; i++) {
-          const member = makeFish(kind, 0, groupId);
+          const member = makeFish(kind, leader.x, leader.y, groupId);
           member.x = leader.x + (Math.random() - 0.5) * FISH_SIZE;
           member.y = Math.min(
             Math.max(leader.y + (Math.random() - 0.5) * FISH_SIZE, 0),
