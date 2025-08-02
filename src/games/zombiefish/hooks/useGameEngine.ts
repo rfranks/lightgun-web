@@ -6,12 +6,10 @@ import { drawTextLabels, newTextLabel } from "@/utils/ui";
 
 import type { GameState, GameUIState, Fish, Bubble } from "../types";
 import {
-  FISH_SPEED_MIN,
-  FISH_SPEED_MAX,
   SKELETON_SPEED,
   TIME_BONUS_BROWN_FISH,
   TIME_PENALTY_GREY_LONG,
-  DEFAULT_CURSOR, 
+  DEFAULT_CURSOR,
   SHOT_CURSOR
 } from "../constants";
 import type { AssetMgr } from "@/types/ui";
@@ -700,6 +698,9 @@ export default function useGameEngine() {
     e.preventDefault();
   }, []);
 
+  // factor that ramps up difficulty as time runs out
+  const difficultyFactor = () => 1 + (1 - state.current.timer / GAME_TIME);
+
   // spawn a group of fish just outside the viewport edges
   const spawnFish = useCallback((kind: string, count: number): Fish[] => {
     const spawned: Fish[] = [];
@@ -719,8 +720,9 @@ export default function useGameEngine() {
 
     // generate a velocity based on the entry edge
     const genVelocity = () => {
-      const main = Math.random() * 2 + 1;
-      const cross = Math.random() * 2 - 1;
+      const factor = difficultyFactor();
+      const main = (Math.random() * 2 + 1) * factor;
+      const cross = (Math.random() * 2 - 1) * factor;
       switch (edge) {
         case 0:
           return { vx: main, vy: cross };
@@ -840,7 +842,8 @@ export default function useGameEngine() {
     const basicKinds = ["blue", "green", "grey", "orange", "pink", "red"];
     let timer: ReturnType<typeof setTimeout>;
     const schedule = () => {
-      const delay = 1000 + Math.random() * 2000;
+      const factor = difficultyFactor();
+      const delay = (1000 + Math.random() * 2000) / factor;
       timer = setTimeout(() => {
         if (state.current.phase !== "playing") return;
         const kind = basicKinds[Math.floor(Math.random() * basicKinds.length)];
