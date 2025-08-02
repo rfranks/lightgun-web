@@ -996,6 +996,7 @@ export default function useGameEngine() {
       },
       assetMgr
     );
+    updateDigitLabel(timerLabel.current, cur.timer, 2, ":");
 
     const shotsText = newTextLabel(
       {
@@ -1091,7 +1092,7 @@ export default function useGameEngine() {
     if (animationFrameRef.current)
       cancelAnimationFrame(animationFrameRef.current);
     animationFrameRef.current = requestAnimationFrame(loop);
-  }, [loop, assetMgr, getImg]);
+  }, [loop, assetMgr, getImg, updateDigitLabel]);
 
   // reset back to title screen
   const resetGame = useCallback(() => {
