@@ -1,4 +1,4 @@
-import type { Dims } from "@/types/ui";
+import type { Dims, TextLabel } from "@/types/ui";
 
 // Game phases for the simple zombiefish prototype
 export type GamePhase = "title" | "playing" | "gameover";
@@ -20,8 +20,6 @@ export interface Fish {
   groupId?: number;
   /** Whether this fish has turned into a skeleton */
   isSkeleton?: boolean;
-  /** Remaining health for skeleton fish */
-  health?: number;
 }
 
 // State exposed to the UI layer
@@ -40,4 +38,6 @@ export interface GameState extends GameUIState {
   dims: Dims;
   /** Active fish currently in the scene */
   fish: Fish[];
+  /** Floating text labels currently displayed */
+  textLabels: TextLabel[];
 }

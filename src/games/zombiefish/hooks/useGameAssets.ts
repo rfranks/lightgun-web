@@ -146,6 +146,24 @@ export function useGameAssets(): {
     assetRefs.current.pctImg = loadImg(
       "/assets/fish/PNG/HUDText/hud_percent.png"
     );
+    assetRefs.current.plusImg = loadImg(
+      "/assets/fish/PNG/HUDText/hud_plus.png"
+    );
+
+    // Generate a simple minus sign dynamically since assets lack one
+    const minusCanvas = document.createElement("canvas");
+    minusCanvas.width = assetRefs.current.plusImg.width || 32;
+    minusCanvas.height = assetRefs.current.plusImg.height || 32;
+    const mctx = minusCanvas.getContext("2d");
+    if (mctx) {
+      mctx.fillStyle = "white";
+      const barHeight = Math.max(1, Math.floor(minusCanvas.height / 5));
+      const y = Math.floor((minusCanvas.height - barHeight) / 2);
+      mctx.fillRect(0, y, minusCanvas.width, barHeight);
+    }
+    const minusImg = new window.Image();
+    minusImg.src = minusCanvas.toDataURL();
+    assetRefs.current.minusImg = minusImg;
 
     // LETTER IMAGES (none provided in assets, but keep key for API parity)
     assetRefs.current.letterImgs = {};
