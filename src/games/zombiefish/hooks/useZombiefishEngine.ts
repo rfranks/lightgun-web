@@ -8,6 +8,8 @@ import type { GameState, GameUIState, Fish } from "../types";
 const GAME_TIME = 60 * 30; // 30 seconds in frames
 
 const FISH_SIZE = 128;
+const SKELETON_SPEED = 2;
+const SKELETON_CONVERT_DISTANCE = FISH_SIZE / 2;
 
 export default function useZombiefishEngine() {
   // canvas and animation frame refs
@@ -47,11 +49,59 @@ export default function useZombiefishEngine() {
     state.current.dims = dims;
   }, [dims]);
 
-  // main loop updates timer and fish positions
+  const updateFish = useCallback(() => {
+    const cur = state.current;
+
+    // move all fish
+    cur.fish.forEach((f) => {
+      f.x += f.vx;
+      f.y += f.vy;
+    });
+
+    // skeleton behavior
+    cur.fish.forEach((s) => {
+      if (s.kind !== "skeleton") return;
+
+      let nearest: Fish | undefined;
+      let nearestDist = Infinity;
+
+      cur.fish.forEach((t) => {
+        if (t.kind === "skeleton") return;
+        const dx = t.x - s.x;
+        const dy = t.y - s.y;
+        const dist2 = dx * dx + dy * dy;
+        if (dist2 < nearestDist) {
+          nearestDist = dist2;
+          nearest = t;
+        }
+      });
+
+      if (nearest) {
+        const dx = nearest.x - s.x;
+        const dy = nearest.y - s.y;
+        const dist = Math.hypot(dx, dy);
+        if (dist > 0) {
+          s.vx = (dx / dist) * SKELETON_SPEED;
+          s.vy = (dy / dist) * SKELETON_SPEED;
+        }
+        if (dist < SKELETON_CONVERT_DISTANCE) {
+          nearest.kind = "skeleton";
+          nearest.health = 2;
+          nearest.vx = 0;
+          nearest.vy = 0;
+          delete nearest.groupId;
+        }
+      }
+    });
+  }, []);
+
+  // main loop updates timer and fish
   const loop = useCallback(() => {
     const cur = state.current;
     if (cur.phase !== "playing") return;
 
+    updateFish();
+    
     // decrement timer and end game when it hits zero
     cur.timer = Math.max(0, cur.timer - 1);
     if (cur.timer === 0) {
@@ -77,7 +127,7 @@ export default function useZombiefishEngine() {
 
     setUI({ phase: cur.phase, timer: cur.timer, shots: cur.shots, hits: cur.hits });
     animationFrameRef.current = requestAnimationFrame(loop);
-  }, []);
+  }, [updateFish]);
 
   // start the game
   const startSplash = useCallback(() => {
@@ -187,7 +237,8 @@ export default function useZombiefishEngine() {
           y,
           vx: baseVx,
           vy: 0,
-          isSkeleton: false,
+          ...(k === "skeleton" ? { health: 2 } : {}),
+          isSkeleton: k === "skeleton",
           ...(groupId !== undefined ? { groupId } : {}),
         } as Fish;
       };
