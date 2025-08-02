@@ -6,8 +6,6 @@ import { drawTextLabels, newTextLabel } from "@/utils/ui";
 
 import type { GameState, GameUIState, Fish, Bubble } from "../types";
 import {
-  FISH_SPAWN_INTERVAL_MIN,
-  FISH_SPAWN_INTERVAL_MAX,
   SKELETON_SPEED,
   TIME_BONUS_BROWN_FISH,
   TIME_PENALTY_GREY_LONG,
@@ -378,6 +376,7 @@ export default function useGameEngine() {
         const lbl = accuracyLabel.current;
         if (displayAccuracy.current < finalAccuracy.current) {
           displayAccuracy.current += 1;
+          audio.play("tick");
           const pct = Math.min(displayAccuracy.current, finalAccuracy.current);
           const str = pct.toString();
           const digitImgs = getImg("digitImgs") as Record<
