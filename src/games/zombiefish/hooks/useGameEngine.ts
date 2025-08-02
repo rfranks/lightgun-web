@@ -440,10 +440,6 @@ export default function useGameEngine() {
             fade: false,
             x: (cur.dims.width - totalWidth) / 2,
             y: cur.dims.height / 2,
-            onClick: () => {
-              resetGame();
-              startSplash();
-            },
           },
           assetMgr
         );
@@ -894,11 +890,11 @@ export default function useGameEngine() {
           0
         );
         const h = lbl.imgs.reduce(
-          (max, img) => Math.max(max, (img?.height || 0) * lbl.scale || 0),
+          (max, img) => Math.max(max, (img?.height || 0) * lbl.scale),
           0
         );
         if (x >= lbl.x && x <= lbl.x + w && y >= lbl.y && y <= lbl.y + h) {
-          lbl.onClick?.();
+          resetGame();
         }
         return;
       }
@@ -1004,7 +1000,7 @@ export default function useGameEngine() {
         cursor: cur.cursor,
       });
     },
-    [audio, makeText, updateDigitLabel]
+    [audio, makeText, updateDigitLabel, resetGame]
   );
 
   // suppress context menu
