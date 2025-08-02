@@ -442,56 +442,53 @@ export default function useGameEngine() {
 
     // skeleton behavior
     const immuneKinds = new Set(["brown", "grey_long_a", "grey_long_b"]);
-    const skeletonSpeed = SKELETON_SPEED + cur.conversions * 0.05;
-    const detectionRadius2 =
-      SKELETON_DETECTION_RADIUS * SKELETON_DETECTION_RADIUS;
+    const detectionRadius2 = SKELETON_DETECTION_RADIUS ** 2;
     let skeletonCount = cur.fish.filter((f) => f.isSkeleton || f.pendingSkeleton)
       .length;
     cur.fish.forEach((s) => {
       if (!s.isSkeleton) return;
 
-      let nearest: Fish | undefined;
-      let nearestDist2 = detectionRadius2;
-
-      cur.fish.forEach((t) => {
-        if (t.isSkeleton) return;
-        if (t.pendingSkeleton) return;
-        if (immuneKinds.has(t.kind)) return;
+      let target: Fish | undefined;
+      let targetDist2 = detectionRadius2;
+      for (const t of cur.fish) {
+        if (t.isSkeleton || t.pendingSkeleton) continue;
+        if (immuneKinds.has(t.kind)) continue;
         const dx = t.x - s.x;
         const dy = t.y - s.y;
         const dist2 = dx * dx + dy * dy;
-        if (dist2 < nearestDist2) {
-          nearestDist2 = dist2;
-          nearest = t;
+        if (dist2 < targetDist2) {
+          targetDist2 = dist2;
+          target = t;
         }
-      });
+      }
 
-      if (nearest) {
-        const dx = nearest.x - s.x;
-        const dy = nearest.y - s.y;
-        const dist = Math.sqrt(nearestDist2);
-        if (dist > 0) {
-          s.vx = (dx / dist) * skeletonSpeed;
-          s.vy = (dy / dist) * skeletonSpeed;
-        }
-        if (
-          dist < SKELETON_CONVERT_DISTANCE &&
-          skeletonCount < MAX_SKELETONS &&
-          !nearest.pendingSkeleton
-        ) {
-          // Spawn a brief text effect before converting the fish
-          makeText("POOF", nearest.x, nearest.y);
-          nearest.pendingSkeleton = true;
-          nearest.flashTimer = CONVERT_FLASH_FRAMES;
-          nearest.vx = 0;
-          nearest.vy = 0;
-          nearest.frame = 0;
-          nearest.frameCounter = 0;
-          delete nearest.groupId;
-          cur.conversions += 1;
-          audio.play("convert");
-          skeletonCount += 1;
-        }
+      if (!target) return;
+
+      const dx = target.x - s.x;
+      const dy = target.y - s.y;
+      const dist = Math.sqrt(targetDist2);
+      if (dist > 0) {
+        s.vx = (dx / dist) * SKELETON_SPEED;
+        s.vy = (dy / dist) * SKELETON_SPEED;
+      }
+
+      if (
+        dist < SKELETON_CONVERT_DISTANCE &&
+        skeletonCount < MAX_SKELETONS &&
+        !target.pendingSkeleton
+      ) {
+        // Spawn a brief text effect before converting the fish
+        makeText("POOF", target.x, target.y);
+        target.pendingSkeleton = true;
+        target.flashTimer = CONVERT_FLASH_FRAMES;
+        target.vx = 0;
+        target.vy = 0;
+        target.frame = 0;
+        target.frameCounter = 0;
+        delete target.groupId;
+        cur.conversions += 1;
+        audio.play("convert");
+        skeletonCount += 1;
       }
     });
 
