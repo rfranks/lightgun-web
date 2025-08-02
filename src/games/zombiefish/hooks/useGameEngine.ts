@@ -8,6 +8,8 @@ import type { GameState, GameUIState, Fish, Bubble } from "../types";
 import {
   FISH_SPEED_MIN,
   FISH_SPEED_MAX,
+  FISH_SPAWN_INTERVAL_MIN,
+  FISH_SPAWN_INTERVAL_MAX,
   SKELETON_SPEED,
   TIME_BONUS_BROWN_FISH,
   TIME_PENALTY_GREY_LONG,
@@ -322,10 +324,6 @@ export default function useGameEngine() {
       return;
     }
 
-    canvas.width = cur.dims.width;
-    canvas.height = cur.dims.height;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
     if (cur.phase === "playing") {
       updateFish();
 
@@ -464,6 +462,7 @@ export default function useGameEngine() {
             f.y < height + margin
         );
       }
+
 
       if (cur.phase === "paused") {
         if (!pausedLabel.current) {
