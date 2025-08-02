@@ -15,4 +15,4 @@ Special fish are:
 * public/assets/fish/PNG/Objects/Fish/fish_grey_long_a.png (tail->torso, aka L)+ public/assets/fish/PNG/Objects/Fish/fish_grey_long_b.png (torso->head, aka R) to form grey fish, it subtracts 5 secs with a fading floating textlabel.
 Special fish do not swim in groups.
 
-Propose 20 new tasks to implement the new game zombiefish as a canvas-driven click-based lightgun-shooter game.
+Propose 20 new tasks that further the implementation of the new game zombiefish as a canvas-driven click-based lightgun-shooter game.

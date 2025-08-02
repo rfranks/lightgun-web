@@ -8,7 +8,8 @@ import { AudioMgr } from "@/types/audio";
 export function useGameAudio(): AudioMgr {
   // Load audio clips via <audio> elements
   const audios = useMemo<Record<string, HTMLAudioElement>>(() => {
-    if (typeof Audio === "undefined") return {} as Record<string, HTMLAudioElement>;
+    if (typeof Audio === "undefined")
+      return {} as Record<string, HTMLAudioElement>;
 
     const shoot = document.createElement("audio");
     shoot.src = "/audio/laser4.ogg";
@@ -65,4 +66,3 @@ export function useGameAudio(): AudioMgr {
     [play, pause, pauseAll]
   );
 }
-

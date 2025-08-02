@@ -18,7 +18,7 @@ const FISH_SIZE = 128;
 const SKELETON_SPEED = 2;
 const SKELETON_CONVERT_DISTANCE = FISH_SIZE / 2;
 
-export default function useZombiefishEngine() {
+export default function useGameEngine() {
   // canvas and animation frame refs
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationFrameRef = useRef<number | null>(null);
@@ -80,7 +80,8 @@ export default function useZombiefishEngine() {
     const cur = state.current;
 
     // For each group, nudge members toward the group's average velocity.
-    const groups: Record<number, { vx: number; vy: number; members: Fish[] }> = {};
+    const groups: Record<number, { vx: number; vy: number; members: Fish[] }> =
+      {};
     cur.fish.forEach((f) => {
       if (f.groupId === undefined) return;
       if (!groups[f.groupId]) {
@@ -274,8 +275,8 @@ export default function useZombiefishEngine() {
       textLabels: cur.textLabels,
       ctx,
       cull: true,
-    }); 
-    
+    });
+
     // cull fish that have moved completely off-screen
     const { width, height } = cur.dims;
     const margin = FISH_SIZE * 2;
@@ -549,12 +550,12 @@ export default function useZombiefishEngine() {
         } as Fish);
       });
     } else {
-        const groupId = specialSingles.includes(kind)
-          ? undefined
-          : nextGroupId.current++;
-        for (let i = 0; i < count; i++) {
-          spawned.push(makeFish(kind, 0, groupId));
-        }
+      const groupId = specialSingles.includes(kind)
+        ? undefined
+        : nextGroupId.current++;
+      for (let i = 0; i < count; i++) {
+        spawned.push(makeFish(kind, 0, groupId));
+      }
     }
 
     state.current.fish.push(...spawned);
