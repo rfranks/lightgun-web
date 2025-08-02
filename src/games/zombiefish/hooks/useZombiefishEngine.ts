@@ -119,6 +119,11 @@ export default function useZombiefishEngine() {
         }
       }
     });
+
+    // update orientation angle for all fish based on their velocity
+    cur.fish.forEach((f) => {
+      f.angle = Math.atan2(f.vy, Math.abs(f.vx));
+    });
   }, []);
 
   // main loop updates timer and fish
@@ -238,7 +243,13 @@ export default function useZombiefishEngine() {
         f.isSkeleton ? "skeletonImgs" : "fishImgs"
       ) as Record<string, HTMLImageElement>;
       const img = imgMap[f.kind as keyof typeof imgMap];
-      if (img) ctx.drawImage(img, f.x, f.y, FISH_SIZE, FISH_SIZE);
+      if (!img) return;
+      ctx.save();
+      ctx.translate(f.x + FISH_SIZE / 2, f.y + FISH_SIZE / 2);
+      if (f.vx < 0) ctx.scale(-1, 1);
+      ctx.rotate(f.angle);
+      ctx.drawImage(img, -FISH_SIZE / 2, -FISH_SIZE / 2, FISH_SIZE, FISH_SIZE);
+      ctx.restore();
     });
 
     // cull fish that have moved completely off-screen
@@ -263,7 +274,13 @@ export default function useZombiefishEngine() {
           f.isSkeleton ? "skeletonImgs" : "fishImgs"
         ) as Record<string, HTMLImageElement>;
         const img = imgMap[f.kind as keyof typeof imgMap];
-        if (img) ctx.drawImage(img, f.x, f.y, FISH_SIZE, FISH_SIZE);
+        if (!img) return;
+        ctx.save();
+        ctx.translate(f.x + FISH_SIZE / 2, f.y + FISH_SIZE / 2);
+        if (f.vx < 0) ctx.scale(-1, 1);
+        ctx.rotate(f.angle);
+        ctx.drawImage(img, -FISH_SIZE / 2, -FISH_SIZE / 2, FISH_SIZE, FISH_SIZE);
+        ctx.restore();
       });
 
       cur.textLabels = drawTextLabels({
@@ -498,8 +515,30 @@ export default function useZombiefishEngine() {
           y,
           vx: baseVx,
           vy: 0,
-          groupId,
-          isSkeleton: false,
+          angle: 0,
+          ...(k === "skeleton" ? { health: 2 } : {}),
+          isSkeleton: k === "skeleton",
+          ...(groupId !== undefined ? { groupId } : {}),
+        } as Fish;
+      };
+
+      if (specialPairs.includes(kind)) {
+        const groupId = nextGroupId.current++;
+        const pairStart = fromLeft ? -2 * FISH_SIZE : width + 2 * FISH_SIZE;
+        const y = Math.random() * height;
+        ["grey_long_a", "grey_long_b"].forEach((name, idx) => {
+          const x = pairStart + (fromLeft ? idx * FISH_SIZE : -idx * FISH_SIZE);
+          spawned.push({
+            id: nextFishId.current++,
+            kind: name,
+            x,
+            y,
+            vx: baseVx,
+            vy: 0,
+            angle: 0,
+            groupId,
+            isSkeleton: false,
+          });
         });
       });
     } else {
