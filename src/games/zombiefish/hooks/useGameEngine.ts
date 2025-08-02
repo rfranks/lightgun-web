@@ -71,6 +71,19 @@ const clampIncline = (vx: number, vy: number) => {
   return { vx: Math.max(Math.min(vx, limit), -limit), vy };
 };
 
+const orientFish = (vx: number, vy: number) => {
+  let angle = Math.atan2(vy, vx);
+  let flipped = false;
+  if (angle > Math.PI / 2) {
+    angle = Math.PI - angle;
+    flipped = true;
+  } else if (angle < -Math.PI / 2) {
+    angle = -Math.PI - angle;
+    flipped = true;
+  }
+  return { angle, flipped };
+};
+
 export default function useGameEngine() {
   // canvas and animation frame refs
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -529,8 +542,9 @@ export default function useGameEngine() {
       const limited = clampIncline(f.vx, f.vy + osc);
       f.x += limited.vx;
       f.y += limited.vy;
-      // angle is based solely on the fish's current velocity
-      f.angle = Math.atan2(f.vy, f.vx);
+      const orient = orientFish(limited.vx, limited.vy);
+      f.angle = orient.angle;
+      f.flipped = orient.flipped;
       if (f.isSkeleton) {
         f.x = Math.max(0, Math.min(f.x, width - FISH_SIZE));
         f.y = Math.max(0, Math.min(f.y, height - FISH_SIZE));
@@ -866,6 +880,9 @@ export default function useGameEngine() {
         }
         ctx.translate(pivotX, pivotY);
         ctx.rotate(f.angle);
+        if (f.flipped) {
+          ctx.scale(-1, 1);
+        }
         if (f.highlight) {
           const fishImgs = getImg("fishImgs") as Record<
             string,
@@ -1497,9 +1514,11 @@ export default function useGameEngine() {
       f.y = y;
       f.vx = vx;
       f.vy = vy;
+      const orient = orientFish(vx, vy);
+      f.angle = orient.angle;
+      f.flipped = orient.flipped;
       f.frame = 0;
       f.frameCounter = 0;
-      f.angle = 0;
       f.health = 0;
       f.hurtTimer = 0;
       f.isSkeleton = false;
@@ -1530,7 +1549,9 @@ export default function useGameEngine() {
           f.y = y;
           f.vx = vx;
           f.vy = vy;
-          f.angle = 0;
+          const orient = orientFish(vx, vy);
+          f.angle = orient.angle;
+          f.flipped = orient.flipped;
           f.health = 0;
           f.hurtTimer = 0;
           f.isSkeleton = false;
@@ -1550,7 +1571,9 @@ export default function useGameEngine() {
           f.y = y;
           f.vx = vx;
           f.vy = vy;
-          f.angle = 0;
+          const orient = orientFish(vx, vy);
+          f.angle = orient.angle;
+          f.flipped = orient.flipped;
           f.health = 0;
           f.hurtTimer = 0;
           f.isSkeleton = false;

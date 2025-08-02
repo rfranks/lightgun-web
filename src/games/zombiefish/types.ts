@@ -13,6 +13,8 @@ export interface Fish {
   vy: number;
   /** Current drawing angle in radians based on velocity. */
   angle: number;
+  /** Whether this fish should be drawn mirrored horizontally */
+  flipped?: boolean;
   /** Current animation frame index */
   frame: number;
   /** Counter used to time frame changes */
