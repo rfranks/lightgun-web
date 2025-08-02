@@ -803,7 +803,7 @@ export default function useGameEngine() {
             makeText(`-${TIME_PENALTY_GREY_LONG}`, f.x, f.y);
             const gid = f.groupId;
             cur.fish = cur.fish.filter((fish) => fish.groupId !== gid);
-            audio.play("hit");
+            audio.play("penalty");
           } else {
             if (!f.isSkeleton) {
               f.isSkeleton = true;
