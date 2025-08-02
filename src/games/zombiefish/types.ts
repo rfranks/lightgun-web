@@ -47,6 +47,10 @@ export interface Bubble {
   vy: number;
   /** Rendered size in pixels */
   size: number;
+  /** Horizontal wiggle amplitude */
+  amp: number;
+  /** Horizontal wiggle frequency */
+  freq: number;
 }
 
 // State exposed to the UI layer

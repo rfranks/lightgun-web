@@ -372,6 +372,8 @@ export default function useGameEngine() {
     const y = height + size;
     const vx = Math.random() * (BUBBLE_VX_MAX * 2) - BUBBLE_VX_MAX;
     const vy = Math.random() * (BUBBLE_VY_MAX - BUBBLE_VY_MIN) + BUBBLE_VY_MIN;
+    const amp = Math.random() * 2 + 0.5;
+    const freq = Math.random() * 0.05 + 0.01;
     state.current.bubbles.push({
       id: nextBubbleId.current++,
       kind,
@@ -380,6 +382,8 @@ export default function useGameEngine() {
       vx,
       vy,
       size,
+      amp,
+      freq,
     } as Bubble);
     if (state.current.bubbles.length > MAX_BUBBLES) {
       state.current.bubbles = state.current.bubbles.slice(-MAX_BUBBLES);
@@ -407,8 +411,8 @@ export default function useGameEngine() {
         bubbleSpawnRef.current = Math.floor(Math.random() * 60) + 30;
       }
       cur.bubbles.forEach((b) => {
-        // Update position using each bubble's velocity
-        b.x += b.vx;
+        // Update position using velocity and per-bubble wiggle
+        b.x += b.vx + Math.sin(frameRef.current * b.freq) * b.amp;
         b.y += b.vy;
       });
       cur.bubbles = cur.bubbles.filter(
