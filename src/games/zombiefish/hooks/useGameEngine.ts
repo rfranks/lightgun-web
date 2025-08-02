@@ -35,6 +35,7 @@ const BUBBLE_SIZE = 64;
 const ROCK_SPEED = [0.1, 0.2];
 const SEAWEED_SPEED = [0.2, 0.4];
 const MAX_BUBBLES = 20;
+const HURT_FRAMES = 10;
 const CONVERT_FLASH_FRAMES = 5;
 
 export default function useGameEngine() {
@@ -323,6 +324,7 @@ export default function useGameEngine() {
 
     // move fish with a slight oscillation and update their angle
     cur.fish.forEach((f) => {
+      if (f.hurtTimer && f.hurtTimer > 0) f.hurtTimer -= 1;
       const osc = Math.sin((frameRef.current + f.id) / 20) * 0.5;
       const vy = f.vy + osc;
       f.x += f.vx;
@@ -488,7 +490,10 @@ export default function useGameEngine() {
       if (f.vx < 0) ctx.scale(-1, 1);
       ctx.rotate(f.angle);
       ctx.drawImage(img, -FISH_SIZE / 2, -FISH_SIZE / 2, FISH_SIZE, FISH_SIZE);
-      if (f.flashTimer && f.flashTimer > 0) {
+      if (f.hurtTimer && f.hurtTimer > 0) {
+        ctx.fillStyle = "rgba(255,0,0,0.5)";
+        ctx.fillRect(-FISH_SIZE / 2, -FISH_SIZE / 2, FISH_SIZE, FISH_SIZE);
+      } else if (f.flashTimer && f.flashTimer > 0) {
         const overlay = getImg("fishFlashImg") as HTMLImageElement;
         if (overlay) {
           ctx.globalAlpha = f.flashTimer / CONVERT_FLASH_FRAMES;
@@ -534,7 +539,8 @@ export default function useGameEngine() {
           );
           cur.textLabels.push(pausedLabel.current);
         }
-      } else if (pausedLabel.current) {
+      } 
+    (pausedLabel.current) {
         cur.textLabels = cur.textLabels.filter((l) => l !== pausedLabel.current);
         pausedLabel.current = null;
       }
@@ -576,6 +582,10 @@ export default function useGameEngine() {
           FISH_SIZE,
           FISH_SIZE
         );
+        if (f.hurtTimer && f.hurtTimer > 0) {
+          ctx.fillStyle = "rgba(255,0,0,0.5)";
+          ctx.fillRect(-FISH_SIZE / 2, -FISH_SIZE / 2, FISH_SIZE, FISH_SIZE);
+        }
         ctx.restore();
       });
 
@@ -926,6 +936,7 @@ export default function useGameEngine() {
                 cur.fish.splice(i, 1);
                 audio.play("death");
               } else {
+                f.hurtTimer = HURT_FRAMES;
                 audio.play("skeleton");
               }
             }

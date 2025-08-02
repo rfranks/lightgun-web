@@ -15,6 +15,8 @@ export interface Fish {
   angle: number;
   /** Health points, used by skeleton fish. */
   health?: number;
+  /** Frames remaining for the red flash after taking damage. */
+  hurtTimer?: number;
   /**
    * Optional identifier tying fish together when spawned in a group.
    * Special fish spawn without a groupId.
