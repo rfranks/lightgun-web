@@ -1,12 +1,12 @@
 import { useRef, useState, useEffect, useCallback } from "react";
 import { useWindowSize } from "@/hooks/useWindowSize";
 import { useGameAssets } from "./useGameAssets";
-import { useAudio } from "@/hooks/useAudio";
-import { rewindAndPlayAudio } from "@/utils/audio";
+import { useGameAudio } from "./useGameAudio";
 import { drawTextLabels, newTextLabel } from "@/utils/ui";
 import type { GameState, GameUIState, Fish } from "../types";
 import type { AssetMgr } from "@/types/ui";
 import type { TextLabel } from "@/types/ui";
+import type { AudioMgr } from "@/types/audio";
 
 // Initial timer value (in seconds)
 const GAME_TIME = 99;
@@ -24,7 +24,7 @@ export default function useZombiefishEngine() {
   // assets
   const assetMgr = useGameAssets();
   const { getImg, ready } = assetMgr;
-  const killSfx = useAudio("/audio/splash.ogg");
+  const audio: AudioMgr = useGameAudio();
 
   // window dimensions
   const dims = useWindowSize();
@@ -116,6 +116,7 @@ export default function useZombiefishEngine() {
           nearest.vx = 0;
           nearest.vy = 0;
           delete nearest.groupId;
+          audio.play("skeleton");
         }
       }
     });
@@ -124,7 +125,7 @@ export default function useZombiefishEngine() {
     cur.fish.forEach((f) => {
       f.angle = Math.atan2(f.vy, Math.abs(f.vx));
     });
-  }, []);
+  }, [audio]);
 
   // main loop updates timer and fish
   const loop = useCallback(() => {
@@ -403,6 +404,7 @@ export default function useZombiefishEngine() {
       if (cur.phase !== "playing") return;
 
       cur.shots += 1;
+      audio.play("shoot");
       const canvas = canvasRef.current;
       if (!canvas) {
         cur.accuracy = cur.shots > 0 ? (cur.hits / cur.shots) * 100 : 0;
@@ -433,22 +435,23 @@ export default function useZombiefishEngine() {
             cur.timer += 3 * 60;
             makeText("+3", f.x, f.y);
             cur.fish.splice(i, 1);
-            rewindAndPlayAudio(killSfx);
+            audio.play("bonus");
           } else if (f.kind === "grey_long_a" || f.kind === "grey_long_b") {
             cur.timer = Math.max(0, cur.timer - 5 * 60);
             makeText("-5", f.x, f.y);
             const gid = f.groupId;
             cur.fish = cur.fish.filter((fish) => fish.groupId !== gid);
-            rewindAndPlayAudio(killSfx);
+            audio.play("hit");
           } else if (f.isSkeleton) {
             f.health = (f.health ?? 0) - 1;
+            audio.play("skeleton");
             if ((f.health ?? 0) <= 0) {
               cur.fish.splice(i, 1);
-              rewindAndPlayAudio(killSfx);
             }
           } else {
             f.isSkeleton = true;
             f.health = 1;
+            audio.play("skeleton");
           }
           break;
         }
@@ -463,13 +466,40 @@ export default function useZombiefishEngine() {
         accuracy: cur.accuracy,
       });
     },
-    [killSfx, makeText, resetGame]
+    [audio, makeText, resetGame]
   );
 
   // suppress context menu
   const handleContext = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
   }, []);
+
+  // reset back to title screen
+  const resetGame = useCallback(() => {
+    const cur = state.current;
+    cur.phase = "title";
+    cur.timer = GAME_TIME;
+    cur.shots = 0;
+    cur.hits = 0;
+    cur.accuracy = 0;
+    cur.fish = [];
+
+    textLabels.current = [];
+    accuracyLabel.current = null;
+    finalAccuracy.current = 0;
+    displayAccuracy.current = 0;
+    frameRef.current = 0;
+
+    setUI({
+      phase: cur.phase,
+      timer: cur.timer,
+      shots: cur.shots,
+      hits: cur.hits,
+      accuracy: cur.accuracy,
+    });
+    audio.pauseAll();
+    if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+  }, [audio]);
 
   // spawn a group of fish just outside the viewport edges
   const spawnFish = useCallback((kind: string, count: number): Fish[] => {
