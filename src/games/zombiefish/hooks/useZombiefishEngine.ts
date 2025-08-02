@@ -154,7 +154,10 @@ export default function useZombiefishEngine() {
         if (lbl) {
           const t = cur.timer.toString().padStart(2, "0");
           lbl.text = t;
-          const digitImgs = getImg("digitImgs") as Record<string, HTMLImageElement>;
+          const digitImgs = getImg("digitImgs") as Record<
+            string,
+            HTMLImageElement
+          >;
           lbl.imgs = t.split("").map((ch) => digitImgs[ch]);
         }
 
@@ -187,7 +190,10 @@ export default function useZombiefishEngine() {
     if (cur.phase === "gameover") {
       if (!accuracyLabel.current) {
         const pctImg = getImg("pctImg") as HTMLImageElement;
-        const digitImgs = getImg("digitImgs") as Record<string, HTMLImageElement>;
+        const digitImgs = getImg("digitImgs") as Record<
+          string,
+          HTMLImageElement
+        >;
         const scale = 1;
         const initImgs = [digitImgs["0"], pctImg];
         const totalWidth = initImgs.reduce(
@@ -215,12 +221,15 @@ export default function useZombiefishEngine() {
           displayAccuracy.current += 1;
           const pct = Math.min(displayAccuracy.current, finalAccuracy.current);
           const str = pct.toString();
-          const digitImgs = getImg("digitImgs") as Record<string, HTMLImageElement>;
+          const digitImgs = getImg("digitImgs") as Record<
+            string,
+            HTMLImageElement
+          >;
           const pctImg = getImg("pctImg") as HTMLImageElement;
           lbl.text = `${str}%`;
           lbl.imgs = [...str.split("").map((ch) => digitImgs[ch]), pctImg];
           const totalWidth = lbl.imgs.reduce(
-            (w, img) => w + img.width * lbl.scale + 2,
+            (w, img) => w + (img?.width || 0) * lbl.scale + 2,
             0
           );
           lbl.x = (cur.dims.width - totalWidth) / 2;
@@ -281,7 +290,10 @@ export default function useZombiefishEngine() {
       });
     }
 
-    textLabels.current = drawTextLabels({ textLabels: textLabels.current, ctx });
+    textLabels.current = drawTextLabels({
+      textLabels: textLabels.current,
+      ctx,
+    });
 
     cur.accuracy = cur.shots > 0 ? (cur.hits / cur.shots) * 100 : 0;
 
@@ -322,11 +334,45 @@ export default function useZombiefishEngine() {
         assetMgr
       ),
     ];
-    setUI({ phase: cur.phase, timer: cur.timer, shots: cur.shots, hits: cur.hits, accuracy: cur.accuracy });
+    setUI({
+      phase: cur.phase,
+      timer: cur.timer,
+      shots: cur.shots,
+      hits: cur.hits,
+      accuracy: cur.accuracy,
+    });
 
-    if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+    if (animationFrameRef.current)
+      cancelAnimationFrame(animationFrameRef.current);
     animationFrameRef.current = requestAnimationFrame(loop);
   }, [loop, assetMgr]);
+
+  // reset back to title screen
+  const resetGame = useCallback(() => {
+    const cur = state.current;
+    cur.phase = "title";
+    cur.timer = GAME_TIME;
+    cur.shots = 0;
+    cur.hits = 0;
+    cur.accuracy = 0;
+    cur.fish = [];
+
+    textLabels.current = [];
+    accuracyLabel.current = null;
+    finalAccuracy.current = 0;
+    displayAccuracy.current = 0;
+    frameRef.current = 0;
+
+    setUI({
+      phase: cur.phase,
+      timer: cur.timer,
+      shots: cur.shots,
+      hits: cur.hits,
+      accuracy: cur.accuracy,
+    });
+    if (animationFrameRef.current)
+      cancelAnimationFrame(animationFrameRef.current);
+  }, []);
 
   // handle left click – detect and affect fish
   const handleClick = useCallback(
@@ -338,16 +384,14 @@ export default function useZombiefishEngine() {
         const lbl = accuracyLabel.current;
         if (!canvas || !lbl) return;
         const rect = canvas.getBoundingClientRect();
-        const x =
-          ((e.clientX - rect.left) / rect.width) * cur.dims.width;
-        const y =
-          ((e.clientY - rect.top) / rect.height) * cur.dims.height;
+        const x = ((e.clientX - rect.left) / rect.width) * cur.dims.width;
+        const y = ((e.clientY - rect.top) / rect.height) * cur.dims.height;
         const w = lbl.imgs.reduce(
-          (sum, img) => sum + img.width * lbl.scale + 2,
+          (sum, img) => sum + (img?.width || 0) * lbl.scale + 2,
           0
         );
         const h = lbl.imgs.reduce(
-          (max, img) => Math.max(max, img.height * lbl.scale),
+          (max, img) => Math.max(max, (img?.height || 0) * lbl.scale || 0),
           0
         );
         if (x >= lbl.x && x <= lbl.x + w && y >= lbl.y && y <= lbl.y + h) {
@@ -373,10 +417,8 @@ export default function useZombiefishEngine() {
       }
 
       const rect = canvas.getBoundingClientRect();
-      const x =
-        ((e.clientX - rect.left) / rect.width) * cur.dims.width;
-      const y =
-        ((e.clientY - rect.top) / rect.height) * cur.dims.height;
+      const x = ((e.clientX - rect.left) / rect.width) * cur.dims.width;
+      const y = ((e.clientY - rect.top) / rect.height) * cur.dims.height;
 
       for (let i = cur.fish.length - 1; i >= 0; i--) {
         const f = cur.fish[i];
@@ -429,55 +471,47 @@ export default function useZombiefishEngine() {
     e.preventDefault();
   }, []);
 
-  // reset back to title screen
-  const resetGame = useCallback(() => {
-    const cur = state.current;
-    cur.phase = "title";
-    cur.timer = GAME_TIME;
-    cur.shots = 0;
-    cur.hits = 0;
-    cur.accuracy = 0;
-    cur.fish = [];
-
-    textLabels.current = [];
-    accuracyLabel.current = null;
-    finalAccuracy.current = 0;
-    displayAccuracy.current = 0;
-    frameRef.current = 0;
-
-    setUI({
-      phase: cur.phase,
-      timer: cur.timer,
-      shots: cur.shots,
-      hits: cur.hits,
-      accuracy: cur.accuracy,
-    });
-    if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
-  }, []);
-
   // spawn a group of fish just outside the viewport edges
-  const spawnFish = useCallback(
-    (kind: string, count: number): Fish[] => {
-      const spawned: Fish[] = [];
-      const { width, height } = state.current.dims;
+  const spawnFish = useCallback((kind: string, count: number): Fish[] => {
+    const spawned: Fish[] = [];
+    const { width, height } = state.current.dims;
 
-      const specialSingles = ["brown", "grey_long_a", "grey_long_b"];
-      const specialPairs = ["grey_long"];
+    const specialSingles = ["brown", "grey_long_a", "grey_long_b"];
+    const specialPairs = ["grey_long"];
 
-      if (specialSingles.includes(kind) || specialPairs.includes(kind)) count = 1;
+    if (specialSingles.includes(kind) || specialPairs.includes(kind)) count = 1;
 
-      // decide side and velocity
-      const fromLeft = Math.random() < 0.5;
-      const baseVx = (Math.random() * 2 + 1) * (fromLeft ? 1 : -1);
-      const startX = fromLeft ? -FISH_SIZE : width + FISH_SIZE;
+    // decide side and velocity
+    const fromLeft = Math.random() < 0.5;
+    const baseVx = (Math.random() * 2 + 1) * (fromLeft ? 1 : -1);
+    const startX = fromLeft ? -FISH_SIZE : width + FISH_SIZE;
 
-      // helper to create a fish
-      const makeFish = (k: string, xOffset = 0, groupId?: number) => {
-        const y = Math.random() * height;
-        return {
+    // helper to create a fish
+    const makeFish = (k: string, xOffset = 0, groupId?: number) => {
+      const y = Math.random() * height;
+      return {
+        id: nextFishId.current++,
+        kind: k,
+        x: startX + xOffset,
+        y,
+        vx: baseVx,
+        vy: 0,
+        ...(k === "skeleton" ? { health: 2 } : {}),
+        isSkeleton: k === "skeleton",
+        ...(groupId !== undefined ? { groupId } : {}),
+      } as Fish;
+    };
+
+    if (specialPairs.includes(kind)) {
+      const groupId = nextGroupId.current++;
+      const pairStart = fromLeft ? -2 * FISH_SIZE : width + 2 * FISH_SIZE;
+      const y = Math.random() * height;
+      ["grey_long_a", "grey_long_b"].forEach((name, idx) => {
+        const x = pairStart + (fromLeft ? idx * FISH_SIZE : -idx * FISH_SIZE);
+        spawned.push({
           id: nextFishId.current++,
-          kind: k,
-          x: startX + xOffset,
+          kind: name,
+          x,
           y,
           vx: baseVx,
           vy: 0,
@@ -506,25 +540,25 @@ export default function useZombiefishEngine() {
             isSkeleton: false,
           });
         });
-      } else {
-        const groupId = specialSingles.includes(kind)
-          ? undefined
-          : nextGroupId.current++;
-        for (let i = 0; i < count; i++) {
-          spawned.push(makeFish(kind, 0, groupId));
-        }
+      });
+    } else {
+      const groupId = specialSingles.includes(kind)
+        ? undefined
+        : nextGroupId.current++;
+      for (let i = 0; i < count; i++) {
+        spawned.push(makeFish(kind, 0, groupId));
       }
+    }
 
-      state.current.fish.push(...spawned);
-      return spawned;
-    },
-    []
-  );
+    state.current.fish.push(...spawned);
+    return spawned;
+  }, []);
 
   // cleanup on unmount
   useEffect(() => {
     return () => {
-      if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+      if (animationFrameRef.current)
+        cancelAnimationFrame(animationFrameRef.current);
     };
   }, []);
 
