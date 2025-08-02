@@ -52,6 +52,7 @@ export default function Game() {
 
   return (
     <GameUI
+      ui={ui}
       canvasRef={canvasRef}
       handleClick={handleClick}
       handleContext={handleContext}
