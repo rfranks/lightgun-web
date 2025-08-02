@@ -230,6 +230,13 @@ export default function useGameEngine() {
           audio.play("skeleton");
         }
       }
+
+      // steer skeletons back onto the playfield if they hit an edge
+      const { width, height } = cur.dims;
+      if (s.x < 0) s.vx = Math.abs(s.vx) || SKELETON_SPEED;
+      else if (s.x + FISH_SIZE > width) s.vx = -Math.abs(s.vx) || -SKELETON_SPEED;
+      if (s.y < 0) s.vy = Math.abs(s.vy) || SKELETON_SPEED;
+      else if (s.y + FISH_SIZE > height) s.vy = -Math.abs(s.vy) || -SKELETON_SPEED;
     });
 
     // move fish with a slight oscillation and update their angle
