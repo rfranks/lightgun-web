@@ -34,33 +34,60 @@ export function useGameAssets(): {
         ])
       );
 
-    // FISH IMAGES
-    const fishTypes = [
-      "blue",
-      "brown",
-      "green",
-      "grey",
-      "grey_long_a",
-      "grey_long_b",
-      "orange",
-      "pink",
-      "red",
-    ];
-    assetRefs.current.fishImgs = Object.fromEntries(
-      fishTypes.map((name) => [
-        name,
-        loadImg(`/assets/fish/PNG/Objects/Fish/fish_${name}.png`),
-      ])
-    );
+    // FISH FRAMES FROM SPRITESHEET
+    const sheet = loadImg("/assets/fish/Spritesheet/spritesheet.png");
+    const FISH_SIZE = 128;
+    const fishCoords: Record<string, [number, number][]> = {
+      blue: [[1152, 256]],
+      brown: [[1024, 1280]],
+      green: [[1024, 1024]],
+      grey: [[1024, 512]],
+      grey_long_a: [[1024, 384]],
+      grey_long_b: [[1024, 128]],
+      orange: [[896, 1280]],
+      pink: [[896, 768]],
+      red: [[896, 256]],
+    };
+    const skeletonCoords: Record<string, [number, number][]> = {
+      blue: [[1152, 0]],
+      green: [[1024, 768]],
+      orange: [[896, 1024]],
+      pink: [[896, 512]],
+      red: [[896, 0]],
+    };
 
-    // SKELETON IMAGES
-    const skeletonTypes = ["blue", "green", "orange", "pink", "red"];
-    assetRefs.current.skeletonImgs = Object.fromEntries(
-      skeletonTypes.map((name) => [
-        name,
-        loadImg(`/assets/fish/PNG/Objects/Fish/fish_${name}_skeleton.png`),
-      ])
-    );
+    sheet.onload = () => {
+      const makeFrames = (coords: Record<string, [number, number][]>) =>
+        Object.fromEntries(
+          Object.entries(coords).map(([kind, arr]) => [
+            kind,
+            arr.map(([sx, sy]) => {
+              const canvas = document.createElement("canvas");
+              canvas.width = FISH_SIZE;
+              canvas.height = FISH_SIZE;
+              const ctx = canvas.getContext("2d");
+              ctx?.drawImage(
+                sheet,
+                sx,
+                sy,
+                FISH_SIZE,
+                FISH_SIZE,
+                0,
+                0,
+                FISH_SIZE,
+                FISH_SIZE
+              );
+              const img = new window.Image();
+              img.src = canvas.toDataURL();
+              return img;
+            }),
+          ])
+        );
+
+      assetRefs.current.fishFrames = makeFrames(fishCoords);
+      assetRefs.current.skeletonFrames = makeFrames(skeletonCoords);
+      setReady(true);
+    };
 
     // OBJECTS
     assetRefs.current.bubbleImgs = build("Objects/Bubbles", [
@@ -188,7 +215,6 @@ export function useGameAssets(): {
       }
     }
 
-    setReady(true);
   }, []);
 
   const get = useCallback<AssetMgr["get"]>(

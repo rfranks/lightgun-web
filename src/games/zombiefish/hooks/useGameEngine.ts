@@ -27,6 +27,7 @@ const GAME_TIME = 99;
 const FPS = 60; // assumed frame rate for requestAnimationFrame
 
 const FISH_SIZE = 128;
+const FISH_FRAME_DELAY = 6;
 const SKELETON_CONVERT_DISTANCE = FISH_SIZE / 2;
 const BUBBLE_SIZE = 64;
 const ROCK_SPEED = 0.2;
@@ -266,6 +267,8 @@ export default function useGameEngine() {
           nearest.health = 2;
           nearest.vx = 0;
           nearest.vy = 0;
+          nearest.frame = 0;
+          nearest.frameCounter = 0;
           delete nearest.groupId;
           audio.play("convert");
         }
@@ -431,11 +434,17 @@ export default function useGameEngine() {
     drawBackground(ctx);
 
     cur.fish.forEach((f) => {
-      const imgMap = getImg(
-        f.isSkeleton ? "skeletonImgs" : "fishImgs"
-      ) as Record<string, HTMLImageElement>;
-      const img = imgMap[f.kind as keyof typeof imgMap];
-      if (!img) return;
+      const frameMap = getImg(
+        f.isSkeleton ? "skeletonFrames" : "fishFrames"
+      ) as Record<string, HTMLImageElement[]>;
+      const frames = frameMap[f.kind as keyof typeof frameMap];
+      if (!frames || frames.length === 0) return;
+      f.frameCounter++;
+      if (f.frameCounter >= FISH_FRAME_DELAY) {
+        f.frameCounter = 0;
+        f.frame = (f.frame + 1) % frames.length;
+      }
+      const img = frames[f.frame];
       ctx.save();
       ctx.translate(f.x + FISH_SIZE / 2, f.y + FISH_SIZE / 2);
       if (f.vx < 0) ctx.scale(-1, 1);
@@ -494,11 +503,17 @@ export default function useGameEngine() {
       });
 
       cur.fish.forEach((f) => {
-        const imgMap = getImg(
-          f.isSkeleton ? "skeletonImgs" : "fishImgs"
-        ) as Record<string, HTMLImageElement>;
-        const img = imgMap[f.kind as keyof typeof imgMap];
-        if (!img) return;
+        const frameMap = getImg(
+          f.isSkeleton ? "skeletonFrames" : "fishFrames"
+        ) as Record<string, HTMLImageElement[]>;
+        const frames = frameMap[f.kind as keyof typeof frameMap];
+        if (!frames || frames.length === 0) return;
+        f.frameCounter++;
+        if (f.frameCounter >= FISH_FRAME_DELAY) {
+          f.frameCounter = 0;
+          f.frame = (f.frame + 1) % frames.length;
+        }
+        const img = frames[f.frame];
         ctx.save();
         ctx.translate(f.x + FISH_SIZE / 2, f.y + FISH_SIZE / 2);
         if (f.vx < 0) ctx.scale(-1, 1);
@@ -815,6 +830,8 @@ export default function useGameEngine() {
               if (Math.random() < 0.5) {
                 f.isSkeleton = true;
                 f.health = 1;
+                f.frame = 0;
+                f.frameCounter = 0;
                 audio.play("skeleton");
               } else {
                 cur.fish.splice(i, 1);
@@ -903,6 +920,8 @@ export default function useGameEngine() {
         y,
         vx,
         vy,
+        frame: 0,
+        frameCounter: 0,
         ...(k === "skeleton" ? { health: 2 } : {}),
         isSkeleton: k === "skeleton",
         ...(groupId !== undefined ? { groupId } : {}),
@@ -929,6 +948,8 @@ export default function useGameEngine() {
             ...(kind === "skeleton" ? { health: 2 } : {}),
             isSkeleton: kind === "skeleton",
             ...(groupId !== undefined ? { groupId } : {}),
+            frame: 0,
+            frameCounter: 0,
           } as Fish);
         });
       } else {
@@ -948,6 +969,8 @@ export default function useGameEngine() {
             ...(kind === "skeleton" ? { health: 2 } : {}),
             isSkeleton: kind === "skeleton",
             ...(groupId !== undefined ? { groupId } : {}),
+            frame: 0,
+            frameCounter: 0,
           } as Fish);
         });
       }
