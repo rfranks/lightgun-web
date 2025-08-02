@@ -4,7 +4,13 @@ import { useGameAssets } from "./useGameAssets";
 import { useGameAudio } from "./useGameAudio";
 import { drawTextLabels, newTextLabel } from "@/utils/ui";
 
-import type { GameState, GameUIState, Fish, Bubble } from "../types";
+import type {
+  GameState,
+  GameUIState,
+  Fish,
+  Bubble,
+  MissParticle,
+} from "../types";
 import {
   FISH_SPEED_MIN,
   FISH_SPEED_MAX,
@@ -44,6 +50,8 @@ const SEAWEED_SPEED = [0.2, 0.4];
 const MAX_BUBBLES = 20;
 const HURT_FRAMES = 10;
 const CONVERT_FLASH_FRAMES = 5;
+const MISS_GROWTH = 4;
+const MISS_FADE = 0.05;
 
 export default function useGameEngine() {
   // canvas and animation frame refs
@@ -70,6 +78,7 @@ export default function useGameEngine() {
     fish: [],
     bubbles: [],
     textLabels: [],
+    missParticles: [],
     conversions: 0,
   });
 
@@ -520,6 +529,13 @@ export default function useGameEngine() {
       );
     }
 
+    // update miss particles
+    cur.missParticles.forEach((p) => {
+      p.radius += MISS_GROWTH;
+      p.alpha -= MISS_FADE;
+    });
+    cur.missParticles = cur.missParticles.filter((p) => p.alpha > 0);
+
     // update accuracy label during gameover
     if (cur.phase === "gameover" && accuracyLabel.current) {
       const lbl = accuracyLabel.current;
@@ -589,6 +605,14 @@ export default function useGameEngine() {
         ctx.drawImage(img, b.x, b.y, b.size, b.size);
       });
 
+      cur.missParticles.forEach((p) => {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(255,255,255,${p.alpha})`;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      });
+
       cur.fish.forEach((f) => {
         const frameMap = getImg(
           f.isSkeleton ? "skeletonFrames" : "fishFrames"
@@ -650,6 +674,7 @@ export default function useGameEngine() {
     cur.hits = 0;
     cur.accuracy = 0;
     cur.bubbles = [];
+    cur.missParticles = [];
 
     frameRef.current = 0;
     accuracyLabel.current = null;
@@ -784,6 +809,7 @@ export default function useGameEngine() {
     cur.fish = [];
     cur.cursor = DEFAULT_CURSOR;
     cur.bubbles = [];
+    cur.missParticles = [];
 
     accuracyLabel.current = null;
     bestAccuracyLabel.current = null;
@@ -944,6 +970,7 @@ export default function useGameEngine() {
         ((e.clientY - rect.top) / rect.height) * cur.dims.height;
 
       // iterate fish in reverse draw order so topmost fish are hit first
+      let hit = false;
       for (let i = cur.fish.length - 1; i >= 0; i--) {
         const f = cur.fish[i];
         if (
@@ -955,6 +982,7 @@ export default function useGameEngine() {
           cur.hits += 1;
           updateDigitLabel(hitsLabel.current, cur.hits);
           audio.play("hit");
+          hit = true;
           if (f.kind === "brown") {
             cur.timer += TIME_BONUS_BROWN_FISH;
             updateDigitLabel(timerLabel.current, cur.timer, 2, ":");
@@ -1001,6 +1029,15 @@ export default function useGameEngine() {
           }
           break;
         }
+      }
+
+      if (!hit) {
+        cur.missParticles.push({
+          x: canvasX,
+          y: canvasY,
+          radius: 0,
+          alpha: 1,
+        } as MissParticle);
       }
 
       cur.accuracy = cur.shots > 0 ? (cur.hits / cur.shots) * 100 : 0;
