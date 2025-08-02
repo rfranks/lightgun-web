@@ -677,9 +677,11 @@ export default function useGameEngine() {
               f.health = 2;
             }
             f.health = (f.health ?? 0) - 1;
-            audio.play("skeleton");
             if ((f.health ?? 0) <= 0) {
               cur.fish.splice(i, 1);
+              audio.play("death");
+            } else {
+              audio.play("skeleton");
             }
           }
           break;
