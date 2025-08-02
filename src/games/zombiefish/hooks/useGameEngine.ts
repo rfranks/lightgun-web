@@ -80,6 +80,7 @@ export default function useGameEngine() {
   const nextBubbleId = useRef(1);
   const bubbleSpawnRef = useRef(0);
   const frameRef = useRef(0); // track frames for one-second ticks
+  const fishSpawnTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const rockOffsets = useRef<number[]>(ROCK_SPEED.map(() => 0));
   const seaweedOffsets = useRef<number[]>(SEAWEED_SPEED.map(() => 0));
   const accuracyLabel = useRef<TextLabel | null>(null);
@@ -761,6 +762,12 @@ export default function useGameEngine() {
   // reset back to title screen
   const resetGame = useCallback(() => {
     const cur = state.current;
+
+    if (fishSpawnTimeout.current) {
+      clearTimeout(fishSpawnTimeout.current);
+      fishSpawnTimeout.current = null;
+    }
+
     cur.phase = "title";
     cur.timer = GAME_TIME;
     cur.shots = 0;
@@ -1177,15 +1184,15 @@ export default function useGameEngine() {
   useEffect(() => {
     if (ui.phase !== "playing") return;
     const basicKinds = ["blue", "green", "orange", "pink", "red"];
-    let timer: ReturnType<typeof setTimeout>;
+
     const schedule = () => {
       const factor = difficultyFactor();
       // FISH_SPAWN_INTERVAL_* are expressed in frames; convert to ms
       const min = (FISH_SPAWN_INTERVAL_MIN / FPS) * 1000;
       const max = (FISH_SPAWN_INTERVAL_MAX / FPS) * 1000;
-      const delay = (min + Math.random() * (max - min)) / factor;
+      const delay = (min + Math.random() * (max - min)) * (1 / factor);
 
-      timer = setTimeout(() => {
+      fishSpawnTimeout.current = setTimeout(() => {
         if (state.current.phase !== "playing") return;
         const roll = Math.random();
         if (roll < 0.1) {
@@ -1201,7 +1208,12 @@ export default function useGameEngine() {
       }, delay);
     };
     schedule();
-    return () => clearTimeout(timer);
+    return () => {
+      if (fishSpawnTimeout.current) {
+        clearTimeout(fishSpawnTimeout.current);
+        fishSpawnTimeout.current = null;
+      }
+    };
   }, [ui.phase, spawnFish]);
 
   // cleanup on unmount
