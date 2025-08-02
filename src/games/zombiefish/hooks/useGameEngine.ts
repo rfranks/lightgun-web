@@ -310,8 +310,14 @@ export default function useGameEngine() {
     const { width, height } = cur.dims;
 
     // handle conversion flashes
+    const flashImg = getImg("fishFlashImg") as HTMLImageElement | undefined;
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext("2d");
     cur.fish.forEach((f) => {
       if (f.pendingSkeleton) {
+        if (ctx && flashImg) {
+          ctx.drawImage(flashImg, f.x, f.y, FISH_SIZE, FISH_SIZE);
+        }
         f.flashTimer = (f.flashTimer || 0) - 1;
         if (f.flashTimer <= 0) {
           f.isSkeleton = true;
@@ -431,7 +437,7 @@ export default function useGameEngine() {
         f.y = Math.max(0, Math.min(f.y, height - FISH_SIZE));
       }
     });
-  }, [audio, makeText]);
+  }, [audio, makeText, getImg]);
 
   const spawnBubble = useCallback(() => {
     const { width, height } = state.current.dims;
@@ -723,6 +729,18 @@ export default function useGameEngine() {
           FISH_SIZE,
           FISH_SIZE
         );
+        if (f.pendingSkeleton) {
+          const flash = getImg("fishFlashImg") as HTMLImageElement;
+          if (flash) {
+            ctx.drawImage(
+              flash,
+              -FISH_SIZE / 2,
+              -FISH_SIZE / 2,
+              FISH_SIZE,
+              FISH_SIZE
+            );
+          }
+        }
         if (f.isSkeleton && f.hurtTimer > 0) {
           ctx.fillStyle = "rgba(255,0,0,0.5)";
           ctx.fillRect(-FISH_SIZE / 2, -FISH_SIZE / 2, FISH_SIZE, FISH_SIZE);
