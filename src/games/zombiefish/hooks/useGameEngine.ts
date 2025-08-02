@@ -262,10 +262,10 @@ export default function useGameEngine() {
 
     // skeleton behavior
     const immuneKinds = new Set(["brown", "grey_long_a", "grey_long_b"]);
-    const speedMult = 1 + cur.conversions * 0.1;
-    const base = SKELETON_SPEED * speedMult;
-    const extra = SKELETON_SPEED * speedMult;
-    const skeletonSpeed = base + (1 - cur.timer / GAME_TIME) * extra;
+    const progress = 1 - cur.timer / GAME_TIME;
+    let skeletonSpeed =
+      SKELETON_SPEED * (1 + cur.conversions * 0.1) * (1 + progress);
+    skeletonSpeed = Math.min(skeletonSpeed, SKELETON_SPEED * 5);
     let skeletonCount = cur.fish.filter((f) => f.isSkeleton).length;
     cur.fish.forEach((s) => {
       if (!s.isSkeleton) return;
@@ -559,19 +559,19 @@ export default function useGameEngine() {
       }
 
 
-        if (cur.phase === "paused") {
-          if (!pausedLabel.current) {
-            pausedLabel.current = newTextLabel(
-              { text: "PAUSED", scale: 2, fixed: true, fade: false },
-              assetMgr,
-              cur.dims
-            );
-            cur.textLabels.push(pausedLabel.current);
-          }
-        } else if (pausedLabel.current) {
-          cur.textLabels = cur.textLabels.filter((l) => l !== pausedLabel.current);
-          pausedLabel.current = null;
+      if (cur.phase === "paused") {
+        if (!pausedLabel.current) {
+          pausedLabel.current = newTextLabel(
+            { text: "PAUSED", scale: 2, fixed: true, fade: false },
+            assetMgr,
+            cur.dims
+          );
+          cur.textLabels.push(pausedLabel.current);
         }
+      } else if (pausedLabel.current) {
+        cur.textLabels = cur.textLabels.filter((l) => l !== pausedLabel.current);
+        pausedLabel.current = null;
+      }
 
         // draw bubbles, fish and text labels
         if (canvas && ctx) {
