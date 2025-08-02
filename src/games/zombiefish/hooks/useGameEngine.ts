@@ -87,6 +87,8 @@ export default function useGameEngine() {
   const nextGroupId = useRef(1);
   const nextPairId = useRef(1);
   const nextBubbleId = useRef(1);
+  const inactiveFish = useRef<Fish[]>([]);
+  const inactiveBubbles = useRef<Bubble[]>([]);
   const bubbleSpawnRef = useRef(0);
   const spawnTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cursorTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -451,19 +453,23 @@ export default function useGameEngine() {
     const vy = Math.random() * (BUBBLE_VY_MAX - BUBBLE_VY_MIN) + BUBBLE_VY_MIN;
     const amp = Math.random() * 2 + 0.5;
     const freq = Math.random() * 0.05 + 0.01;
-    state.current.bubbles.push({
-      id: nextBubbleId.current++,
-      kind,
-      x,
-      y,
-      vx,
-      vy,
-      size,
-      amp,
-      freq,
-    } as Bubble);
+    const bubble = inactiveBubbles.current.pop() || ({} as Bubble);
+    bubble.id = nextBubbleId.current++;
+    bubble.kind = kind;
+    bubble.x = x;
+    bubble.y = y;
+    bubble.vx = vx;
+    bubble.vy = vy;
+    bubble.size = size;
+    bubble.amp = amp;
+    bubble.freq = freq;
+    state.current.bubbles.push(bubble);
     if (state.current.bubbles.length > MAX_BUBBLES) {
-      state.current.bubbles = state.current.bubbles.slice(-MAX_BUBBLES);
+      const removed = state.current.bubbles.splice(
+        0,
+        state.current.bubbles.length - MAX_BUBBLES
+      );
+      inactiveBubbles.current.push(...removed);
     }
   }, []);
 
@@ -507,10 +513,14 @@ export default function useGameEngine() {
         b.x += b.vx + Math.sin(frameRef.current * b.freq) * b.amp;
         b.y += b.vy;
       });
-      cur.bubbles = cur.bubbles.filter(
-        (b) =>
-          b.y + b.size > 0 && b.x + b.size > 0 && b.x - b.size < cur.dims.width
-      );
+      cur.bubbles = cur.bubbles.filter((b) => {
+        const on =
+          b.y + b.size > 0 &&
+          b.x + b.size > 0 &&
+          b.x - b.size < cur.dims.width;
+        if (!on) inactiveBubbles.current.push(b);
+        return on;
+      });
 
       // track frames and decrement the timer once per second
       frameRef.current += 1;
@@ -607,13 +617,15 @@ export default function useGameEngine() {
       // cull fish that have moved completely off-screen
       const { width, height } = cur.dims;
       const margin = FISH_SIZE * 2;
-      cur.fish = cur.fish.filter(
-        (f) =>
+      cur.fish = cur.fish.filter((f) => {
+        const on =
           f.x > -margin &&
           f.x < width + margin &&
           f.y > -margin &&
-          f.y < height + margin
-      );
+          f.y < height + margin;
+        if (!on) inactiveFish.current.push(f);
+        return on;
+      });
     }
 
     // update miss particles
@@ -653,13 +665,15 @@ export default function useGameEngine() {
     if (cur.phase === "playing") {
       const { width, height } = cur.dims;
       const margin = FISH_SIZE * 2;
-      cur.fish = cur.fish.filter(
-        (f) =>
+      cur.fish = cur.fish.filter((f) => {
+        const on =
           f.x > -margin &&
           f.x < width + margin &&
           f.y > -margin &&
-          f.y < height + margin
-      );
+          f.y < height + margin;
+        if (!on) inactiveFish.current.push(f);
+        return on;
+      });
     }
 
     if (cur.phase === "paused") {
@@ -794,6 +808,9 @@ export default function useGameEngine() {
     cur.shots = 0;
     cur.hits = 0;
     cur.accuracy = 0;
+    inactiveFish.current.push(...cur.fish);
+    cur.fish = [];
+    inactiveBubbles.current.push(...cur.bubbles);
     cur.bubbles = [];
     cur.missParticles = [];
 
@@ -938,8 +955,10 @@ export default function useGameEngine() {
     cur.hits = 0;
     cur.accuracy = 0;
     cur.conversions = 0;
+    inactiveFish.current.push(...cur.fish);
     cur.fish = [];
     cur.cursor = DEFAULT_CURSOR;
+    inactiveBubbles.current.push(...cur.bubbles);
     cur.bubbles = [];
     cur.missParticles = [];
 
@@ -1131,7 +1150,8 @@ export default function useGameEngine() {
           canvasY >= b.y &&
           canvasY <= b.y + b.size
         ) {
-          cur.bubbles.splice(i, 1);
+          const [removedBubble] = cur.bubbles.splice(i, 1);
+          if (removedBubble) inactiveBubbles.current.push(removedBubble);
           audio.play("pop");
           cur.accuracy = cur.shots > 0 ? (cur.hits / cur.shots) * 100 : 0;
           setUI({
@@ -1164,7 +1184,8 @@ export default function useGameEngine() {
             cur.timer += TIME_BONUS_BROWN_FISH;
             updateDigitLabel(timerLabel.current, cur.timer, 2, ":");
             makeText(`+${TIME_BONUS_BROWN_FISH}`, f.x, f.y, "#ff0");
-            cur.fish.splice(i, 1);
+            const [removed] = cur.fish.splice(i, 1);
+            if (removed) inactiveFish.current.push(removed);
             audio.play("bonus");
           } else if (f.kind === "grey_long_a" || f.kind === "grey_long_b") {
             cur.timer = Math.max(0, cur.timer - TIME_PENALTY_GREY_LONG);
@@ -1172,9 +1193,12 @@ export default function useGameEngine() {
             makeText(`-${TIME_PENALTY_GREY_LONG}`, f.x, f.y);
             const pid = f.pairId;
             if (pid !== undefined) {
+              const removed = cur.fish.filter((fish) => fish.pairId === pid);
               cur.fish = cur.fish.filter((fish) => fish.pairId !== pid);
+              inactiveFish.current.push(...removed);
             } else {
-              cur.fish.splice(i, 1);
+              const [removed] = cur.fish.splice(i, 1);
+              if (removed) inactiveFish.current.push(removed);
             }
             audio.play("penalty");
           } else {
@@ -1190,7 +1214,8 @@ export default function useGameEngine() {
                 f.frameCounter = 0;
                 audio.play("skeleton");
               } else {
-                cur.fish.splice(i, 1);
+                const [removed] = cur.fish.splice(i, 1);
+                if (removed) inactiveFish.current.push(removed);
                 audio.play("death");
               }
             } else {
@@ -1199,7 +1224,8 @@ export default function useGameEngine() {
                 f.hurtTimer = HURT_FRAMES;
                 audio.play("skeleton");
               } else {
-                cur.fish.splice(i, 1);
+                const [removed] = cur.fish.splice(i, 1);
+                if (removed) inactiveFish.current.push(removed);
                 audio.play("death");
               }
             }
@@ -1249,6 +1275,8 @@ export default function useGameEngine() {
     const specialPairs = ["grey_long"];
     const isSpecial = specialSingles.includes(kind) || specialPairs.includes(kind);
 
+    const reuseFish = () => inactiveFish.current.pop() || ({} as Fish);
+
     if (isSpecial) count = 1;
     count = Math.min(count, MAX_SCHOOL_SIZE);
 
@@ -1286,22 +1314,25 @@ export default function useGameEngine() {
       highlight = false
     ) => {
       const { vx, vy } = genVelocity();
-      return {
-        id: nextFishId.current++,
-        kind: k,
-        x,
-        y,
-        vx,
-        vy,
-        frame: 0,
-        frameCounter: 0,
-        angle: 0,
-        health: k === "skeleton" ? 2 : 0,
-        hurtTimer: 0,
-        isSkeleton: k === "skeleton",
-        ...(groupId !== undefined ? { groupId } : {}),
-        ...(highlight ? { highlight: true } : {}),
-      } as Fish;
+      const f = reuseFish();
+      f.id = nextFishId.current++;
+      f.kind = k;
+      f.x = x;
+      f.y = y;
+      f.vx = vx;
+      f.vy = vy;
+      f.frame = 0;
+      f.frameCounter = 0;
+      f.angle = 0;
+      f.health = k === "skeleton" ? 2 : 0;
+      f.hurtTimer = 0;
+      f.isSkeleton = k === "skeleton";
+      f.groupId = groupId;
+      f.pairId = undefined;
+      f.highlight = highlight ? true : undefined;
+      f.pendingSkeleton = undefined;
+      f.flashTimer = undefined;
+      return f;
     };
 
     if (specialPairs.includes(kind)) {
@@ -1315,46 +1346,50 @@ export default function useGameEngine() {
         ["grey_long_a", "grey_long_b"].forEach((name, idx) => {
           const x =
             pairStart + (edge === 0 ? idx * FISH_SIZE : -idx * FISH_SIZE);
-          spawned.push({
-            id: nextFishId.current++,
-            kind: name,
-            x,
-            y,
-            vx,
-            vy,
-            angle: 0,
-            health: kind === "skeleton" ? 2 : 0,
-            hurtTimer: 0,
-            isSkeleton: kind === "skeleton",
-            groupId,
-            pairId,
-            frame: 0,
-            frameCounter: 0,
-            highlight: isSpecial,
-          } as Fish);
+          const f = reuseFish();
+          f.id = nextFishId.current++;
+          f.kind = name;
+          f.x = x;
+          f.y = y;
+          f.vx = vx;
+          f.vy = vy;
+          f.angle = 0;
+          f.health = kind === "skeleton" ? 2 : 0;
+          f.hurtTimer = 0;
+          f.isSkeleton = kind === "skeleton";
+          f.groupId = groupId;
+          f.pairId = pairId;
+          f.frame = 0;
+          f.frameCounter = 0;
+          f.highlight = isSpecial;
+          f.pendingSkeleton = undefined;
+          f.flashTimer = undefined;
+          spawned.push(f);
         });
       } else {
         const pairStart = Math.random() * (width - 2 * FISH_SIZE);
         const y = startY;
         ["grey_long_a", "grey_long_b"].forEach((name, idx) => {
           const x = pairStart + idx * FISH_SIZE;
-          spawned.push({
-            id: nextFishId.current++,
-            kind: name,
-            x,
-            y,
-            vx,
-            vy,
-            angle: 0,
-            health: kind === "skeleton" ? 2 : 0,
-            hurtTimer: 0,
-            isSkeleton: kind === "skeleton",
-            groupId,
-            pairId,
-            frame: 0,
-            frameCounter: 0,
-            highlight: isSpecial,
-          } as Fish);
+          const f = reuseFish();
+          f.id = nextFishId.current++;
+          f.kind = name;
+          f.x = x;
+          f.y = y;
+          f.vx = vx;
+          f.vy = vy;
+          f.angle = 0;
+          f.health = kind === "skeleton" ? 2 : 0;
+          f.hurtTimer = 0;
+          f.isSkeleton = kind === "skeleton";
+          f.groupId = groupId;
+          f.pairId = pairId;
+          f.frame = 0;
+          f.frameCounter = 0;
+          f.highlight = isSpecial;
+          f.pendingSkeleton = undefined;
+          f.flashTimer = undefined;
+          spawned.push(f);
         });
       }
     } else {
