@@ -208,7 +208,7 @@ export default function useGameEngine() {
       let nearestDist = Infinity;
 
       cur.fish.forEach((t) => {
-        if (!t.isSkeleton) return;
+        if (t.isSkeleton) return;
         const dx = t.x - s.x;
         const dy = t.y - s.y;
         const dist2 = dx * dx + dy * dy;
@@ -654,15 +654,17 @@ export default function useGameEngine() {
           cur.hits += 1;
           updateDigitLabel(hitsLabel.current, cur.hits);
           if (f.kind === "brown") {
-            cur.timer += TIME_BONUS_BROWN_FISH * FPS;
+            cur.timer += TIME_BONUS_BROWN_FISH;
+            updateDigitLabel(timerLabel.current, cur.timer, 2);
             makeText(`+${TIME_BONUS_BROWN_FISH}`, f.x, f.y);
             cur.fish.splice(i, 1);
             audio.play("bonus");
           } else if (f.kind === "grey_long_a" || f.kind === "grey_long_b") {
             cur.timer = Math.max(
               0,
-              cur.timer - TIME_PENALTY_GREY_LONG * FPS
+              cur.timer - TIME_PENALTY_GREY_LONG
             );
+            updateDigitLabel(timerLabel.current, cur.timer, 2);
             makeText(`-${TIME_PENALTY_GREY_LONG}`, f.x, f.y);
             const gid = f.groupId;
             cur.fish = cur.fish.filter((fish) => fish.groupId !== gid);
@@ -817,7 +819,7 @@ export default function useGameEngine() {
         const leader = makeFish(kind, x, y, groupId);
         spawned.push(leader);
         for (let i = 1; i < count; i++) {
-          const member = makeFish(kind, 0, groupId);
+          const member = makeFish(kind, leader.x, leader.y, groupId);
           member.x = leader.x + (Math.random() - 0.5) * FISH_SIZE;
           member.y = Math.min(
             Math.max(leader.y + (Math.random() - 0.5) * FISH_SIZE, 0),
