@@ -80,10 +80,25 @@ export default function useZombiefishEngine() {
   const updateFish = useCallback(() => {
     const cur = state.current;
 
-    // move all fish
+    // For each group, nudge members toward the group's average velocity.
+    const groups: Record<number, { vx: number; vy: number; members: Fish[] }> = {};
     cur.fish.forEach((f) => {
-      f.x += f.vx;
-      f.y += f.vy;
+      if (f.groupId === undefined) return;
+      if (!groups[f.groupId]) {
+        groups[f.groupId] = { vx: 0, vy: 0, members: [] };
+      }
+      const g = groups[f.groupId];
+      g.vx += f.vx;
+      g.vy += f.vy;
+      g.members.push(f);
+    });
+    Object.values(groups).forEach((g) => {
+      const avgVx = g.vx / g.members.length;
+      const avgVy = g.vy / g.members.length;
+      g.members.forEach((f) => {
+        f.vx += (avgVx - f.vx) * 0.05;
+        f.vy += (avgVy - f.vy) * 0.05;
+      });
     });
 
     // skeleton behavior
@@ -123,9 +138,13 @@ export default function useZombiefishEngine() {
       }
     });
 
-    // update orientation angle for all fish based on their velocity
+    // move fish with a slight oscillation and update their angle
     cur.fish.forEach((f) => {
-      f.angle = Math.atan2(f.vy, Math.abs(f.vx));
+      const osc = Math.sin((frameRef.current + f.id) / 20) * 0.5;
+      const vy = f.vy + osc;
+      f.x += f.vx;
+      f.y += vy;
+      f.angle = Math.atan2(vy, Math.abs(f.vx));
     });
   }, [audio]);
 
@@ -531,38 +550,20 @@ export default function useZombiefishEngine() {
           vx: baseVx,
           vy: 0,
           angle: 0,
+          isSkeleton: false,
+          groupId,
           ...(kind === "skeleton" ? { health: 2 } : {}),
           isSkeleton: kind === "skeleton",
           ...(groupId !== undefined ? { groupId } : {}),
         } as Fish);
       });
-
-      if (specialPairs.includes(kind)) {
-        const groupId = nextGroupId.current++;
-        const pairStart = fromLeft ? -2 * FISH_SIZE : width + 2 * FISH_SIZE;
-        const y = Math.random() * height;
-        ["grey_long_a", "grey_long_b"].forEach((name, idx) => {
-          const x = pairStart + (fromLeft ? idx * FISH_SIZE : -idx * FISH_SIZE);
-          spawned.push({
-            id: nextFishId.current++,
-            kind: name,
-            x,
-            y,
-            vx: baseVx,
-            vy: 0,
-            angle: 0,
-            groupId,
-            isSkeleton: false,
-          });
-        });
-      } else {
+    } else {
         const groupId = specialSingles.includes(kind)
           ? undefined
           : nextGroupId.current++;
         for (let i = 0; i < count; i++) {
           spawned.push(makeFish(kind, 0, groupId));
         }
-      }
     }
 
     state.current.fish.push(...spawned);
