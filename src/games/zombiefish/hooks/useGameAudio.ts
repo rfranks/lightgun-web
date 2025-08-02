@@ -21,8 +21,11 @@ export function useGameAudio(): AudioMgr {
     const bonus = document.createElement("audio");
     bonus.src = "/audio/powerUp8.ogg"; // special-fish bonus
     bonus.preload = "auto";
+    const skeleton = document.createElement("audio");
+    skeleton.src = "/audio/splash.ogg";
+    skeleton.preload = "auto";
 
-    return { shoot, hit, bonus };
+    return { shoot, hit, bonus, skeleton };
   }, []);
 
   // Play a sound by key
