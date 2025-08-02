@@ -74,6 +74,9 @@ export default function useGameEngine() {
   const shotsLabel = useRef<TextLabel | null>(null);
   const hitsLabel = useRef<TextLabel | null>(null);
   const pausedLabel = useRef<TextLabel | null>(null);
+  const gameoverShotsLabel = useRef<TextLabel | null>(null);
+  const gameoverHitsLabel = useRef<TextLabel | null>(null);
+  const gameoverTimeLabel = useRef<TextLabel | null>(null);
 
   // ui state that triggers re-renders
   const [ui, setUI] = useState<GameUIState>({
@@ -426,6 +429,58 @@ export default function useGameEngine() {
           lbl.x = (cur.dims.width - totalWidth) / 2;
         }
       }
+
+      if (!gameoverShotsLabel.current || !gameoverHitsLabel.current || !gameoverTimeLabel.current) {
+        const digitImgs = getImg("digitImgs") as Record<string, HTMLImageElement>;
+        const digitHeight = digitImgs["0"]?.height || 0;
+        const lineHeight = digitHeight + 8;
+        const startY = (accuracyLabel.current?.y || cur.dims.height / 2) + lineHeight * 1.5;
+
+        if (!gameoverShotsLabel.current) {
+          gameoverShotsLabel.current = newTextLabel(
+            {
+              text: `SHOTS ${cur.shots}`,
+              scale: 1,
+              fixed: true,
+              fade: false,
+              y: startY,
+            },
+            assetMgr,
+            cur.dims
+          );
+          cur.textLabels.push(gameoverShotsLabel.current);
+        }
+
+        if (!gameoverHitsLabel.current) {
+          gameoverHitsLabel.current = newTextLabel(
+            {
+              text: `HITS ${cur.hits}`,
+              scale: 1,
+              fixed: true,
+              fade: false,
+              y: startY + lineHeight,
+            },
+            assetMgr,
+            cur.dims
+          );
+          cur.textLabels.push(gameoverHitsLabel.current);
+        }
+
+        if (!gameoverTimeLabel.current) {
+          gameoverTimeLabel.current = newTextLabel(
+            {
+              text: `TIME ${cur.timer.toString().padStart(2, "0")}`,
+              scale: 1,
+              fixed: true,
+              fade: false,
+              y: startY + lineHeight * 2,
+            },
+            assetMgr,
+            cur.dims
+          );
+          cur.textLabels.push(gameoverTimeLabel.current);
+        }
+      }
     }
 
     drawBackground(ctx);
@@ -677,6 +732,9 @@ export default function useGameEngine() {
     timerLabel.current = null;
     shotsLabel.current = null;
     hitsLabel.current = null;
+    gameoverShotsLabel.current = null;
+    gameoverHitsLabel.current = null;
+    gameoverTimeLabel.current = null;
     state.current.textLabels = [];
     bubbleSpawnRef.current = 0;
     rockOffset.current = 0;
