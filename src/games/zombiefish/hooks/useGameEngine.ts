@@ -914,10 +914,14 @@ export default function useGameEngine() {
         return;
       }
 
+      // translate click to canvas coordinates so hits are detected correctly
       const rect = canvas.getBoundingClientRect();
-      const x = ((e.clientX - rect.left) / rect.width) * cur.dims.width;
-      const y = ((e.clientY - rect.top) / rect.height) * cur.dims.height;
+      const relX = e.clientX - rect.left;
+      const relY = e.clientY - rect.top;
+      const x = (relX / rect.width) * cur.dims.width;
+      const y = (relY / rect.height) * cur.dims.height;
 
+      // iterate fish from topmost (end of array) so higher-drawn fish are hit first
       for (let i = cur.fish.length - 1; i >= 0; i--) {
         const f = cur.fish[i];
         if (
@@ -928,6 +932,7 @@ export default function useGameEngine() {
         ) {
           cur.hits += 1;
           updateDigitLabel(hitsLabel.current, cur.hits);
+          audio.play("hit");
           if (f.kind === "brown") {
             cur.timer += TIME_BONUS_BROWN_FISH;
             updateDigitLabel(timerLabel.current, cur.timer, 2);
