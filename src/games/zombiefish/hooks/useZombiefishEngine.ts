@@ -382,7 +382,6 @@ export default function useZombiefishEngine() {
     cur.accuracy = 0;
     cur.fish = [];
 
-    textLabels.current = [];
     accuracyLabel.current = null;
     finalAccuracy.current = 0;
     displayAccuracy.current = 0;
@@ -543,7 +542,6 @@ export default function useZombiefishEngine() {
           vx: baseVx,
           vy: 0,
           angle: 0,
-          isSkeleton: false,
           groupId,
           ...(kind === "skeleton" ? { health: 2 } : {}),
           isSkeleton: kind === "skeleton",
