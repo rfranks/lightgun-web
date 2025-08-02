@@ -45,6 +45,9 @@ export default function useZombiefishEngine() {
   const nextGroupId = useRef(1);
   const textLabels = useRef<TextLabel[]>([]);
   const frameRef = useRef(0); // track frames for one-second ticks
+  const accuracyLabel = useRef<TextLabel | null>(null);
+  const finalAccuracy = useRef(0);
+  const displayAccuracy = useRef(0);
 
   // ui state that triggers re-renders
   const [ui, setUI] = useState<GameUIState>({
@@ -121,7 +124,6 @@ export default function useZombiefishEngine() {
   // main loop updates timer and fish
   const loop = useCallback(() => {
     const cur = state.current;
-    if (cur.phase !== "playing") return;
 
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");
@@ -130,73 +132,116 @@ export default function useZombiefishEngine() {
       return;
     }
 
+    canvas.width = cur.dims.width;
+    canvas.height = cur.dims.height;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    updateFish();
+    if (cur.phase === "playing") {
+      updateFish();
 
-    // track frames and decrement the timer once per second
-    frameRef.current += 1;
-    if (frameRef.current >= FPS) {
-      frameRef.current = 0;
-      cur.timer = Math.max(0, cur.timer - 1);
+      // track frames and decrement the timer once per second
+      frameRef.current += 1;
+      if (frameRef.current >= FPS) {
+        frameRef.current = 0;
+        cur.timer = Math.max(0, cur.timer - 1);
 
-      const lbl = textLabels.current[0];
-      if (lbl) {
-        const t = cur.timer.toString().padStart(2, "0");
-        lbl.text = t;
-        const digitImgs = getImg("digitImgs") as Record<string, HTMLImageElement>;
-        lbl.imgs = t.split("").map((ch) => digitImgs[ch]);
+        const lbl = textLabels.current[0];
+        if (lbl) {
+          const t = cur.timer.toString().padStart(2, "0");
+          lbl.text = t;
+          const digitImgs = getImg("digitImgs") as Record<string, HTMLImageElement>;
+          lbl.imgs = t.split("").map((ch) => digitImgs[ch]);
+        }
+
+        if (cur.timer === 0) {
+          cur.phase = "gameover";
+          finalAccuracy.current = Math.round(cur.accuracy);
+          displayAccuracy.current = 0;
+        }
       }
 
-      if (cur.timer === 0) {
-        cur.phase = "gameover";
-      }
+      // move fish based on velocity
+      cur.fish.forEach((f) => {
+        f.x += f.vx;
+        f.y += f.vy;
+      });
+
+      // cull fish that have moved completely off-screen
+      const { width, height } = cur.dims;
+      const margin = FISH_SIZE * 2;
+      cur.fish = cur.fish.filter(
+        (f) =>
+          f.x > -margin &&
+          f.x < width + margin &&
+          f.y > -margin &&
+          f.y < height + margin
+      );
     }
 
-    // move fish based on velocity
-    cur.fish.forEach((f) => {
-      f.x += f.vx;
-      f.y += f.vy;
-    });
-
-    // cull fish that have moved completely off-screen
-    const { width, height } = cur.dims;
-    const margin = FISH_SIZE * 2;
-    cur.fish = cur.fish.filter(
-      (f) =>
-        f.x > -margin &&
-        f.x < width + margin &&
-        f.y > -margin &&
-        f.y < height + margin
-    );
+    // create/update accuracy label during gameover
+    if (cur.phase === "gameover") {
+      if (!accuracyLabel.current) {
+        const pctImg = getImg("pctImg") as HTMLImageElement;
+        const digitImgs = getImg("digitImgs") as Record<string, HTMLImageElement>;
+        const scale = 1;
+        const initImgs = [digitImgs["0"], pctImg];
+        const totalWidth = initImgs.reduce(
+          (w, img) => w + img.width * scale + 2,
+          0
+        );
+        const lbl = newTextLabel(
+          {
+            text: "0",
+            scale,
+            fixed: true,
+            fade: false,
+            x: (cur.dims.width - totalWidth) / 2,
+            y: cur.dims.height / 2,
+          },
+          assetMgr
+        );
+        lbl.text = "0%";
+        lbl.imgs = initImgs;
+        accuracyLabel.current = lbl;
+        textLabels.current.push(lbl);
+      } else {
+        const lbl = accuracyLabel.current;
+        if (displayAccuracy.current < finalAccuracy.current) {
+          displayAccuracy.current += 1;
+          const pct = Math.min(displayAccuracy.current, finalAccuracy.current);
+          const str = pct.toString();
+          const digitImgs = getImg("digitImgs") as Record<string, HTMLImageElement>;
+          const pctImg = getImg("pctImg") as HTMLImageElement;
+          lbl.text = `${str}%`;
+          lbl.imgs = [...str.split("").map((ch) => digitImgs[ch]), pctImg];
+          const totalWidth = lbl.imgs.reduce(
+            (w, img) => w + img.width * lbl.scale + 2,
+            0
+          );
+          lbl.x = (cur.dims.width - totalWidth) / 2;
+        }
+      }
+    }
 
     // draw fish and text labels
-    const canvas = canvasRef.current;
-    const ctx = canvas?.getContext("2d");
-    if (canvas && ctx) {
-      canvas.width = cur.dims.width;
-      canvas.height = cur.dims.height;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    cur.fish.forEach((f) => {
+      const imgMap = getImg(
+        f.isSkeleton ? "skeletonImgs" : "fishImgs"
+      ) as Record<string, HTMLImageElement>;
+      const img = imgMap[f.kind as keyof typeof imgMap];
+      if (img) ctx.drawImage(img, f.x, f.y, FISH_SIZE, FISH_SIZE);
+    });
 
-      cur.fish.forEach((f) => {
-        const imgMap = getImg(
-          f.isSkeleton ? "skeletonImgs" : "fishImgs"
-        ) as Record<string, HTMLImageElement>;
-        const img = imgMap[f.kind as keyof typeof imgMap];
-        if (img) ctx.drawImage(img, f.x, f.y, FISH_SIZE, FISH_SIZE);
-      });
-
-      cur.textLabels = drawTextLabels({
-        textLabels: cur.textLabels,
-        ctx,
-        cull: true,
-      });
-    }
+    cur.textLabels = drawTextLabels({
+      textLabels: cur.textLabels,
+      ctx,
+      cull: true,
+    });
 
     textLabels.current = drawTextLabels({ textLabels: textLabels.current, ctx });
 
     cur.accuracy = cur.shots > 0 ? (cur.hits / cur.shots) * 100 : 0;
-    
+
     setUI({
       phase: cur.phase,
       timer: cur.timer,
@@ -206,7 +251,7 @@ export default function useZombiefishEngine() {
     });
 
     animationFrameRef.current = requestAnimationFrame(loop);
-  }, [updateFish, getImg]);
+  }, [updateFish, getImg, assetMgr]);
 
   // start the game
   const startSplash = useCallback(() => {
@@ -218,6 +263,9 @@ export default function useZombiefishEngine() {
     cur.accuracy = 0;
 
     frameRef.current = 0;
+    accuracyLabel.current = null;
+    finalAccuracy.current = 0;
+    displayAccuracy.current = 0;
     textLabels.current = [
       newTextLabel(
         {
@@ -242,6 +290,29 @@ export default function useZombiefishEngine() {
     (e: React.MouseEvent) => {
       e.preventDefault();
       const cur = state.current;
+      if (cur.phase === "gameover") {
+        const canvas = canvasRef.current;
+        const lbl = accuracyLabel.current;
+        if (!canvas || !lbl) return;
+        const rect = canvas.getBoundingClientRect();
+        const x =
+          ((e.clientX - rect.left) / rect.width) * cur.dims.width;
+        const y =
+          ((e.clientY - rect.top) / rect.height) * cur.dims.height;
+        const w = lbl.imgs.reduce(
+          (sum, img) => sum + img.width * lbl.scale + 2,
+          0
+        );
+        const h = lbl.imgs.reduce(
+          (max, img) => Math.max(max, img.height * lbl.scale),
+          0
+        );
+        if (x >= lbl.x && x <= lbl.x + w && y >= lbl.y && y <= lbl.y + h) {
+          resetGame();
+        }
+        return;
+      }
+
       if (cur.phase !== "playing") return;
 
       cur.shots += 1;
@@ -307,7 +378,7 @@ export default function useZombiefishEngine() {
         accuracy: cur.accuracy,
       });
     },
-    [killSfx, makeText]
+    [killSfx, makeText, resetGame]
   );
 
   // suppress context menu
@@ -326,6 +397,9 @@ export default function useZombiefishEngine() {
     cur.fish = [];
 
     textLabels.current = [];
+    accuracyLabel.current = null;
+    finalAccuracy.current = 0;
+    displayAccuracy.current = 0;
     frameRef.current = 0;
 
     setUI({
