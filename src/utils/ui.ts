@@ -24,11 +24,13 @@ export function drawTextLabels({
 }): TextLabel[] {
   // get current alpha
   const prevAlpha = ctx.globalAlpha;
+  const prevFillStyle = ctx.fillStyle;
 
   textLabels.forEach((lbl) => {
     // adjust alpha for fade effect, if applicable
     const alpha = lbl.fade ? 1 - lbl.age / lbl.maxAge : 1;
     ctx.globalAlpha = alpha;
+    ctx.fillStyle = lbl.color ?? prevFillStyle;
 
     // set the starting x position
     const drawX = lbl.fixed ? lbl.x : lbl.x - (offsetX || 0);
@@ -63,6 +65,7 @@ export function drawTextLabels({
 
   // reset alpha to previous value
   ctx.globalAlpha = prevAlpha;
+  ctx.fillStyle = prevFillStyle;
 
   if (cull) {
     // if cull, remove expired labels
@@ -95,7 +98,7 @@ export function newTextLabel(
   dims?: Dims
 ): TextLabel {
   // destructure properties from textLabelProps
-  const { text, scale, fixed, fade, x, y, vy, vs, maxAge, onClick } =
+  const { text, scale, fixed, fade, x, y, vy, vs, maxAge, onClick, color } =
     textLabelProps;
   let { spaceGap } = textLabelProps;
 
@@ -155,6 +158,7 @@ export function newTextLabel(
     age: 0,
     maxAge: maxAge ? maxAge : fade ? 60 : Infinity,
     spaceGap,
+    ...(color ? { color } : {}),
     ...(onClick ? { onClick } : {}),
   };
 
