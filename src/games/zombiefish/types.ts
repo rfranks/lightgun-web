@@ -3,6 +3,21 @@ import type { Dims } from "@/types/ui";
 // Game phases for the simple zombiefish prototype
 export type GamePhase = "title" | "playing" | "gameover";
 
+// Basic fish state tracked by the engine
+export interface Fish {
+  id: number;
+  kind: string;
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  /**
+   * Optional identifier tying fish together when spawned in a group.
+   * Special fish spawn without a groupId.
+   */
+  groupId?: number;
+}
+
 // State exposed to the UI layer
 export interface GameUIState {
   phase: GamePhase;
@@ -17,4 +32,6 @@ export interface GameUIState {
 // Internal game state tracked by the engine
 export interface GameState extends GameUIState {
   dims: Dims;
+  /** Active fish currently in the scene */
+  fish: Fish[];
 }
