@@ -45,7 +45,7 @@ export function GameUI({
         left={16}
         sx={{ color: "white", fontSize: 24 }}
       >
-        <div>Time: {Math.ceil(timer / 60)}</div>
+        <div>Time: {timer}</div>
         <div>Shots: {shots}</div>
         <div>Hits: {hits}</div>
       </Box>
