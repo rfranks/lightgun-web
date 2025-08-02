@@ -1017,7 +1017,8 @@ export function useGameEngine() {
     if (!ctx) return;
 
     const { width, height } = dims;
-    const dpr = typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1;
+    const dpr =
+      typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1;
     canvas.width = width * dpr;
     canvas.height = height * dpr;
     canvas.style.width = `${width}px`;
@@ -3314,7 +3315,8 @@ export function useGameEngine() {
       const ctx = canvas?.getContext("2d");
       if (!canvas || !ctx) return;
       const { width, height } = dims;
-      const dpr = typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1;
+      const dpr =
+        typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1;
       canvas.width = width * dpr;
       canvas.height = height * dpr;
       canvas.style.width = `${width}px`;
@@ -3427,18 +3429,15 @@ export function useGameEngine() {
   };
 
   // ─── RESET ON GAME OVER ───────────────────────────────────────────────────
-  const resetGame = () => {
+  const resetGame = useCallback(() => {
     play("gameOverSfx");
     startSplash();
-  };
+  }, [play, startSplash]);
 
   useEffect(() => {
     const handleKeydown = (e: KeyboardEvent) => {
       if (e.code !== "Space") return;
-      if (state.current.phase === "gameover") {
-        resetGame();
-        startSplash();
-      } else if (state.current.phase === "title") {
+      if (state.current.phase === "title") {
         startSplash();
       }
     };
