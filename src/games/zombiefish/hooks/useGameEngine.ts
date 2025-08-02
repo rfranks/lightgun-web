@@ -6,8 +6,6 @@ import { drawTextLabels, newTextLabel } from "@/utils/ui";
 
 import type { GameState, GameUIState, Fish, Bubble } from "../types";
 import {
-  FISH_SPAWN_INTERVAL_MIN,
-  FISH_SPAWN_INTERVAL_MAX,
   SKELETON_SPEED,
   TIME_BONUS_BROWN_FISH,
   TIME_PENALTY_GREY_LONG,
@@ -27,6 +25,7 @@ const FPS = 60; // assumed frame rate for requestAnimationFrame
 const FISH_SIZE = 128;
 const SKELETON_CONVERT_DISTANCE = FISH_SIZE / 2;
 const BUBBLE_SIZE = 64;
+const MAX_BUBBLES = 20;
 
 export default function useGameEngine() {
   // canvas and animation frame refs
@@ -282,6 +281,9 @@ export default function useGameEngine() {
       vy,
       size,
     } as Bubble);
+    if (state.current.bubbles.length > MAX_BUBBLES) {
+      state.current.bubbles = state.current.bubbles.slice(-MAX_BUBBLES);
+    }
   }, []);
 
   // main loop updates timer and fish
@@ -306,6 +308,7 @@ export default function useGameEngine() {
       bubbleSpawnRef.current -= 1;
       if (bubbleSpawnRef.current <= 0) {
         spawnBubble();
+        cur.bubbles = cur.bubbles.slice(-MAX_BUBBLES);
         bubbleSpawnRef.current = Math.floor(Math.random() * 60) + 30;
       }
       cur.bubbles.forEach((b) => {
