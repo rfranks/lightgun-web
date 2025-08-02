@@ -497,11 +497,14 @@ export default function useGameEngine() {
       if (f.isSkeleton) return;
       f.wanderTimer -= 1;
       if (f.wanderTimer <= 0) {
-        const speed = Math.hypot(f.vx, f.vy) || 0;
-        const angle = Math.random() * Math.PI * 2;
-        f.vx = Math.cos(angle) * speed;
-        f.vy = Math.sin(angle) * speed;
         f.wanderTimer = Math.floor(Math.random() * FPS) + FPS;
+        // apply a small random drift to the current velocity
+        const drift = 0.1;
+        f.vx += (Math.random() - 0.5) * drift;
+        f.vy += (Math.random() - 0.5) * drift;
+        const limited = clampIncline(f.vx, f.vy);
+        f.vx = limited.vx;
+        f.vy = limited.vy;
       }
     });
 
@@ -536,18 +539,11 @@ export default function useGameEngine() {
     cur.fish.forEach((f) => {
       if (f.hurtTimer > 0) f.hurtTimer -= 1;
       const osc = Math.sin((frameRef.current + f.id) / 20) * 0.5;
-      let vx = f.vx;
-      let vy = f.vy + osc;
-      if (Math.abs(f.vx) >= Math.abs(f.vy)) {
-        const limit = Math.abs(f.vx) * MAX_FISH_INCLINE;
-        vy = Math.max(Math.min(vy, limit), -limit);
-      } else {
-        const limit = Math.abs(f.vy) * MAX_FISH_INCLINE;
-        vx = Math.max(Math.min(vx, limit), -limit);
-      }
-      f.x += vx;
-      f.y += vy;
-      f.angle = Math.atan2(vy, Math.abs(vx));
+      const limited = clampIncline(f.vx, f.vy + osc);
+      f.x += limited.vx;
+      f.y += limited.vy;
+      // angle is based solely on the fish's current velocity
+      f.angle = Math.atan2(f.vy, f.vx);
       if (f.isSkeleton) {
         f.x = Math.max(0, Math.min(f.x, width - FISH_SIZE));
         f.y = Math.max(0, Math.min(f.y, height - FISH_SIZE));
@@ -871,7 +867,6 @@ export default function useGameEngine() {
           drawX = f.kind === "grey_long_a" ? -FISH_SIZE : 0;
         }
         ctx.translate(pivotX, pivotY);
-        if (f.vx < 0) ctx.scale(-1, 1);
         ctx.rotate(f.angle);
         if (f.highlight) {
           const fishImgs = getImg("fishImgs") as Record<string, HTMLImageElement>;
