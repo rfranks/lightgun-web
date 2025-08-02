@@ -1496,10 +1496,11 @@ export default function useGameEngine() {
       k: string,
       x: number,
       y: number,
+      vx: number,
+      vy: number,
       groupId?: number,
       highlight = false
     ) => {
-      const { vx, vy } = genVelocity();
       const f = reuseFish();
       f.id = nextFishId.current++;
       f.kind = k;
@@ -1533,25 +1534,8 @@ export default function useGameEngine() {
         ["grey_long_a", "grey_long_b"].forEach((name, idx) => {
           const x =
             pairStart + (edge === 0 ? idx * FISH_SIZE : -idx * FISH_SIZE);
-          const f = reuseFish();
-          f.id = nextFishId.current++;
-          f.kind = name;
-          f.x = x;
-          f.y = y;
-          f.vx = vx;
-          f.vy = vy;
-          f.angle = 0;
-          f.health = kind === "skeleton" ? 2 : 0;
-          f.hurtTimer = 0;
-          f.isSkeleton = kind === "skeleton";
-          f.groupId = groupId;
+          const f = makeFish(name, x, y, vx, vy, groupId, isSpecial);
           f.pairId = pairId;
-          f.frame = 0;
-          f.frameCounter = 0;
-          f.highlight = isSpecial;
-          f.pendingSkeleton = undefined;
-          f.flashTimer = undefined;
-          f.wanderTimer = Math.floor(Math.random() * FPS) + FPS;
           spawned.push(f);
         });
       } else {
@@ -1559,100 +1543,61 @@ export default function useGameEngine() {
         const y = startY;
         ["grey_long_a", "grey_long_b"].forEach((name, idx) => {
           const x = pairStart + idx * FISH_SIZE;
-          const f = reuseFish();
-          f.id = nextFishId.current++;
-          f.kind = name;
-          f.x = x;
-          f.y = y;
-          f.vx = vx;
-          f.vy = vy;
-          f.angle = 0;
-          f.health = kind === "skeleton" ? 2 : 0;
-          f.hurtTimer = 0;
-          f.isSkeleton = kind === "skeleton";
-          f.groupId = groupId;
+          const f = makeFish(name, x, y, vx, vy, groupId, isSpecial);
           f.pairId = pairId;
-          f.frame = 0;
-          f.frameCounter = 0;
-          f.highlight = isSpecial;
-          f.pendingSkeleton = undefined;
-          f.flashTimer = undefined;
-          f.wanderTimer = Math.floor(Math.random() * FPS) + FPS;
           spawned.push(f);
         });
       }
     } else {
-      const groupId = specialSingles.includes(kind)
-        ? undefined
-        : nextGroupId.current++;
-      const x =
-        edge === 0 ? startX : edge === 1 ? startX : Math.random() * width;
-      const y =
-        edge === 2 ? startY : edge === 3 ? startY : Math.random() * height;
+      // non-special fish
+      const baseX = edge === 0 || edge === 1 ? startX : Math.random() * width;
+      const baseY = edge === 2 || edge === 3 ? startY : Math.random() * height;
+      const baseVel = genVelocity();
+      const groupId = count > 1 && !specialSingles.includes(kind)
+        ? nextGroupId.current++
+        : undefined;
 
-      if (groupId === undefined) {
-        for (let i = 0; i < count; i++) {
-          spawned.push(makeFish(kind, x, y, groupId, isSpecial));
-        }
-      } else {
-        const leader = makeFish(kind, x, y, groupId, isSpecial);
-        spawned.push(leader);
-        const existingPositions: Fish[] = [...state.current.fish, leader];
-        const overlaps = (nx: number, ny: number) =>
-          existingPositions.some(
-            (f) =>
-              Math.abs(f.x - nx) < FISH_SIZE && Math.abs(f.y - ny) < FISH_SIZE
-          );
-        for (let i = 1; i < count; i++) {
-          const member = makeFish(kind, leader.x, leader.y, groupId);
-          let mx = leader.x + (Math.random() - 0.5) * FISH_SIZE;
-          const my = Math.min(
-            Math.max(leader.y + (Math.random() - 0.5) * FISH_SIZE, 0),
-            height
-          );
-          let attempts = 0;
-          while (overlaps(mx, my) && attempts < 10) {
-            mx += FISH_SIZE;
-            attempts++;
+      for (let i = 0; i < count; i++) {
+        let px = baseX;
+        let py = baseY;
+        let vx = baseVel.vx;
+        let vy = baseVel.vy;
+
+        if (groupId !== undefined && i > 0) {
+          if (edge === 0 || edge === 1) {
+            py += (Math.random() - 0.5) * FISH_SIZE;
+            px += edge === 0
+              ? -Math.random() * (FISH_SIZE / 2)
+              : Math.random() * (FISH_SIZE / 2);
+          } else {
+            px += (Math.random() - 0.5) * FISH_SIZE;
+            py += edge === 2
+              ? -Math.random() * (FISH_SIZE / 2)
+              : Math.random() * (FISH_SIZE / 2);
           }
-          member.x = Math.min(Math.max(mx, 0), width - FISH_SIZE);
-          member.y = my;
-          member.vx = leader.vx + (Math.random() - 0.5) * speedVariance;
-          member.vy = leader.vy + (Math.random() - 0.5) * speedVariance;
-          const limited = clampIncline(member.vx, member.vy);
-          member.vx = limited.vx;
-          member.vy = limited.vy;
-          spawned.push(member);
-          existingPositions.push(member);
-        }
-
-        // repulsion loop to ensure group members don't overlap
-        const groupMembers = spawned.filter((f) => f.groupId === groupId);
-        for (let iter = 0; iter < 5; iter++) {
-          for (let i = 0; i < groupMembers.length; i++) {
-            for (let j = i + 1; j < groupMembers.length; j++) {
-              const a = groupMembers[i];
-              const b = groupMembers[j];
-              if (
-                Math.abs(a.x - b.x) < FISH_SIZE &&
-                Math.abs(a.y - b.y) < FISH_SIZE
-              ) {
-                const overlapX = FISH_SIZE - Math.abs(a.x - b.x);
-                const overlapY = FISH_SIZE - Math.abs(a.y - b.y);
-                const dirX = a.x < b.x ? -1 : 1;
-                const dirY = a.y < b.y ? -1 : 1;
-                a.x += (dirX * overlapX) / 2;
-                b.x -= (dirX * overlapX) / 2;
-                a.y += (dirY * overlapY) / 2;
-                b.y -= (dirY * overlapY) / 2;
-                a.x = Math.min(Math.max(a.x, 0), width - FISH_SIZE);
-                b.x = Math.min(Math.max(b.x, 0), width - FISH_SIZE);
-                a.y = Math.min(Math.max(a.y, 0), height - FISH_SIZE);
-                b.y = Math.min(Math.max(b.y, 0), height - FISH_SIZE);
-              }
-            }
+          vx += (Math.random() - 0.5) * speedVariance;
+          vy += (Math.random() - 0.5) * speedVariance;
+          const limited = clampIncline(vx, vy);
+          vx = limited.vx;
+          vy = limited.vy;
+        } else {
+          if (edge === 0 || edge === 1) {
+            py = Math.random() * height;
+          } else {
+            px = Math.random() * width;
           }
         }
+
+        const fish = makeFish(
+          kind,
+          px,
+          py,
+          vx,
+          vy,
+          groupId,
+          isSpecial && i === 0
+        );
+        spawned.push(fish);
       }
     }
 
