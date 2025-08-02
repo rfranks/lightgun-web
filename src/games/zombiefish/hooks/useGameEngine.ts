@@ -4,6 +4,13 @@ import { useGameAssets } from "./useGameAssets";
 import { useGameAudio } from "./useGameAudio";
 import { drawTextLabels, newTextLabel } from "@/utils/ui";
 import type { GameState, GameUIState, Fish } from "../types";
+import {
+  FISH_SPEED_MIN,
+  FISH_SPEED_MAX,
+  SKELETON_SPEED,
+  TIME_BONUS_BROWN_FISH,
+  TIME_PENALTY_GREY_LONG,
+} from "../constants";
 import type { AssetMgr } from "@/types/ui";
 import type { TextLabel } from "@/types/ui";
 import type { AudioMgr } from "@/types/audio";
@@ -15,7 +22,6 @@ const GAME_TIME = 99;
 const FPS = 60; // assumed frame rate for requestAnimationFrame
 
 const FISH_SIZE = 128;
-const SKELETON_SPEED = 2;
 const SKELETON_CONVERT_DISTANCE = FISH_SIZE / 2;
 
 export default function useGameEngine() {
@@ -456,13 +462,16 @@ export default function useGameEngine() {
         ) {
           cur.hits += 1;
           if (f.kind === "brown") {
-            cur.timer += 3 * 60;
-            makeText("+3", f.x, f.y);
+            cur.timer += TIME_BONUS_BROWN_FISH * FPS;
+            makeText(`+${TIME_BONUS_BROWN_FISH}`, f.x, f.y);
             cur.fish.splice(i, 1);
             audio.play("bonus");
           } else if (f.kind === "grey_long_a" || f.kind === "grey_long_b") {
-            cur.timer = Math.max(0, cur.timer - 5 * 60);
-            makeText("-5", f.x, f.y);
+            cur.timer = Math.max(
+              0,
+              cur.timer - TIME_PENALTY_GREY_LONG * FPS
+            );
+            makeText(`-${TIME_PENALTY_GREY_LONG}`, f.x, f.y);
             const gid = f.groupId;
             cur.fish = cur.fish.filter((fish) => fish.groupId !== gid);
             audio.play("hit");
@@ -614,6 +623,25 @@ export default function useGameEngine() {
     state.current.fish.push(...spawned);
     return spawned;
   }, []);
+
+  // spawn scheduler
+  useEffect(() => {
+    if (ui.phase !== "playing") return;
+    const basicKinds = ["blue", "green", "grey", "orange", "pink", "red"];
+    let timer: ReturnType<typeof setTimeout>;
+    const schedule = () => {
+      const delay = 1000 + Math.random() * 2000;
+      timer = setTimeout(() => {
+        if (state.current.phase !== "playing") return;
+        const kind = basicKinds[Math.floor(Math.random() * basicKinds.length)];
+        const count = Math.floor(Math.random() * 5) + 1;
+        spawnFish(kind, count);
+        schedule();
+      }, delay);
+    };
+    schedule();
+    return () => clearTimeout(timer);
+  }, [ui.phase, spawnFish]);
 
   // cleanup on unmount
   useEffect(() => {
