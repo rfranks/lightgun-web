@@ -1,33 +1,12 @@
-// hooks/useGameAssets.ts
 "use client";
 
 import { useRef, useEffect, useCallback, useState } from "react";
-import { TANK_EXPLOSION_SRC } from "@/constants/effects";
-import {
-  WATER_SRCS,
-  TREE_SOURCES,
-  ROCK_SRCS,
-  GROUND_VARIANTS,
-} from "@/constants/environment";
-import {
-  DUCK_SRCS,
-  DUCK_TARGET_SRCS,
-  DUCK_OUTLINE_SRCS,
-} from "@/constants/objects";
-import {
-  NAPALM_MISSILE_SRC,
-  NAPALM_FLAME_FRAME_SRCS,
-  POWERUP_TYPES,
-} from "@/constants/powerups";
-import { SCORE_DIGIT_PATH } from "@/constants/ui";
-import { ENEMY_COLORS, AIRSHIP_COLORS } from "@/constants/vehicles";
-import { AssetMgr } from "@/types/ui";
+import type { AssetMgr } from "@/types/ui";
 import { withBasePath } from "@/utils/basePath";
 
 /**
- * SSR-safe asset loader for browser games.
- * Ensures no client/server hydration errors!
- * Fully matches your dynamic AssetMgr type.
+ * Asset loading hook for the Zombiefish game.
+ * Mirrors warbirds' useGameAssets to keep API consistent across games.
  */
 export function useGameAssets(): {
   get: AssetMgr["get"];
@@ -36,224 +15,144 @@ export function useGameAssets(): {
   ready: boolean;
 } {
   const [ready, setReady] = useState(false);
-
-  // All asset refs live in a plain object, so you can string-key into it.
   const assetRefs = useRef<AssetMgr["assetRefs"]>({});
 
   useEffect(() => {
-    if (typeof window === "undefined") return; // SSR guard
+    if (typeof window === "undefined") return;
 
-    // Utility to load an image and return it
     const loadImg = (src: string) => {
       const img = new window.Image();
       img.src = withBasePath(src);
       return img;
     };
 
-    // AIRSHIP FRAMES
-    assetRefs.current.airshipFrames = Object.fromEntries(
-      AIRSHIP_COLORS.map((color) => [
-        color,
-        [1, 2, 3].map((i) =>
-          loadImg(`/assets/airships/airship_${color}_${i}.png`)
-        ),
+    const build = (folder: string, names: string[]) =>
+      Object.fromEntries(
+        names.map((name) => [
+          name,
+          loadImg(`/assets/fish/PNG/${folder}/${name}.png`),
+        ])
+      );
+
+    // FISH IMAGES
+    const fishTypes = [
+      "blue",
+      "brown",
+      "green",
+      "grey",
+      "grey_long_a",
+      "grey_long_b",
+      "orange",
+      "pink",
+      "red",
+    ];
+    assetRefs.current.fishImgs = Object.fromEntries(
+      fishTypes.map((name) => [
+        name,
+        loadImg(`/assets/fish/PNG/Objects/Fish/fish_${name}.png`),
       ])
     );
 
-    // ARTILLERY
-    assetRefs.current.artilleryImg = loadImg(
-      "/assets/tanks/PNG/Retina/tank_bulletFly6.png"
+    // SKELETON IMAGES
+    const skeletonTypes = ["blue", "green", "orange", "pink", "red"];
+    assetRefs.current.skeletonImgs = Object.fromEntries(
+      skeletonTypes.map((name) => [
+        name,
+        loadImg(`/assets/fish/PNG/Objects/Fish/fish_${name}_skeleton.png`),
+      ])
     );
 
-    // BLACK SMOKE
-    assetRefs.current.blackSmokeImgs = Array.from({ length: 25 }, (_, i) =>
-      loadImg(
-        `/assets/smoke/PNG/Black smoke/blackSmoke${String(i).padStart(
-          2,
-          "0"
-        )}.png`
-      )
-    );
+    // OBJECTS
+    assetRefs.current.bubbleImgs = build("Objects/Bubbles", [
+      "bubble_a",
+      "bubble_b",
+      "bubble_c",
+    ]);
 
-    // BROKEN STICK
-    assetRefs.current.brokenStickImg = loadImg(
-      "/assets/shooting-gallery/PNG/Objects/stick_wood_broken.png"
-    );
+    assetRefs.current.rockImgs = build("Objects/Rocks", [
+      "background_rock_a",
+      "background_rock_b",
+      "rock_a",
+      "rock_a_outline",
+      "rock_b",
+      "rock_b_outline",
+    ]);
 
-    // BULLET HOLE
-    assetRefs.current.bulletHoleImg = loadImg(
-      "/assets/shooting-gallery/PNG/Objects/shot_brown_large.png"
-    );
+    assetRefs.current.seaGrassImgs = build("Objects/SeaGrass", [
+      "seaweed_grass_a",
+      "seaweed_grass_a_outline",
+      "seaweed_grass_b",
+      "seaweed_grass_b_outline",
+    ]);
 
-    // CANNONBALL
-    assetRefs.current.cannonballImg = loadImg(
-      "/assets/pirates/PNG/Retina/Ship parts/cannonBall.png"
-    );
+    const seaweedNames: string[] = [];
+    "abcdefgh".split("").forEach((l) => {
+      seaweedNames.push(`background_seaweed_${l}`);
+    });
+    "abcd".split("").forEach((l) => {
+      seaweedNames.push(`seaweed_green_${l}`);
+      seaweedNames.push(`seaweed_green_${l}_outline`);
+    });
+    "ab".split("").forEach((l) => {
+      seaweedNames.push(`seaweed_orange_${l}`);
+      seaweedNames.push(`seaweed_orange_${l}_outline`);
+    });
+    "abcd".split("").forEach((l) => {
+      seaweedNames.push(`seaweed_pink_${l}`);
+      seaweedNames.push(`seaweed_pink_${l}_outline`);
+    });
+    assetRefs.current.seaweedImgs = build("Objects/Seaweed", seaweedNames);
+
+    // TERRAIN
+    const topLetters = "abcdefgh".split("");
+    const dirtNames = [
+      "terrain_dirt_a",
+      "terrain_dirt_b",
+      "terrain_dirt_c",
+      "terrain_dirt_d",
+      ...topLetters.flatMap((l) => [
+        `terrain_dirt_top_${l}`,
+        `terrain_dirt_top_${l}_outline`,
+      ]),
+    ];
+    const sandNames = [
+      "terrain_sand_a",
+      "terrain_sand_b",
+      "terrain_sand_c",
+      "terrain_sand_d",
+      ...topLetters.flatMap((l) => [
+        `terrain_sand_top_${l}`,
+        `terrain_sand_top_${l}_outline`,
+      ]),
+    ];
+
+    const waterNames = ["water_terrain", "water_terrain_top"];
+    assetRefs.current.terrainDirtImgs = build("Terrain/Dirt", dirtNames);
+    assetRefs.current.terrainSandImgs = build("Terrain/Sand", sandNames);
+    assetRefs.current.terrainWaterImgs = build("Terrain/Water", waterNames);
 
     // DIGIT IMAGES
     assetRefs.current.digitImgs = {};
-    for (let d = 0; d <= 9; d++) {
-      assetRefs.current.digitImgs[d.toString()] = loadImg(
-        `${SCORE_DIGIT_PATH}${d}.png`
-      );
-    }
-
-    // DUCKS
-    assetRefs.current.duckImgs = DUCK_SRCS.map(loadImg);
-    assetRefs.current.duckOutlineImgs = DUCK_OUTLINE_SRCS.map(loadImg);
-    assetRefs.current.duckTargetImgs = DUCK_TARGET_SRCS.map(loadImg);
-
-    // ENEMIES
-    assetRefs.current.enemyImgs = ENEMY_COLORS.map(loadImg);
-    assetRefs.current.enemyFrames = ENEMY_COLORS.map((base) =>
-      [1, 2, 3].map((i) => loadImg(base.replace(/1\.png$/, `${i}.png`)))
-    );
-
-    // EXPLOSION
-    assetRefs.current.explosionImgs = TANK_EXPLOSION_SRC.map(loadImg);
-
-    // FIRE/FLAME
-    assetRefs.current.fireImgs = [
-      loadImg("/assets/pirates/PNG/Retina/Effects/fire1.png"),
-      loadImg("/assets/pirates/PNG/Retina/Effects/fire2.png"),
-    ];
-    assetRefs.current.flameImgs = NAPALM_FLAME_FRAME_SRCS.map(loadImg);
-
-    // GROUND
-    assetRefs.current.groundImgs = GROUND_VARIANTS.map(loadImg);
-
-    // HOMING
-    assetRefs.current.homingImg = loadImg(
-      "/assets/tanks/PNG/Retina/tank_bullet3.png"
-    );
-
-    // LETTER IMAGES
-    assetRefs.current.letterImgs = {};
-    for (let c = 65; c <= 90; c++) {
-      const ch = String.fromCharCode(c);
-      assetRefs.current.letterImgs[ch] = loadImg(
-        `/assets/tappyplane/PNG/Letters/letter${ch}.png`
-      );
-    }
-
-    // MEDAL FRAMES
-    assetRefs.current.medalFrames = [];
-    for (let i = 1; i <= 9; i++) {
-      (assetRefs.current.medalFrames as HTMLImageElement[][]).push([
-        loadImg(`/assets/medals/PNG/flat_medal${i}.png`),
-        loadImg(`/assets/medals/PNG/flatshadow_medal${i}.png`),
-        loadImg(`/assets/medals/PNG/shaded_medal${i}.png`),
-      ]);
-    }
-
-    // NAPALM
-    assetRefs.current.napalmImg = loadImg(NAPALM_MISSILE_SRC);
-
-    // NUMBER IMAGES
-    assetRefs.current.numberImgs = {};
     for (let n = 0; n <= 9; n++) {
-      assetRefs.current.numberImgs[n.toString()] = loadImg(
-        `/assets/tappyplane/PNG/Numbers/number${n}.png`
+      assetRefs.current.digitImgs[n.toString()] = loadImg(
+        `/assets/fish/PNG/HUDText/hud_number_${n}.png`
       );
     }
 
-    // PLANE FRAMES/IMG
-    assetRefs.current.planeFrames = [1, 2, 3].map((i) =>
-      loadImg(`/assets/tappyplane/PNG/Planes/planeYellow${i}.png`)
+    assetRefs.current.dotImg = loadImg("/assets/fish/PNG/HUDText/hud_dot.png");
+    assetRefs.current.colonImg = loadImg(
+      "/assets/fish/PNG/HUDText/hud_colon.png"
     );
-    assetRefs.current.planeImg = assetRefs.current.planeFrames[0];
-
-    // PLUS
-    assetRefs.current.plusImg = loadImg(
-      "/assets/shooting-gallery/PNG/HUD/text_plus_small.png"
+    assetRefs.current.pctImg = loadImg(
+      "/assets/fish/PNG/HUDText/hud_percent.png"
     );
 
-    // POWERUPS
-    assetRefs.current.powerupImgs = Object.fromEntries(
-      POWERUP_TYPES.map((type) => [
-        type,
-        loadImg(`/assets/powerups/${type}.png`),
-      ])
-    );
-    assetRefs.current.powerupImgs.coin2x = loadImg(
-      "/assets/powerups/coin_2x.png"
-    );
-    assetRefs.current.powerupImgs.infiniteAmmo = loadImg(
-      "/assets/powerups/infinite_ammo.png"
-    );
-    assetRefs.current.powerupImgs.machineGuns = loadImg(
-      "/assets/powerups/machine_guns.png"
-    );
-    assetRefs.current.powerupImgs.autoReload = loadImg(
-      "/assets/powerups/autoReload.png"
-    );
-    assetRefs.current.powerupImgs.shrink = loadImg(
-      "/assets/powerups/shrink_effect.png"
-    );
-
-    // PUFF
-    assetRefs.current.puffLargeImg = loadImg(
-      "/assets/tappyplane/PNG/puffLarge.png"
-    );
-    assetRefs.current.puffSmallImg = loadImg(
-      "/assets/tappyplane/PNG/puffSmall.png"
-    );
-
-    // ROCKS
-    assetRefs.current.rockImgs = ROCK_SRCS.map(loadImg);
-
-    // SHIELD
-    assetRefs.current.shieldImg = loadImg(
-      "/assets/particles/PNG (Transparent)/circle_03.png"
-    );
-
-    // SPARKS
-    assetRefs.current.sparkImgs = Array.from({ length: 7 }, (_, i) =>
-      loadImg(`/assets/particles/PNG (Transparent)/spark_0${i + 1}.png`)
-    );
-
-    // LASER BEAM
-    assetRefs.current.laserBeamImgs = [
-      loadImg(
-        "/assets/space-shooter-redux/PNG/Lasers/laserRed04.png"
-      ),
-      loadImg(
-        "/assets/space-shooter-redux/PNG/Lasers/laserRed04.png"
-      ),
-    ];
-
-    // STICK
-    assetRefs.current.stickImg = loadImg(
-      "/assets/shooting-gallery/PNG/Objects/stick_wood.png"
-    );
-
-    // TARGETS
-    assetRefs.current.targetImgs = [
-      loadImg("/assets/shooting-gallery/PNG/Objects/target_red1.png"),
-      loadImg("/assets/shooting-gallery/PNG/Objects/target_red2.png"),
-      loadImg("/assets/shooting-gallery/PNG/Objects/target_red3.png"),
-    ];
-
-    // TREES
-    assetRefs.current.treeImgs = TREE_SOURCES.map(loadImg);
-
-    // WATER
-    assetRefs.current.waterImgs = WATER_SRCS.map(loadImg);
-
-    // WHITE PUFF
-    assetRefs.current.whitePuffImgs = Array.from({ length: 25 }, (_, i) =>
-      loadImg(
-        `/assets/smoke/PNG/White puff/whitePuff${String(i).padStart(
-          2,
-          "0"
-        )}.png`
-      )
-    );
+    // LETTER IMAGES (none provided in assets, but keep key for API parity)
+    assetRefs.current.letterImgs = {};
 
     setReady(true);
   }, []);
 
-  // Generic getters as specified in your AssetMgr
   const get = useCallback<AssetMgr["get"]>(
     (key: string) => assetRefs.current[key],
     []
