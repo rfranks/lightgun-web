@@ -38,10 +38,13 @@ export function useGameAssets(): {
     const fishTypes = [
       "blue",
       "brown",
+      "brown_outline",
       "green",
       "grey",
       "grey_long_a",
+      "grey_long_a_outline",
       "grey_long_b",
+      "grey_long_b_outline",
       "orange",
       "pink",
       "red",

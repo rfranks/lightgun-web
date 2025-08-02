@@ -20,6 +20,8 @@ export interface Fish {
    * Special fish spawn without a groupId.
    */
   groupId?: number;
+  /** Whether this fish should draw with a highlighted variant */
+  highlight?: boolean;
   /** Whether this fish has turned into a skeleton */
   isSkeleton?: boolean;
 }
