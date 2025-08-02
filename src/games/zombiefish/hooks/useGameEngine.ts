@@ -6,12 +6,10 @@ import { drawTextLabels, newTextLabel } from "@/utils/ui";
 
 import type { GameState, GameUIState, Fish, Bubble } from "../types";
 import {
-  FISH_SPEED_MIN,
-  FISH_SPEED_MAX,
   SKELETON_SPEED,
   TIME_BONUS_BROWN_FISH,
   TIME_PENALTY_GREY_LONG,
-  DEFAULT_CURSOR, 
+  DEFAULT_CURSOR,
   SHOT_CURSOR
 } from "../constants";
 import type { AssetMgr } from "@/types/ui";
@@ -201,6 +199,7 @@ export default function useGameEngine() {
     });
 
     // skeleton behavior
+    const immuneKinds = new Set(["brown", "grey_long_a", "grey_long_b"]);
     cur.fish.forEach((s) => {
       if (!s.isSkeleton) return;
 
@@ -208,7 +207,8 @@ export default function useGameEngine() {
       let nearestDist = Infinity;
 
       cur.fish.forEach((t) => {
-        if (!t.isSkeleton) return;
+        if (t.isSkeleton) return;
+        if (immuneKinds.has(t.kind)) return;
         const dx = t.x - s.x;
         const dy = t.y - s.y;
         const dist2 = dx * dx + dy * dy;
@@ -226,7 +226,10 @@ export default function useGameEngine() {
           s.vx = (dx / dist) * SKELETON_SPEED;
           s.vy = (dy / dist) * SKELETON_SPEED;
         }
-        if (dist < SKELETON_CONVERT_DISTANCE) {
+        if (
+          dist < SKELETON_CONVERT_DISTANCE &&
+          !immuneKinds.has(nearest.kind)
+        ) {
           nearest.isSkeleton = true;
           nearest.health = 2;
           nearest.vx = 0;
