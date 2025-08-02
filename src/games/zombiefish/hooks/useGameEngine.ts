@@ -582,6 +582,7 @@ export default function useGameEngine() {
       drawBackground(ctx);
 
       const bubbleImgs = getImg("bubbleImgs") as Record<string, HTMLImageElement>;
+      const fishImgs = getImg("fishImgs") as Record<string, HTMLImageElement>;
       cur.bubbles.forEach((b) => {
         const img = bubbleImgs[b.kind as keyof typeof bubbleImgs];
         if (!img) return;
@@ -606,6 +607,23 @@ export default function useGameEngine() {
         ctx.translate(f.x + FISH_SIZE / 2, f.y + FISH_SIZE / 2);
         if (f.vx < 0) ctx.scale(-1, 1);
         ctx.rotate(f.angle);
+        if (f.highlight) {
+          const outlineKey = f.isSkeleton
+            ? `${f.kind}_skeleton_outline`
+            : `${f.kind}_outline`;
+          const outline = fishImgs[outlineKey as keyof typeof fishImgs];
+          if (outline) {
+            ctx.globalAlpha = (Math.sin(frameRef.current / 10) + 1) / 2;
+            ctx.drawImage(
+              outline,
+              -FISH_SIZE / 2,
+              -FISH_SIZE / 2,
+              FISH_SIZE,
+              FISH_SIZE
+            );
+            ctx.globalAlpha = 1;
+          }
+        }
         ctx.drawImage(
           img,
           -FISH_SIZE / 2,
@@ -1031,7 +1049,7 @@ export default function useGameEngine() {
     // keep school member velocity variance tied to the configured speed range
     const speedVariance = (FISH_SPEED_MAX - FISH_SPEED_MIN) / 4;
 
-    const specialSingles = ["brown", "grey_long_a", "grey_long_b"];
+    const specialSingles = ["brown"];
     const specialPairs = ["grey_long"];
 
     if (specialSingles.includes(kind) || specialPairs.includes(kind)) count = 1;
@@ -1099,44 +1117,20 @@ export default function useGameEngine() {
         ["grey_long_a", "grey_long_b"].forEach((name, idx) => {
           const x =
             pairStart + (edge === 0 ? idx * FISH_SIZE : -idx * FISH_SIZE);
-          spawned.push({
-            id: nextFishId.current++,
-            kind: name,
-            x,
-            y,
-            vx,
-            vy,
-            angle: 0,
-            health: kind === "skeleton" ? 2 : 0,
-            hurtTimer: 0,
-            isSkeleton: kind === "skeleton",
-            groupId,
-            frame: 0,
-            frameCounter: 0,
-            highlight: true,
-          } as Fish);
+          const piece = makeFish(name, x, y, groupId, true);
+          piece.vx = vx;
+          piece.vy = vy;
+          spawned.push(piece);
         });
       } else {
         const pairStart = Math.random() * (width - 2 * FISH_SIZE);
         const y = startY;
         ["grey_long_a", "grey_long_b"].forEach((name, idx) => {
           const x = pairStart + idx * FISH_SIZE;
-          spawned.push({
-            id: nextFishId.current++,
-            kind: name,
-            x,
-            y,
-            vx,
-            vy,
-            angle: 0,
-            health: kind === "skeleton" ? 2 : 0,
-            hurtTimer: 0,
-            isSkeleton: kind === "skeleton",
-            groupId,
-            frame: 0,
-            frameCounter: 0,
-            highlight: true,
-          } as Fish);
+          const piece = makeFish(name, x, y, groupId, true);
+          piece.vx = vx;
+          piece.vy = vy;
+          spawned.push(piece);
         });
       }
     } else {
