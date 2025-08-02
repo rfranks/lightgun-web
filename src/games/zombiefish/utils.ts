@@ -85,6 +85,7 @@ export function initState(
 
     enemies: [],
     airships: [],
+    fish: [],
     mountains: [],
     trees: [],
     clouds: [],
