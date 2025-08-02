@@ -853,6 +853,7 @@ export default function useGameEngine() {
       clearTimeout(cursorTimeoutRef.current);
       cursorTimeoutRef.current = null;
     }
+    audio.pause("bgm");
     audio.pauseAll();
   }, []);
 
