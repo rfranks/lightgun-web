@@ -75,6 +75,7 @@ export default function useGameEngine() {
 
   const nextFishId = useRef(1);
   const nextGroupId = useRef(1);
+  const nextPairId = useRef(1);
   const nextBubbleId = useRef(1);
   const bubbleSpawnRef = useRef(0);
   const spawnTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -292,6 +293,26 @@ export default function useGameEngine() {
         f.vx += (avgVx - f.vx) * 0.05;
         f.vy += (avgVy - f.vy) * 0.05;
       });
+    });
+
+    // Keep multi-segment fish aligned. For each pairId, ensure the "b" segment
+    // trails the "a" segment at roughly one FISH_SIZE distance.
+    const pairs: Record<number, { a?: Fish; b?: Fish }> = {};
+    cur.fish.forEach((f) => {
+      if (f.pairId === undefined) return;
+      const p = (pairs[f.pairId] ||= {});
+      if (f.kind === "grey_long_a") p.a = f;
+      else if (f.kind === "grey_long_b") p.b = f;
+    });
+    Object.values(pairs).forEach(({ a, b }) => {
+      if (!a || !b) return;
+      // synchronize vertical velocity
+      b.vy = a.vy;
+      // small corrective horizontal velocity to maintain spacing
+      const sign = b.x >= a.x ? 1 : -1;
+      const desiredX = a.x + FISH_SIZE * sign;
+      const dx = desiredX - b.x;
+      b.vx += dx * 0.05;
     });
 
     // skeleton behavior
@@ -800,6 +821,7 @@ export default function useGameEngine() {
     bubbleSpawnRef.current = 0;
     nextFishId.current = 1;
     nextGroupId.current = 1;
+    nextPairId.current = 1;
     nextBubbleId.current = 1;
     rockOffsets.current.fill(0);
     seaweedOffsets.current.fill(0);
@@ -965,9 +987,9 @@ export default function useGameEngine() {
             cur.timer = Math.max(0, cur.timer - TIME_PENALTY_GREY_LONG);
             updateDigitLabel(timerLabel.current, cur.timer, 2, ":");
             makeText(`-${TIME_PENALTY_GREY_LONG}`, f.x, f.y);
-            const gid = f.groupId;
-            if (gid !== undefined) {
-              cur.fish = cur.fish.filter((fish) => fish.groupId !== gid);
+            const pid = f.pairId;
+            if (pid !== undefined) {
+              cur.fish = cur.fish.filter((fish) => fish.pairId !== pid);
             } else {
               cur.fish.splice(i, 1);
             }
@@ -1092,6 +1114,7 @@ export default function useGameEngine() {
     if (specialPairs.includes(kind)) {
       // grey_long spawns as two pieces that move together
       const groupId = nextGroupId.current++;
+      const pairId = nextPairId.current++;
       const { vx, vy } = genVelocity(); // keep pair aligned
       if (edge === 0 || edge === 1) {
         const pairStart = edge === 0 ? -2 * FISH_SIZE : width + 2 * FISH_SIZE;
@@ -1111,6 +1134,7 @@ export default function useGameEngine() {
             hurtTimer: 0,
             isSkeleton: kind === "skeleton",
             groupId,
+            pairId,
             frame: 0,
             frameCounter: 0,
             highlight: true,
@@ -1133,6 +1157,7 @@ export default function useGameEngine() {
             hurtTimer: 0,
             isSkeleton: kind === "skeleton",
             groupId,
+            pairId,
             frame: 0,
             frameCounter: 0,
             highlight: true,
