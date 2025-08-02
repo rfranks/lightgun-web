@@ -79,6 +79,7 @@ export default function useGameEngine() {
   const spawnTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cursorTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const frameRef = useRef(0); // track frames for one-second ticks
+  const fishSpawnTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const rockOffsets = useRef<number[]>(ROCK_SPEED.map(() => 0));
   const seaweedOffsets = useRef<number[]>(SEAWEED_SPEED.map(() => 0));
   const accuracyLabel = useRef<TextLabel | null>(null);
@@ -771,6 +772,12 @@ export default function useGameEngine() {
   // reset back to title screen
   const resetGame = useCallback(() => {
     const cur = state.current;
+
+    if (fishSpawnTimeout.current) {
+      clearTimeout(fishSpawnTimeout.current);
+      fishSpawnTimeout.current = null;
+    }
+
     cur.phase = "title";
     cur.timer = GAME_TIME;
     cur.shots = 0;
@@ -1214,9 +1221,9 @@ export default function useGameEngine() {
       // FISH_SPAWN_INTERVAL_* are expressed in frames; convert to ms
       const min = (FISH_SPAWN_INTERVAL_MIN / FPS) * 1000;
       const max = (FISH_SPAWN_INTERVAL_MAX / FPS) * 1000;
-      const delay = (min + Math.random() * (max - min)) / factor;
+      const delay = (min + Math.random() * (max - min)) * (1 / factor);
 
-      spawnTimeoutRef.current = setTimeout(() => {
+      fishSpawnTimeout.current = setTimeout(() => {
         if (state.current.phase !== "playing") return;
         const roll = Math.random();
         if (roll < 0.1) {
@@ -1233,7 +1240,10 @@ export default function useGameEngine() {
     };
     schedule();
     return () => {
-      if (spawnTimeoutRef.current) clearTimeout(spawnTimeoutRef.current);
+      if (fishSpawnTimeout.current) {
+        clearTimeout(fishSpawnTimeout.current);
+        fishSpawnTimeout.current = null;
+      }
     };
   }, [ui.phase, spawnFish]);
 
