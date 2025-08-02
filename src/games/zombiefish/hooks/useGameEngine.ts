@@ -32,17 +32,14 @@ const FISH_SIZE = 128;
 const FISH_FRAME_DELAY = 6;
 const MAX_SCHOOL_SIZE = 4;
 const SKELETON_CONVERT_DISTANCE = FISH_SIZE / 2;
-const BUBBLE_BASE_SIZE = 64;
-const BUBBLE_MIN_SIZE = BUBBLE_BASE_SIZE * 0.5;
-const BUBBLE_MAX_SIZE = BUBBLE_BASE_SIZE * 1.5;
-const BUBBLE_VX_MAX = 0.5;
-const BUBBLE_VY_MIN = -1.5;
-const BUBBLE_VY_MAX = -0.5;
-const ROCK_SPEED = 0.2;
-const SEAWEED_SPEED = 0.4;
-const BUBBLE_SIZE = BUBBLE_BASE_SIZE;
-const ROCK_SPEED = [0.1, 0.2];
-const SEAWEED_SPEED = [0.2, 0.4];
+  const BUBBLE_BASE_SIZE = 64;
+  const BUBBLE_MIN_SIZE = BUBBLE_BASE_SIZE * 0.5;
+  const BUBBLE_MAX_SIZE = BUBBLE_BASE_SIZE * 1.5;
+  const BUBBLE_VX_MAX = 0.5;
+  const BUBBLE_VY_MIN = -1.5;
+  const BUBBLE_VY_MAX = -0.5;
+  const ROCK_SPEED = [0.1, 0.2];
+  const SEAWEED_SPEED = [0.2, 0.4];
 const MAX_BUBBLES = 20;
 const HURT_FRAMES = 10;
 const CONVERT_FLASH_FRAMES = 5;
@@ -279,10 +276,10 @@ export default function useGameEngine() {
 
     // skeleton behavior
     const immuneKinds = new Set(["brown", "grey_long_a", "grey_long_b"]);
-    const speedMult = 1 + cur.conversions * 0.1;
-    const base = SKELETON_SPEED * speedMult;
-    const extra = SKELETON_SPEED * speedMult;
-    const skeletonSpeed = base + (1 - cur.timer / GAME_TIME) * extra;
+    const progress = 1 - cur.timer / GAME_TIME;
+    let skeletonSpeed =
+      SKELETON_SPEED * (1 + cur.conversions * 0.1) * (1 + progress);
+    skeletonSpeed = Math.min(skeletonSpeed, SKELETON_SPEED * 5);
     let skeletonCount = cur.fish.filter((f) => f.isSkeleton).length;
     cur.fish.forEach((s) => {
       if (!s.isSkeleton) return;
@@ -313,7 +310,7 @@ export default function useGameEngine() {
         if (
           dist < SKELETON_CONVERT_DISTANCE &&
           !immuneKinds.has(nearest.kind) &&
-          skeletonCount < MAX_SKELETONS
+          skeletonCount < MAX_SKELETONS &&
           !nearest.pendingSkeleton
         ) {
           // Spawn a brief text effect before converting the fish
@@ -551,20 +548,19 @@ export default function useGameEngine() {
       }
 
 
-      if (cur.phase === "paused") {
-        if (!pausedLabel.current) {
-          pausedLabel.current = newTextLabel(
-            { text: "PAUSED", scale: 2, fixed: true, fade: false },
-            assetMgr,
-            cur.dims
-          );
-          cur.textLabels.push(pausedLabel.current);
-        }
-      } 
-    (pausedLabel.current) {
-        cur.textLabels = cur.textLabels.filter((l) => l !== pausedLabel.current);
-        pausedLabel.current = null;
+    if (cur.phase === "paused") {
+      if (!pausedLabel.current) {
+        pausedLabel.current = newTextLabel(
+          { text: "PAUSED", scale: 2, fixed: true, fade: false },
+          assetMgr,
+          cur.dims
+        );
+        cur.textLabels.push(pausedLabel.current);
       }
+    } else if (pausedLabel.current) {
+      cur.textLabels = cur.textLabels.filter((l) => l !== pausedLabel.current);
+      pausedLabel.current = null;
+    }
 
       // draw bubbles, fish and text labels
       if (canvas && ctx) {
