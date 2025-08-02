@@ -124,6 +124,9 @@ export default function useGameEngine() {
   const drawBackground = useCallback(
     (ctx: CanvasRenderingContext2D) => {
       const { width, height } = state.current.dims;
+
+      // --- Water ----------------------------------------------------------
+      // Tile the base water texture from Terrain/Water across the canvas.
       const waterImgs = getImg("terrainWaterImgs") as
         | Record<string, HTMLImageElement>
         | undefined;
@@ -139,6 +142,8 @@ export default function useGameEngine() {
         ctx.fillRect(0, 0, width, height);
       }
 
+      // --- Sand -----------------------------------------------------------
+      // Lay down the sand terrain and its top edge from Terrain/Sand.
       const sandImgs = getImg("terrainSandImgs") as
         | Record<string, HTMLImageElement>
         | undefined;
@@ -162,34 +167,16 @@ export default function useGameEngine() {
         }
       }
 
-      const rockBgImgs = getImg("rockBgImgs") as HTMLImageElement[] | undefined;
-      if (rockBgImgs && rockBgImgs.length) {
-        const groupWidth = rockBgImgs[0].width * rockBgImgs.length;
-        ROCK_SPEED.forEach((s, i) => {
-          rockOffsets.current[i] -= s;
-          if (rockOffsets.current[i] <= -groupWidth)
-            rockOffsets.current[i] += groupWidth;
-        });
-        for (let i = 0; i < ROCK_SPEED.length; i++) {
-          const offset = rockOffsets.current[i];
-          const y = groundY - rockBgImgs[0].height;
-          for (let x = -groupWidth; x < width + groupWidth; x += groupWidth) {
-            rockBgImgs.forEach((img, idx) => {
-              if (!img) return;
-              ctx.drawImage(img, x + offset + idx * rockBgImgs[0].width, y);
-            });
-          }
-        }
-      }
-
+      // --- Seaweed -------------------------------------------------------
+      // Parallax scrolling background seaweed from Objects/Seaweed.
       const seaweedBgImgs = getImg("seaweedBgImgs") as
         | HTMLImageElement[]
         | undefined;
       if (seaweedBgImgs && seaweedBgImgs.length) {
         const bottom = groundY;
         const groupWidth = seaweedBgImgs[0].width * seaweedBgImgs.length;
-        SEAWEED_SPEED.forEach((s, i) => {
-          seaweedOffsets.current[i] -= s;
+        SEAWEED_SPEED.forEach((speed, i) => {
+          seaweedOffsets.current[i] -= speed;
           if (seaweedOffsets.current[i] <= -groupWidth)
             seaweedOffsets.current[i] += groupWidth;
         });
@@ -200,6 +187,28 @@ export default function useGameEngine() {
               if (!img) return;
               const y = bottom - img.height;
               ctx.drawImage(img, x + offset + idx * seaweedBgImgs[0].width, y);
+            });
+          }
+        }
+      }
+
+      // --- Rocks ---------------------------------------------------------
+      // Parallax scrolling background rocks from Objects/Rocks.
+      const rockBgImgs = getImg("rockBgImgs") as HTMLImageElement[] | undefined;
+      if (rockBgImgs && rockBgImgs.length) {
+        const groupWidth = rockBgImgs[0].width * rockBgImgs.length;
+        ROCK_SPEED.forEach((speed, i) => {
+          rockOffsets.current[i] -= speed;
+          if (rockOffsets.current[i] <= -groupWidth)
+            rockOffsets.current[i] += groupWidth;
+        });
+        for (let i = 0; i < ROCK_SPEED.length; i++) {
+          const offset = rockOffsets.current[i];
+          const y = groundY - rockBgImgs[0].height;
+          for (let x = -groupWidth; x < width + groupWidth; x += groupWidth) {
+            rockBgImgs.forEach((img, idx) => {
+              if (!img) return;
+              ctx.drawImage(img, x + offset + idx * rockBgImgs[0].width, y);
             });
           }
         }
