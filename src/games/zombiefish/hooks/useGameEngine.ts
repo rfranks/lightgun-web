@@ -943,21 +943,21 @@ export default function useGameEngine() {
         return;
       }
 
-      // translate click to canvas coordinates so hits are detected correctly
+      // translate mouse coordinates into canvas space
       const rect = canvas.getBoundingClientRect();
-      const relX = e.clientX - rect.left;
-      const relY = e.clientY - rect.top;
-      const x = (relX / rect.width) * cur.dims.width;
-      const y = (relY / rect.height) * cur.dims.height;
+      const canvasX =
+        ((e.clientX - rect.left) / rect.width) * cur.dims.width;
+      const canvasY =
+        ((e.clientY - rect.top) / rect.height) * cur.dims.height;
 
-      // iterate fish from topmost (end of array) so higher-drawn fish are hit first
+      // iterate fish in reverse draw order so topmost fish are hit first
       for (let i = cur.fish.length - 1; i >= 0; i--) {
         const f = cur.fish[i];
         if (
-          x >= f.x &&
-          x <= f.x + FISH_SIZE &&
-          y >= f.y &&
-          y <= f.y + FISH_SIZE
+          canvasX >= f.x &&
+          canvasX <= f.x + FISH_SIZE &&
+          canvasY >= f.y &&
+          canvasY <= f.y + FISH_SIZE
         ) {
           cur.hits += 1;
           updateDigitLabel(hitsLabel.current, cur.hits);
