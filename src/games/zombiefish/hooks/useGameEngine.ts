@@ -3,7 +3,14 @@ import { useWindowSize } from "@/hooks/useWindowSize";
 import { useGameAssets } from "./useGameAssets";
 import { useGameAudio } from "./useGameAudio";
 import { drawTextLabels, newTextLabel } from "@/utils/ui";
-import type { GameState, GameUIState, Fish } from "../types";
+import type { GameState, GameUIState, Fish, Bubble } from "../types";
+import {
+  FISH_SPEED_MIN,
+  FISH_SPEED_MAX,
+  SKELETON_SPEED,
+  TIME_BONUS_BROWN_FISH,
+  TIME_PENALTY_GREY_LONG,
+} from "../constants";
 import type { AssetMgr } from "@/types/ui";
 import type { TextLabel } from "@/types/ui";
 import type { AudioMgr } from "@/types/audio";
@@ -15,8 +22,8 @@ const GAME_TIME = 99;
 const FPS = 60; // assumed frame rate for requestAnimationFrame
 
 const FISH_SIZE = 128;
-const SKELETON_SPEED = 2;
 const SKELETON_CONVERT_DISTANCE = FISH_SIZE / 2;
+const BUBBLE_SIZE = 64;
 
 export default function useGameEngine() {
   // canvas and animation frame refs
@@ -40,11 +47,14 @@ export default function useGameEngine() {
     accuracy: 0,
     dims,
     fish: [],
+    bubbles: [],
     textLabels: [],
   });
 
   const nextFishId = useRef(1);
   const nextGroupId = useRef(1);
+  const nextBubbleId = useRef(1);
+  const bubbleSpawnRef = useRef(0);
   const frameRef = useRef(0); // track frames for one-second ticks
   const accuracyLabel = useRef<TextLabel | null>(null);
   const finalAccuracy = useRef(0);
@@ -173,13 +183,13 @@ export default function useGameEngine() {
 
     // skeleton behavior
     cur.fish.forEach((s) => {
-      if (s.kind !== "skeleton") return;
+      if (!s.isSkeleton) return;
 
       let nearest: Fish | undefined;
       let nearestDist = Infinity;
 
       cur.fish.forEach((t) => {
-        if (t.kind === "skeleton") return;
+        if (t.isSkeleton) return;
         const dx = t.x - s.x;
         const dy = t.y - s.y;
         const dist2 = dx * dx + dy * dy;
@@ -198,7 +208,7 @@ export default function useGameEngine() {
           s.vy = (dy / dist) * SKELETON_SPEED;
         }
         if (dist < SKELETON_CONVERT_DISTANCE) {
-          nearest.kind = "skeleton";
+          nearest.isSkeleton = true;
           nearest.health = 2;
           nearest.vx = 0;
           nearest.vy = 0;
@@ -218,6 +228,26 @@ export default function useGameEngine() {
     });
   }, [audio]);
 
+  const spawnBubble = useCallback(() => {
+    const { width, height } = state.current.dims;
+    const kinds = ["bubble_a", "bubble_b", "bubble_c"];
+    const kind = kinds[Math.floor(Math.random() * kinds.length)];
+    const size = BUBBLE_SIZE * (Math.random() * 0.5 + 0.5);
+    const x = Math.random() * (width - size);
+    const y = height + size;
+    const vx = (Math.random() - 0.5) * 0.5;
+    const vy = -(Math.random() * 1 + 0.5);
+    state.current.bubbles.push({
+      id: nextBubbleId.current++,
+      kind,
+      x,
+      y,
+      vx,
+      vy,
+      size,
+    } as Bubble);
+  }, []);
+
   // main loop updates timer and fish
   const loop = useCallback(() => {
     const cur = state.current;
@@ -235,6 +265,18 @@ export default function useGameEngine() {
 
     if (cur.phase === "playing") {
       updateFish();
+
+      // spawn and animate bubbles
+      bubbleSpawnRef.current -= 1;
+      if (bubbleSpawnRef.current <= 0) {
+        spawnBubble();
+        bubbleSpawnRef.current = Math.floor(Math.random() * 60) + 30;
+      }
+      cur.bubbles.forEach((b) => {
+        b.x += b.vx;
+        b.y += b.vy;
+      });
+      cur.bubbles = cur.bubbles.filter((b) => b.y + b.size > 0);
 
       // track frames and decrement the timer once per second
       frameRef.current += 1;
@@ -360,13 +402,20 @@ export default function useGameEngine() {
         f.y < height + margin
     );
 
-    // draw fish and text labels
+    // draw bubbles, fish and text labels
     if (canvas && ctx) {
       canvas.width = cur.dims.width;
       canvas.height = cur.dims.height;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       drawBackground(ctx);
+
+      const bubbleImgs = getImg("bubbleImgs") as Record<string, HTMLImageElement>;
+      cur.bubbles.forEach((b) => {
+        const img = bubbleImgs[b.kind as keyof typeof bubbleImgs];
+        if (!img) return;
+        ctx.drawImage(img, b.x, b.y, b.size, b.size);
+      });
 
       cur.fish.forEach((f) => {
         const imgMap = getImg(
@@ -406,7 +455,7 @@ export default function useGameEngine() {
     });
 
     animationFrameRef.current = requestAnimationFrame(loop);
-  }, [updateFish, getImg, assetMgr]);
+  }, [updateFish, getImg, assetMgr, spawnBubble]);
 
   // start the game
   const startSplash = useCallback(() => {
@@ -416,11 +465,13 @@ export default function useGameEngine() {
     cur.shots = 0;
     cur.hits = 0;
     cur.accuracy = 0;
+    cur.bubbles = [];
 
     frameRef.current = 0;
     accuracyLabel.current = null;
     finalAccuracy.current = 0;
     displayAccuracy.current = 0;
+    bubbleSpawnRef.current = 0;
     state.current.textLabels = [
       newTextLabel(
         {
@@ -456,11 +507,13 @@ export default function useGameEngine() {
     cur.hits = 0;
     cur.accuracy = 0;
     cur.fish = [];
+    cur.bubbles = [];
 
     accuracyLabel.current = null;
     finalAccuracy.current = 0;
     displayAccuracy.current = 0;
     frameRef.current = 0;
+    bubbleSpawnRef.current = 0;
 
     setUI({
       phase: cur.phase,
@@ -530,13 +583,16 @@ export default function useGameEngine() {
         ) {
           cur.hits += 1;
           if (f.kind === "brown") {
-            cur.timer += 3 * 60;
-            makeText("+3", f.x, f.y);
+            cur.timer += TIME_BONUS_BROWN_FISH * FPS;
+            makeText(`+${TIME_BONUS_BROWN_FISH}`, f.x, f.y);
             cur.fish.splice(i, 1);
             audio.play("bonus");
           } else if (f.kind === "grey_long_a" || f.kind === "grey_long_b") {
-            cur.timer = Math.max(0, cur.timer - 5 * 60);
-            makeText("-5", f.x, f.y);
+            cur.timer = Math.max(
+              0,
+              cur.timer - TIME_PENALTY_GREY_LONG * FPS
+            );
+            makeText(`-${TIME_PENALTY_GREY_LONG}`, f.x, f.y);
             const gid = f.groupId;
             cur.fish = cur.fish.filter((fish) => fish.groupId !== gid);
             audio.play("hit");
@@ -582,21 +638,40 @@ export default function useGameEngine() {
 
     if (specialSingles.includes(kind) || specialPairs.includes(kind)) count = 1;
 
-    // decide side and velocity
-    const fromLeft = Math.random() < 0.5;
-    const baseVx = (Math.random() * 2 + 1) * (fromLeft ? 1 : -1);
-    const startX = fromLeft ? -FISH_SIZE : width + FISH_SIZE;
+    // decide spawning edge
+    const edge = Math.floor(Math.random() * 4); // 0:left,1:right,2:top,3:bottom
+    const startX =
+      edge === 0 ? -FISH_SIZE : edge === 1 ? width + FISH_SIZE : 0;
+    const startY =
+      edge === 2 ? -FISH_SIZE : edge === 3 ? height + FISH_SIZE : 0;
+
+    // generate a velocity based on the entry edge
+    const genVelocity = () => {
+      const main = Math.random() * 2 + 1;
+      const cross = Math.random() * 2 - 1;
+      switch (edge) {
+        case 0:
+          return { vx: main, vy: cross };
+        case 1:
+          return { vx: -main, vy: cross };
+        case 2:
+          return { vx: cross, vy: main };
+        case 3:
+        default:
+          return { vx: cross, vy: -main };
+      }
+    };
 
     // helper to create a fish
-    const makeFish = (k: string, xOffset = 0, groupId?: number) => {
-      const y = Math.random() * height;
+    const makeFish = (k: string, x: number, y: number, groupId?: number) => {
+      const { vx, vy } = genVelocity();
       return {
         id: nextFishId.current++,
         kind: k,
-        x: startX + xOffset,
+        x,
         y,
-        vx: baseVx,
-        vy: 0,
+        vx,
+        vy,
         ...(k === "skeleton" ? { health: 2 } : {}),
         isSkeleton: k === "skeleton",
         ...(groupId !== undefined ? { groupId } : {}),
@@ -605,36 +680,89 @@ export default function useGameEngine() {
 
     if (specialPairs.includes(kind)) {
       const groupId = nextGroupId.current++;
-      const pairStart = fromLeft ? -2 * FISH_SIZE : width + 2 * FISH_SIZE;
-      const y = Math.random() * height;
-      ["grey_long_a", "grey_long_b"].forEach((name, idx) => {
-        const x = pairStart + (fromLeft ? idx * FISH_SIZE : -idx * FISH_SIZE);
-        spawned.push({
-          id: nextFishId.current++,
-          kind: name,
-          x,
-          y,
-          vx: baseVx,
-          vy: 0,
-          angle: 0,
-          groupId,
-          ...(kind === "skeleton" ? { health: 2 } : {}),
-          isSkeleton: kind === "skeleton",
-          ...(groupId !== undefined ? { groupId } : {}),
-        } as Fish);
-      });
+      const { vx, vy } = genVelocity(); // keep pair aligned
+      if (edge === 0 || edge === 1) {
+        const pairStart = edge === 0 ? -2 * FISH_SIZE : width + 2 * FISH_SIZE;
+        const y = Math.random() * height;
+        ["grey_long_a", "grey_long_b"].forEach((name, idx) => {
+          const x = pairStart + (edge === 0 ? idx * FISH_SIZE : -idx * FISH_SIZE);
+          spawned.push({
+            id: nextFishId.current++,
+            kind: name,
+            x,
+            y,
+            vx,
+            vy,
+            angle: 0,
+            groupId,
+            ...(kind === "skeleton" ? { health: 2 } : {}),
+            isSkeleton: kind === "skeleton",
+            ...(groupId !== undefined ? { groupId } : {}),
+          } as Fish);
+        });
+      } else {
+        const pairStart = Math.random() * (width - 2 * FISH_SIZE);
+        const y = startY;
+        ["grey_long_a", "grey_long_b"].forEach((name, idx) => {
+          const x = pairStart + idx * FISH_SIZE;
+          spawned.push({
+            id: nextFishId.current++,
+            kind: name,
+            x,
+            y,
+            vx,
+            vy,
+            angle: 0,
+            groupId,
+            ...(kind === "skeleton" ? { health: 2 } : {}),
+            isSkeleton: kind === "skeleton",
+            ...(groupId !== undefined ? { groupId } : {}),
+          } as Fish);
+        });
+      }
     } else {
       const groupId = specialSingles.includes(kind)
         ? undefined
         : nextGroupId.current++;
       for (let i = 0; i < count; i++) {
-        spawned.push(makeFish(kind, 0, groupId));
+        const x =
+          edge === 0
+            ? startX
+            : edge === 1
+            ? startX
+            : Math.random() * width;
+        const y =
+          edge === 2
+            ? startY
+            : edge === 3
+            ? startY
+            : Math.random() * height;
+        spawned.push(makeFish(kind, x, y, groupId));
       }
     }
 
     state.current.fish.push(...spawned);
     return spawned;
   }, []);
+
+  // spawn scheduler
+  useEffect(() => {
+    if (ui.phase !== "playing") return;
+    const basicKinds = ["blue", "green", "grey", "orange", "pink", "red"];
+    let timer: ReturnType<typeof setTimeout>;
+    const schedule = () => {
+      const delay = 1000 + Math.random() * 2000;
+      timer = setTimeout(() => {
+        if (state.current.phase !== "playing") return;
+        const kind = basicKinds[Math.floor(Math.random() * basicKinds.length)];
+        const count = Math.floor(Math.random() * 5) + 1;
+        spawnFish(kind, count);
+        schedule();
+      }, delay);
+    };
+    schedule();
+    return () => clearTimeout(timer);
+  }, [ui.phase, spawnFish]);
 
   // cleanup on unmount
   useEffect(() => {
