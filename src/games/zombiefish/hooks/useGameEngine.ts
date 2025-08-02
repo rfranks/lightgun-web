@@ -38,9 +38,6 @@ const BUBBLE_MAX_SIZE = BUBBLE_BASE_SIZE * 1.5;
 const BUBBLE_VX_MAX = 0.5;
 const BUBBLE_VY_MIN = -1.5;
 const BUBBLE_VY_MAX = -0.5;
-const ROCK_SPEED = 0.2;
-const SEAWEED_SPEED = 0.4;
-const BUBBLE_SIZE = BUBBLE_BASE_SIZE;
 const ROCK_SPEED = [0.1, 0.2];
 const SEAWEED_SPEED = [0.2, 0.4];
 const MAX_BUBBLES = 20;
@@ -85,6 +82,7 @@ export default function useGameEngine() {
   const accuracyLabel = useRef<TextLabel | null>(null);
   const finalAccuracy = useRef(0);
   const displayAccuracy = useRef(0);
+  const bestAccuracyLabel = useRef<TextLabel | null>(null);
   const timerLabel = useRef<TextLabel | null>(null);
   const shotsLabel = useRef<TextLabel | null>(null);
   const hitsLabel = useRef<TextLabel | null>(null);
@@ -313,7 +311,7 @@ export default function useGameEngine() {
         if (
           dist < SKELETON_CONVERT_DISTANCE &&
           !immuneKinds.has(nearest.kind) &&
-          skeletonCount < MAX_SKELETONS
+          skeletonCount < MAX_SKELETONS &&
           !nearest.pendingSkeleton
         ) {
           // Spawn a brief text effect before converting the fish
@@ -468,6 +466,25 @@ export default function useGameEngine() {
         accuracyLabel.current = lbl;
         cur.textLabels.push(lbl);
       }
+      if (!bestAccuracyLabel.current) {
+        const best = Number(localStorage.bestAccuracy || 0);
+        const pctImg = getImg("pctImg") as HTMLImageElement;
+        const digitImgs = getImg("digitImgs") as Record<string, HTMLImageElement>;
+        const lbl = newTextLabel(
+          {
+            text: `${best}%`,
+            scale: 1,
+            fixed: true,
+            fade: false,
+            x: 16,
+            y: 16,
+          },
+          assetMgr
+        );
+        lbl.imgs = [...best.toString().split("").map((ch) => digitImgs[ch]), pctImg];
+        bestAccuracyLabel.current = lbl;
+        cur.textLabels.push(lbl);
+      }
 
       const lbl = accuracyLabel.current!;
       if (displayAccuracy.current < finalAccuracy.current) {
@@ -560,8 +577,7 @@ export default function useGameEngine() {
           );
           cur.textLabels.push(pausedLabel.current);
         }
-      } 
-    (pausedLabel.current) {
+      } else if (pausedLabel.current) {
         cur.textLabels = cur.textLabels.filter((l) => l !== pausedLabel.current);
         pausedLabel.current = null;
       }
@@ -646,6 +662,7 @@ export default function useGameEngine() {
 
     frameRef.current = 0;
     accuracyLabel.current = null;
+    bestAccuracyLabel.current = null;
     finalAccuracy.current = 0;
     displayAccuracy.current = 0;
     rockOffsets.current.fill(0);
@@ -772,6 +789,7 @@ export default function useGameEngine() {
     cur.bubbles = [];
 
     accuracyLabel.current = null;
+    bestAccuracyLabel.current = null;
     finalAccuracy.current = 0;
     displayAccuracy.current = 0;
     frameRef.current = 0;
