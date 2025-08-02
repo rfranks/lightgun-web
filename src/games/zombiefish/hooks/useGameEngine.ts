@@ -289,6 +289,7 @@ export default function useGameEngine() {
 
       cur.fish.forEach((t) => {
         if (t.isSkeleton) return;
+        if (t.pendingSkeleton) return;
         if (immuneKinds.has(t.kind)) return;
         const dx = t.x - s.x;
         const dy = t.y - s.y;
@@ -548,19 +549,19 @@ export default function useGameEngine() {
       }
 
 
-      if (cur.phase === "paused") {
-        if (!pausedLabel.current) {
-          pausedLabel.current = newTextLabel(
-            { text: "PAUSED", scale: 2, fixed: true, fade: false },
-            assetMgr,
-            cur.dims
-          );
-          cur.textLabels.push(pausedLabel.current);
-        }
-      } else if (pausedLabel.current) {
-        cur.textLabels = cur.textLabels.filter((l) => l !== pausedLabel.current);
-        pausedLabel.current = null;
+    if (cur.phase === "paused") {
+      if (!pausedLabel.current) {
+        pausedLabel.current = newTextLabel(
+          { text: "PAUSED", scale: 2, fixed: true, fade: false },
+          assetMgr,
+          cur.dims
+        );
+        cur.textLabels.push(pausedLabel.current);
       }
+    } else if (pausedLabel.current) {
+      cur.textLabels = cur.textLabels.filter((l) => l !== pausedLabel.current);
+      pausedLabel.current = null;
+    }
 
       // draw bubbles, fish and text labels
       if (canvas && ctx) {
