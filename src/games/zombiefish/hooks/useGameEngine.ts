@@ -205,6 +205,7 @@ export default function useGameEngine() {
     });
 
     // skeleton behavior
+    const immuneKinds = new Set(["brown", "grey_long_a", "grey_long_b"]);
     cur.fish.forEach((s) => {
       if (!s.isSkeleton) return;
 
@@ -213,6 +214,7 @@ export default function useGameEngine() {
 
       cur.fish.forEach((t) => {
         if (t.isSkeleton) return;
+        if (immuneKinds.has(t.kind)) return;
         const dx = t.x - s.x;
         const dy = t.y - s.y;
         const dist2 = dx * dx + dy * dy;
@@ -230,7 +232,10 @@ export default function useGameEngine() {
           s.vx = (dx / dist) * SKELETON_SPEED;
           s.vy = (dy / dist) * SKELETON_SPEED;
         }
-        if (dist < SKELETON_CONVERT_DISTANCE) {
+        if (
+          dist < SKELETON_CONVERT_DISTANCE &&
+          !immuneKinds.has(nearest.kind)
+        ) {
           nearest.isSkeleton = true;
           nearest.health = 2;
           nearest.vx = 0;
