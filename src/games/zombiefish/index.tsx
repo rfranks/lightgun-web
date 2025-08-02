@@ -57,7 +57,6 @@ export default function Game() {
     <GameUI
       ui={ui}
       canvasRef={canvasRef}
-      cursor={ui.cursor}
       handleClick={handleClick}
       handleContext={handleContext}
       handleMouseMove={handleMouseMove}

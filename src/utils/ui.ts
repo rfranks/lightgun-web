@@ -120,7 +120,8 @@ export function newTextLabel(
 
   // give spaces a width roughly matching a letter
   // (this is a bit arbitrary, but should be close enough for most cases)
-  spaceGap = spaceGap || letterImgs["A"].width * 1.5 * scale;
+  spaceGap =
+    spaceGap || (letterImgs && letterImgs["A"].width * 1.5 * scale) || 10;
 
   const imgs: (HTMLImageElement | null)[] = [];
 
@@ -130,11 +131,13 @@ export function newTextLabel(
       imgs.push(null); // push null for space to maintain index
     } else {
       const img =
-        (ch === "+"
+        ch === "+"
           ? plusImg
           : ch === "-"
           ? minusImg
-          : letterImgs[ch.toUpperCase()] || numberImgs[ch] || digitImgs[ch]);
+          : letterImgs?.[ch.toUpperCase()] ||
+            numberImgs?.[ch] ||
+            digitImgs?.[ch];
       if (img) {
         totalWidth += img.width * scale + 2;
         imgs.push(img);

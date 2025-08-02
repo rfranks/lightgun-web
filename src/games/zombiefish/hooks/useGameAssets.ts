@@ -88,8 +88,8 @@ export function useGameAssets(): {
       assetRefs.current.skeletonFrames = makeFrames(skeletonCoords);
       setReady(true);
     };
-    
-        // FISH IMAGES
+
+    // FISH IMAGES
     const fishTypes = [
       "blue",
       "brown",
@@ -166,8 +166,12 @@ export function useGameAssets(): {
     assetRefs.current.seaweedImgs = build("Objects/Seaweed", seaweedNames);
     assetRefs.current.seaweedBgImgs = "abcdefgh"
       .split("")
-      .map((l) => (assetRefs.current.seaweedImgs as Record<string, HTMLImageElement>)[`background_seaweed_${l}`] ||
-        undefined);
+      .map(
+        (l) =>
+          (assetRefs.current.seaweedImgs as Record<string, HTMLImageElement>)[
+            `background_seaweed_${l}`
+          ] || undefined
+      );
 
     // TERRAIN
     const topLetters = "abcdefgh".split("");
@@ -208,6 +212,15 @@ export function useGameAssets(): {
       "/assets/fish/PNG/HUDText/hud_colon.png"
     );
 
+    // LETTER IMAGES
+    assetRefs.current.letterImgs = {};
+    for (let c = 65; c <= 90; c++) {
+      const ch = String.fromCharCode(c);
+      assetRefs.current.letterImgs[ch] = loadImg(
+        `/assets/tappyplane/PNG/Letters/letter${ch}.png`
+      );
+    }
+
     assetRefs.current.dotImg = loadImg("/assets/fish/PNG/HUDText/hud_dot.png");
     assetRefs.current.pctImg = loadImg(
       "/assets/fish/PNG/HUDText/hud_percent.png"
@@ -230,30 +243,6 @@ export function useGameAssets(): {
     const minusImg = new window.Image();
     minusImg.src = minusCanvas.toDataURL();
     assetRefs.current.minusImg = minusImg;
-
-    // LETTER IMAGES
-    // Assets do not include letters, so dynamically generate them
-    assetRefs.current.letterImgs = {};
-    const letterCanvas = document.createElement("canvas");
-    const baseImg = assetRefs.current.digitImgs["0"] as HTMLImageElement;
-    letterCanvas.width = baseImg?.width || 32;
-    letterCanvas.height = baseImg?.height || 32;
-    const lctx = letterCanvas.getContext("2d");
-    if (lctx) {
-      lctx.fillStyle = "white";
-      lctx.textAlign = "center";
-      lctx.textBaseline = "middle";
-      lctx.font = `${letterCanvas.height}px sans-serif`;
-      for (let c = 65; c <= 90; c++) {
-        const ch = String.fromCharCode(c);
-        lctx.clearRect(0, 0, letterCanvas.width, letterCanvas.height);
-        lctx.fillText(ch, letterCanvas.width / 2, letterCanvas.height / 2);
-        const img = new window.Image();
-        img.src = letterCanvas.toDataURL();
-        assetRefs.current.letterImgs[ch] = img;
-      }
-    }
-
   }, []);
 
   const get = useCallback<AssetMgr["get"]>(
