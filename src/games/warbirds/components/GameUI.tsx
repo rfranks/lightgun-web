@@ -1,5 +1,6 @@
 import React from "react";
 import Box from "@mui/material/Box";
+import type { ClickEvent } from "@/types/events";
 import { PowerupType } from "@/types/objects";
 import {
   SCORE_LABEL_SRC,
@@ -18,7 +19,7 @@ import { GameUIState } from "../types";
 export interface GameUIProps {
   ui: GameUIState;
   canvasRef: React.RefObject<HTMLCanvasElement | null>;
-  handleClick: (e: React.MouseEvent) => void;
+  handleClick: (e: ClickEvent) => void;
   handleContext: (e: React.MouseEvent) => void;
   resetGame: () => void;
   getImg: (
@@ -199,12 +200,10 @@ export function GameUI({
         onTouchStart={(e) => {
           e.preventDefault();
           const touch = e.touches[0];
-          handleClick(
-            {
-              clientX: touch.clientX,
-              clientY: touch.clientY,
-            } as unknown as React.MouseEvent<HTMLCanvasElement>
-          );
+          handleClick({
+            clientX: touch.clientX,
+            clientY: touch.clientY,
+          });
         }}
         style={{
           display: "block",

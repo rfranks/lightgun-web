@@ -1,6 +1,7 @@
 import React from "react";
 import Box from "@mui/material/Box";
 import { withBasePath } from "@/utils/basePath";
+import type { ClickEvent } from "@/types/events";
 import type { GameUIState } from "../types";
 
 export interface GameUIProps {
@@ -8,7 +9,7 @@ export interface GameUIProps {
   canvasRef: React.RefObject<HTMLCanvasElement | null>;
   /** Current cursor style to display over the canvas */
   cursor: string;
-  handleClick: (e: React.MouseEvent) => void;
+  handleClick: (e: ClickEvent) => void;
   handleContext: (e: React.MouseEvent) => void;
   handleMouseMove: (e: React.MouseEvent) => void;
 }
@@ -33,12 +34,10 @@ export function GameUI({
         onTouchStart={(e) => {
           e.preventDefault();
           const touch = e.touches[0];
-          handleClick(
-            {
-              clientX: touch.clientX,
-              clientY: touch.clientY,
-            } as unknown as React.MouseEvent<HTMLCanvasElement>
-          );
+          handleClick({
+            clientX: touch.clientX,
+            clientY: touch.clientY,
+          });
         }}
         onMouseMove={handleMouseMove}
         style={{ display: "block", width: "100%", height: "100%", cursor }}

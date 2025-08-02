@@ -4,6 +4,7 @@ import Button from "@mui/material/Button";
 import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import Typography from "@mui/material/Typography";
+import type { ClickEvent } from "@/types/events";
 import Reel from "./Reel";
 import BonusWheel from "./BonusWheel";
 import JackpotDisplay, { JackpotHandle } from "./JackpotDisplay";
@@ -13,7 +14,7 @@ export interface GameUIProps {
   cursor: string;
   onShot: () => void;
   canvasRef: React.RefObject<HTMLCanvasElement | null>;
-  handleClick: (e: React.MouseEvent) => void;
+  handleClick: (e: ClickEvent) => void;
   handleContext: (e: React.MouseEvent) => void;
   startSpins: (amount: number, denom: number) => void;
   spinning: boolean[];
@@ -153,12 +154,10 @@ export default function GameUI({
         onTouchStart={(e) => {
           e.preventDefault();
           const touch = e.touches[0];
-          handleClick(
-            {
-              clientX: touch.clientX,
-              clientY: touch.clientY,
-            } as unknown as React.MouseEvent<HTMLCanvasElement>
-          );
+          handleClick({
+            clientX: touch.clientX,
+            clientY: touch.clientY,
+          });
         }}
         style={{
           position: "absolute",
