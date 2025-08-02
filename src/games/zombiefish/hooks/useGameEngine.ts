@@ -233,9 +233,8 @@ export default function useGameEngine() {
       if (surfaceImgs && surfaceImgs.length) {
         const groupWidth = surfaceImgs[0].width * surfaceImgs.length;
         SURFACE_SPEED.forEach((speed, i) => {
-          surfaceOffsets.current[i] -= speed;
-          if (surfaceOffsets.current[i] <= -groupWidth)
-            surfaceOffsets.current[i] += groupWidth;
+          surfaceOffsets.current[i] =
+            (surfaceOffsets.current[i] - speed) % groupWidth;
         });
         for (let i = 0; i < SURFACE_SPEED.length; i++) {
           const offset = surfaceOffsets.current[i];
@@ -292,9 +291,8 @@ export default function useGameEngine() {
         const bottom = groundY;
         const groupWidth = seaweedBgImgs[0].width * seaweedBgImgs.length;
         SEAWEED_SPEED.forEach((speed, i) => {
-          seaweedOffsets.current[i] -= speed;
-          if (seaweedOffsets.current[i] <= -groupWidth)
-            seaweedOffsets.current[i] += groupWidth;
+          seaweedOffsets.current[i] =
+            (seaweedOffsets.current[i] - speed) % groupWidth;
         });
         for (let i = 0; i < SEAWEED_SPEED.length; i++) {
           const offset = seaweedOffsets.current[i];
@@ -314,9 +312,8 @@ export default function useGameEngine() {
       if (rockBgImgs && rockBgImgs.length) {
         const groupWidth = rockBgImgs[0].width * rockBgImgs.length;
         ROCK_SPEED.forEach((speed, i) => {
-          rockOffsets.current[i] -= speed;
-          if (rockOffsets.current[i] <= -groupWidth)
-            rockOffsets.current[i] += groupWidth;
+          rockOffsets.current[i] =
+            (rockOffsets.current[i] - speed) % groupWidth;
         });
         for (let i = 0; i < ROCK_SPEED.length; i++) {
           const offset = rockOffsets.current[i];
@@ -338,9 +335,8 @@ export default function useGameEngine() {
       if (seaGrassImgs && seaGrassImgs.length) {
         const groupWidth = seaGrassImgs[0].width * seaGrassImgs.length;
         SEAGRASS_SPEED.forEach((speed, i) => {
-          seaGrassOffsets.current[i] -= speed;
-          if (seaGrassOffsets.current[i] <= -groupWidth)
-            seaGrassOffsets.current[i] += groupWidth;
+          seaGrassOffsets.current[i] =
+            (seaGrassOffsets.current[i] - speed) % groupWidth;
         });
         for (let i = 0; i < SEAGRASS_SPEED.length; i++) {
           const offset = seaGrassOffsets.current[i];
@@ -379,6 +375,18 @@ export default function useGameEngine() {
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");
     cur.fish.forEach((f) => {
+      const frameMap = getImg(
+        f.isSkeleton ? "skeletonFrames" : "fishFrames"
+      ) as Record<string, HTMLImageElement[]>;
+      const frames = frameMap[f.kind as keyof typeof frameMap];
+      if (frames && frames.length > 0) {
+        f.frameCounter += 1;
+        if (f.frameCounter >= FISH_FRAME_DELAY) {
+          f.frameCounter = 0;
+          f.frame = (f.frame + 1) % frames.length;
+        }
+      }
+
       if (f.pendingSkeleton) {
         if (ctx && flashImg) {
           ctx.drawImage(flashImg, f.x, f.y, FISH_SIZE, FISH_SIZE);
@@ -447,48 +455,47 @@ export default function useGameEngine() {
     cur.fish.forEach((s) => {
       if (!s.isSkeleton) return;
 
-      let nearest: Fish | undefined;
-      let nearestDist2 = detectionRadius2;
-
-      cur.fish.forEach((t) => {
-        if (t.isSkeleton) return;
-        if (t.pendingSkeleton) return;
-        if (immuneKinds.has(t.kind)) return;
+      let target: Fish | undefined;
+      let targetDist2 = detectionRadius2;
+      for (const t of cur.fish) {
+        if (t.isSkeleton || t.pendingSkeleton) continue;
+        if (immuneKinds.has(t.kind)) continue;
         const dx = t.x - s.x;
         const dy = t.y - s.y;
         const dist2 = dx * dx + dy * dy;
-        if (dist2 < nearestDist2) {
-          nearestDist2 = dist2;
-          nearest = t;
+        if (dist2 < targetDist2) {
+          targetDist2 = dist2;
+          target = t;
         }
-      });
+      }
 
-      if (nearest) {
-        const dx = nearest.x - s.x;
-        const dy = nearest.y - s.y;
-        const dist = Math.sqrt(nearestDist2);
-        if (dist > 0) {
-          s.vx = (dx / dist) * skeletonSpeed;
-          s.vy = (dy / dist) * skeletonSpeed;
-        }
-        if (
-          dist < SKELETON_CONVERT_DISTANCE &&
-          skeletonCount < MAX_SKELETONS &&
-          !nearest.pendingSkeleton
-        ) {
-          // Spawn a brief text effect before converting the fish
-          makeText("POOF", nearest.x, nearest.y);
-          nearest.pendingSkeleton = true;
-          nearest.flashTimer = CONVERT_FLASH_FRAMES;
-          nearest.vx = 0;
-          nearest.vy = 0;
-          nearest.frame = 0;
-          nearest.frameCounter = 0;
-          delete nearest.groupId;
-          cur.conversions += 1;
-          audio.play("convert");
-          skeletonCount += 1;
-        }
+      if (!target) return;
+
+      const dx = target.x - s.x;
+      const dy = target.y - s.y;
+      const dist = Math.sqrt(targetDist2);
+      if (dist > 0) {
+        s.vx = (dx / dist) * SKELETON_SPEED;
+        s.vy = (dy / dist) * SKELETON_SPEED;
+      }
+
+      if (
+        dist < SKELETON_CONVERT_DISTANCE &&
+        skeletonCount < MAX_SKELETONS &&
+        !target.pendingSkeleton
+      ) {
+        // Spawn a brief text effect before converting the fish
+        makeText("POOF", target.x, target.y);
+        target.pendingSkeleton = true;
+        target.flashTimer = CONVERT_FLASH_FRAMES;
+        target.vx = 0;
+        target.vy = 0;
+        target.frame = 0;
+        target.frameCounter = 0;
+        delete target.groupId;
+        cur.conversions += 1;
+        audio.play("convert");
+        skeletonCount += 1;
       }
     });
 
@@ -497,14 +504,16 @@ export default function useGameEngine() {
       if (f.isSkeleton) return;
       f.wanderTimer -= 1;
       if (f.wanderTimer <= 0) {
-        f.wanderTimer = Math.floor(Math.random() * FPS) + FPS;
-        // apply a small random drift to the current velocity
-        const drift = 0.1;
-        f.vx += (Math.random() - 0.5) * drift;
-        f.vy += (Math.random() - 0.5) * drift;
-        const limited = clampIncline(f.vx, f.vy);
+        // pick a new random velocity
+        const range = FISH_SPEED_MAX - FISH_SPEED_MIN;
+        const speed = Math.random() * range + FISH_SPEED_MIN;
+        let vx = (Math.random() * 2 - 1) * speed;
+        let vy = (Math.random() * 2 - 1) * speed;
+        const limited = clampIncline(vx, vy);
         f.vx = limited.vx;
         f.vy = limited.vy;
+        // reset timer
+        f.wanderTimer = Math.floor(Math.random() * FPS) + FPS;
       }
     });
 
@@ -563,6 +572,7 @@ export default function useGameEngine() {
     const vy = Math.random() * (BUBBLE_VY_MAX - BUBBLE_VY_MIN) + BUBBLE_VY_MIN; // upward
     const amp = Math.random() * 2 + 0.5;
     const freq = Math.random() * 0.05 + 0.01;
+    if (state.current.bubbles.length >= MAX_BUBBLES) return;
     const bubble = inactiveBubbles.current.pop() || ({} as Bubble);
     bubble.id = nextBubbleId.current++;
     bubble.kind = kind;
@@ -574,13 +584,6 @@ export default function useGameEngine() {
     bubble.amp = amp;
     bubble.freq = freq;
     state.current.bubbles.push(bubble);
-    if (state.current.bubbles.length > MAX_BUBBLES) {
-      const removed = state.current.bubbles.splice(
-        0,
-        state.current.bubbles.length - MAX_BUBBLES
-      );
-      inactiveBubbles.current.push(...removed);
-    }
   }, []);
 
   // main loop updates timer and fish
@@ -862,11 +865,6 @@ export default function useGameEngine() {
         ) as Record<string, HTMLImageElement[]>;
         const frames = frameMap[f.kind as keyof typeof frameMap];
         if (!frames || frames.length === 0) return;
-        f.frameCounter++;
-        if (f.frameCounter >= FISH_FRAME_DELAY) {
-          f.frameCounter = 0;
-          f.frame = (f.frame + 1) % frames.length;
-        }
         const img = frames[f.frame];
         if (!img) return;
         ctx.save();
@@ -878,8 +876,10 @@ export default function useGameEngine() {
           pivotX = f.x + (f.kind === "grey_long_a" ? FISH_SIZE : 0);
           drawX = f.kind === "grey_long_a" ? -FISH_SIZE : 0;
         }
+        // Rotate the fish based on its current velocity
+        const angle = Math.atan2(f.vy, f.vx);
         ctx.translate(pivotX, pivotY);
-        ctx.rotate(f.angle);
+        ctx.rotate(angle);
         if (f.flipped) {
           ctx.scale(-1, 1);
         }
@@ -1360,14 +1360,14 @@ export default function useGameEngine() {
           if (f.kind === "brown") {
             cur.timer += TIME_BONUS_BROWN_FISH;
             updateDigitLabel(timerLabel.current, cur.timer, 2, ":");
-            makeText("+3", f.x, f.y, "#0f0");
+            makeText(`+${TIME_BONUS_BROWN_FISH}`, f.x, f.y, "#0f0");
             const [removed] = cur.fish.splice(i, 1);
             if (removed) inactiveFish.current.push(removed);
             audio.play("bonus");
           } else if (f.kind === "grey_long_a" || f.kind === "grey_long_b") {
             cur.timer += TIME_BONUS_GREY_LONG;
             updateDigitLabel(timerLabel.current, cur.timer, 2, ":");
-            makeText("+5", f.x, f.y, "#f00");
+            makeText(`+${TIME_BONUS_GREY_LONG}`, f.x, f.y, "#f00");
             const pid = f.pairId;
             if (pid !== undefined) {
               const removed = cur.fish.filter((fish) => fish.pairId === pid);
@@ -1657,16 +1657,16 @@ export default function useGameEngine() {
 
       fishSpawnTimeout.current = setTimeout(() => {
         if (state.current.phase !== "playing") return;
+        const kind =
+          basicKinds[Math.floor(Math.random() * basicKinds.length)];
+        const count = Math.floor(Math.random() * 5) + 1;
+        spawnFish(kind, count);
+
         const roll = Math.random();
         if (roll < 0.1) {
           spawnFish("brown", 1);
         } else if (roll < 0.15) {
           spawnFish("grey_long", 1);
-        } else {
-          const kind =
-            basicKinds[Math.floor(Math.random() * basicKinds.length)];
-          const count = Math.floor(Math.random() * 5) + 1;
-          spawnFish(kind, count);
         }
         if (state.current.phase === "playing") schedule();
       }, delay);
