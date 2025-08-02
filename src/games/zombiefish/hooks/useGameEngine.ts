@@ -38,9 +38,6 @@ const BUBBLE_MAX_SIZE = BUBBLE_BASE_SIZE * 1.5;
 const BUBBLE_VX_MAX = 0.5;
 const BUBBLE_VY_MIN = -1.5;
 const BUBBLE_VY_MAX = -0.5;
-const ROCK_SPEED = 0.2;
-const SEAWEED_SPEED = 0.4;
-const BUBBLE_SIZE = BUBBLE_BASE_SIZE;
 const ROCK_SPEED = [0.1, 0.2];
 const SEAWEED_SPEED = [0.2, 0.4];
 const MAX_BUBBLES = 20;
@@ -79,6 +76,8 @@ export default function useGameEngine() {
   const nextGroupId = useRef(1);
   const nextBubbleId = useRef(1);
   const bubbleSpawnRef = useRef(0);
+  const spawnTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cursorTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const frameRef = useRef(0); // track frames for one-second ticks
   const rockOffsets = useRef<number[]>(ROCK_SPEED.map(() => 0));
   const seaweedOffsets = useRef<number[]>(SEAWEED_SPEED.map(() => 0));
@@ -313,7 +312,7 @@ export default function useGameEngine() {
         if (
           dist < SKELETON_CONVERT_DISTANCE &&
           !immuneKinds.has(nearest.kind) &&
-          skeletonCount < MAX_SKELETONS
+          skeletonCount < MAX_SKELETONS &&
           !nearest.pendingSkeleton
         ) {
           // Spawn a brief text effect before converting the fish
@@ -560,8 +559,7 @@ export default function useGameEngine() {
           );
           cur.textLabels.push(pausedLabel.current);
         }
-      } 
-    (pausedLabel.current) {
+      } else if (pausedLabel.current) {
         cur.textLabels = cur.textLabels.filter((l) => l !== pausedLabel.current);
         pausedLabel.current = null;
       }
@@ -783,6 +781,9 @@ export default function useGameEngine() {
     gameoverTimeLabel.current = null;
     state.current.textLabels = [];
     bubbleSpawnRef.current = 0;
+    nextFishId.current = 1;
+    nextGroupId.current = 1;
+    nextBubbleId.current = 1;
     rockOffsets.current.fill(0);
     seaweedOffsets.current.fill(0);
     pausedLabel.current = null;
@@ -797,7 +798,15 @@ export default function useGameEngine() {
     });
     if (animationFrameRef.current)
       cancelAnimationFrame(animationFrameRef.current);
-    audio.pause("bgm");
+    if (spawnTimeoutRef.current) {
+      clearTimeout(spawnTimeoutRef.current);
+      spawnTimeoutRef.current = null;
+    }
+    if (cursorTimeoutRef.current) {
+      clearTimeout(cursorTimeoutRef.current);
+      cursorTimeoutRef.current = null;
+    }
+    audio.pauseAll();
   }, []);
 
   useEffect(() => {
@@ -888,7 +897,8 @@ export default function useGameEngine() {
       if (cur.phase !== "playing") return;
 
       cur.cursor = SHOT_CURSOR;
-      setTimeout(() => {
+      if (cursorTimeoutRef.current) clearTimeout(cursorTimeoutRef.current);
+      cursorTimeoutRef.current = setTimeout(() => {
         state.current.cursor = DEFAULT_CURSOR;
         setUI({
           phase: state.current.phase,
@@ -1177,7 +1187,6 @@ export default function useGameEngine() {
   useEffect(() => {
     if (ui.phase !== "playing") return;
     const basicKinds = ["blue", "green", "orange", "pink", "red"];
-    let timer: ReturnType<typeof setTimeout>;
     const schedule = () => {
       const factor = difficultyFactor();
       // FISH_SPAWN_INTERVAL_* are expressed in frames; convert to ms
@@ -1185,7 +1194,7 @@ export default function useGameEngine() {
       const max = (FISH_SPAWN_INTERVAL_MAX / FPS) * 1000;
       const delay = (min + Math.random() * (max - min)) / factor;
 
-      timer = setTimeout(() => {
+      spawnTimeoutRef.current = setTimeout(() => {
         if (state.current.phase !== "playing") return;
         const roll = Math.random();
         if (roll < 0.1) {
@@ -1201,7 +1210,9 @@ export default function useGameEngine() {
       }, delay);
     };
     schedule();
-    return () => clearTimeout(timer);
+    return () => {
+      if (spawnTimeoutRef.current) clearTimeout(spawnTimeoutRef.current);
+    };
   }, [ui.phase, spawnFish]);
 
   // cleanup on unmount
