@@ -16,6 +16,10 @@ export interface Fish {
    * Special fish spawn without a groupId.
    */
   groupId?: number;
+  /** Whether this fish has turned into a skeleton */
+  isSkeleton?: boolean;
+  /** Remaining health for skeleton fish */
+  health?: number;
 }
 
 // State exposed to the UI layer
