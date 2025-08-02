@@ -664,7 +664,7 @@ export default function useGameEngine() {
     const digitHeight = digitImgs["0"]?.height || 0;
     const lineHeight = digitHeight + 8;
 
-    audio.play("bgm");
+    audio.play("bgm", { loop: true });
 
     const labelWidth = (lbl: TextLabel) =>
       lbl.imgs.reduce(

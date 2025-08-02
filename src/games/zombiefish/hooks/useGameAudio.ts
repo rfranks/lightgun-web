@@ -32,7 +32,7 @@ export function useGameAudio(): AudioMgr {
     skeleton.preload = "auto";
 
     const death = document.createElement("audio");
-    death.src = "/audio/lowDown.ogg";
+    death.src = withBasePath("/audio/lowDown.ogg");
     death.preload = "auto";
 
     const convert = document.createElement("audio");
@@ -53,9 +53,14 @@ export function useGameAudio(): AudioMgr {
 
   // Play a sound by key
   const play = useCallback(
-    (key: string) => {
+    (
+      key: string,
+      options?: { loop?: boolean; volume?: number }
+    ) => {
       const audio = audios[key];
       if (audio) {
+        if (options?.loop !== undefined) audio.loop = options.loop;
+        if (options?.volume !== undefined) audio.volume = options.volume;
         audio.currentTime = 0;
         void audio.play();
       }
