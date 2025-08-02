@@ -296,7 +296,7 @@ export default function useGameEngine() {
 
     // skeleton behavior
     const immuneKinds = new Set(["brown", "grey_long_a", "grey_long_b"]);
-    const skeletonSpeed = SKELETON_SPEED;
+    const skeletonSpeed = SKELETON_SPEED + cur.conversions * 0.05;
     let skeletonCount = cur.fish.filter((f) => f.isSkeleton).length;
     cur.fish.forEach((s) => {
       if (!s.isSkeleton) return;
