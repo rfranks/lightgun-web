@@ -232,11 +232,37 @@ export default function useZombiefishEngine() {
       if (img) ctx.drawImage(img, f.x, f.y, FISH_SIZE, FISH_SIZE);
     });
 
-    cur.textLabels = drawTextLabels({
-      textLabels: cur.textLabels,
-      ctx,
-      cull: true,
-    });
+    // cull fish that have moved completely off-screen
+    const { width, height } = cur.dims;
+    const margin = FISH_SIZE * 2;
+    cur.fish = cur.fish.filter(
+      (f) =>
+        f.x > -margin &&
+        f.x < width + margin &&
+        f.y > -margin &&
+        f.y < height + margin
+    );
+
+    // draw fish and text labels
+    if (canvas && ctx) {
+      canvas.width = cur.dims.width;
+      canvas.height = cur.dims.height;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      cur.fish.forEach((f) => {
+        const imgMap = getImg(
+          f.isSkeleton ? "skeletonImgs" : "fishImgs"
+        ) as Record<string, HTMLImageElement>;
+        const img = imgMap[f.kind as keyof typeof imgMap];
+        if (img) ctx.drawImage(img, f.x, f.y, FISH_SIZE, FISH_SIZE);
+      });
+
+      cur.textLabels = drawTextLabels({
+        textLabels: cur.textLabels,
+        ctx,
+        cull: true,
+      });
+    }
 
     textLabels.current = drawTextLabels({ textLabels: textLabels.current, ctx });
 
