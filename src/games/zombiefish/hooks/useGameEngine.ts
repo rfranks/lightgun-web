@@ -220,9 +220,8 @@ export default function useGameEngine() {
       if (surfaceImgs && surfaceImgs.length) {
         const groupWidth = surfaceImgs[0].width * surfaceImgs.length;
         SURFACE_SPEED.forEach((speed, i) => {
-          surfaceOffsets.current[i] -= speed;
-          if (surfaceOffsets.current[i] <= -groupWidth)
-            surfaceOffsets.current[i] += groupWidth;
+          surfaceOffsets.current[i] =
+            (surfaceOffsets.current[i] - speed) % groupWidth;
         });
         for (let i = 0; i < SURFACE_SPEED.length; i++) {
           const offset = surfaceOffsets.current[i];
@@ -279,9 +278,8 @@ export default function useGameEngine() {
         const bottom = groundY;
         const groupWidth = seaweedBgImgs[0].width * seaweedBgImgs.length;
         SEAWEED_SPEED.forEach((speed, i) => {
-          seaweedOffsets.current[i] -= speed;
-          if (seaweedOffsets.current[i] <= -groupWidth)
-            seaweedOffsets.current[i] += groupWidth;
+          seaweedOffsets.current[i] =
+            (seaweedOffsets.current[i] - speed) % groupWidth;
         });
         for (let i = 0; i < SEAWEED_SPEED.length; i++) {
           const offset = seaweedOffsets.current[i];
@@ -301,9 +299,8 @@ export default function useGameEngine() {
       if (rockBgImgs && rockBgImgs.length) {
         const groupWidth = rockBgImgs[0].width * rockBgImgs.length;
         ROCK_SPEED.forEach((speed, i) => {
-          rockOffsets.current[i] -= speed;
-          if (rockOffsets.current[i] <= -groupWidth)
-            rockOffsets.current[i] += groupWidth;
+          rockOffsets.current[i] =
+            (rockOffsets.current[i] - speed) % groupWidth;
         });
         for (let i = 0; i < ROCK_SPEED.length; i++) {
           const offset = rockOffsets.current[i];
@@ -325,9 +322,8 @@ export default function useGameEngine() {
       if (seaGrassImgs && seaGrassImgs.length) {
         const groupWidth = seaGrassImgs[0].width * seaGrassImgs.length;
         SEAGRASS_SPEED.forEach((speed, i) => {
-          seaGrassOffsets.current[i] -= speed;
-          if (seaGrassOffsets.current[i] <= -groupWidth)
-            seaGrassOffsets.current[i] += groupWidth;
+          seaGrassOffsets.current[i] =
+            (seaGrassOffsets.current[i] - speed) % groupWidth;
         });
         for (let i = 0; i < SEAGRASS_SPEED.length; i++) {
           const offset = seaGrassOffsets.current[i];
@@ -551,6 +547,7 @@ export default function useGameEngine() {
     const vy = Math.random() * (BUBBLE_VY_MAX - BUBBLE_VY_MIN) + BUBBLE_VY_MIN; // upward
     const amp = Math.random() * 2 + 0.5;
     const freq = Math.random() * 0.05 + 0.01;
+    if (state.current.bubbles.length >= MAX_BUBBLES) return;
     const bubble = inactiveBubbles.current.pop() || ({} as Bubble);
     bubble.id = nextBubbleId.current++;
     bubble.kind = kind;
@@ -562,13 +559,6 @@ export default function useGameEngine() {
     bubble.amp = amp;
     bubble.freq = freq;
     state.current.bubbles.push(bubble);
-    if (state.current.bubbles.length > MAX_BUBBLES) {
-      const removed = state.current.bubbles.splice(
-        0,
-        state.current.bubbles.length - MAX_BUBBLES
-      );
-      inactiveBubbles.current.push(...removed);
-    }
   }, []);
 
   // main loop updates timer and fish
