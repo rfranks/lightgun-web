@@ -33,6 +33,7 @@ const BUBBLE_SIZE = 64;
 const ROCK_SPEED = 0.2;
 const SEAWEED_SPEED = 0.4;
 const MAX_BUBBLES = 20;
+const CONVERT_FLASH_FRAMES = 5;
 
 export default function useGameEngine() {
   // canvas and animation frame refs
@@ -204,6 +205,19 @@ export default function useGameEngine() {
   const updateFish = useCallback(() => {
     const cur = state.current;
 
+    // handle conversion flashes
+    cur.fish.forEach((f) => {
+      if (f.pendingSkeleton) {
+        f.flashTimer = (f.flashTimer || 0) - 1;
+        if (f.flashTimer <= 0) {
+          f.isSkeleton = true;
+          f.health = 2;
+          f.pendingSkeleton = undefined;
+          f.flashTimer = undefined;
+        }
+      }
+    });
+
     // For each group, nudge members toward the group's average velocity.
     const groups: Record<number, { vx: number; vy: number; members: Fish[] }> =
       {};
@@ -262,11 +276,12 @@ export default function useGameEngine() {
           dist < SKELETON_CONVERT_DISTANCE &&
           !immuneKinds.has(nearest.kind) &&
           skeletonCount < MAX_SKELETONS
+          !nearest.pendingSkeleton
         ) {
           // Spawn a brief text effect before converting the fish
           makeText("POOF", nearest.x, nearest.y);
-          nearest.isSkeleton = true;
-          nearest.health = 2;
+          nearest.pendingSkeleton = true;
+          nearest.flashTimer = CONVERT_FLASH_FRAMES;
           nearest.vx = 0;
           nearest.vy = 0;
           delete nearest.groupId;
@@ -438,13 +453,32 @@ export default function useGameEngine() {
       const imgMap = getImg(
         f.isSkeleton ? "skeletonImgs" : "fishImgs"
       ) as Record<string, HTMLImageElement>;
-      const img = imgMap[f.kind as keyof typeof imgMap];
+      const key = f.isSkeleton
+        ? f.kind
+        : f.highlight
+        ? `${f.kind}_outline`
+        : f.kind;
+      const img = imgMap[key as keyof typeof imgMap];
       if (!img) return;
       ctx.save();
       ctx.translate(f.x + FISH_SIZE / 2, f.y + FISH_SIZE / 2);
       if (f.vx < 0) ctx.scale(-1, 1);
       ctx.rotate(f.angle);
       ctx.drawImage(img, -FISH_SIZE / 2, -FISH_SIZE / 2, FISH_SIZE, FISH_SIZE);
+      if (f.flashTimer && f.flashTimer > 0) {
+        const overlay = getImg("fishFlashImg") as HTMLImageElement;
+        if (overlay) {
+          ctx.globalAlpha = f.flashTimer / CONVERT_FLASH_FRAMES;
+          ctx.drawImage(
+            overlay,
+            -FISH_SIZE / 2,
+            -FISH_SIZE / 2,
+            FISH_SIZE,
+            FISH_SIZE
+          );
+          ctx.globalAlpha = 1;
+        }
+      }
       ctx.restore();
     });
 
@@ -501,7 +535,12 @@ export default function useGameEngine() {
         const imgMap = getImg(
           f.isSkeleton ? "skeletonImgs" : "fishImgs"
         ) as Record<string, HTMLImageElement>;
-        const img = imgMap[f.kind as keyof typeof imgMap];
+        const key = f.isSkeleton
+          ? f.kind
+          : f.highlight
+          ? `${f.kind}_outline`
+          : f.kind;
+        const img = imgMap[key as keyof typeof imgMap];
         if (!img) return;
         ctx.save();
         ctx.translate(f.x + FISH_SIZE / 2, f.y + FISH_SIZE / 2);
@@ -899,7 +938,13 @@ export default function useGameEngine() {
     };
 
     // helper to create a fish
-    const makeFish = (k: string, x: number, y: number, groupId?: number) => {
+    const makeFish = (
+      k: string,
+      x: number,
+      y: number,
+      groupId?: number,
+      highlight = false
+    ) => {
       const { vx, vy } = genVelocity();
       return {
         id: nextFishId.current++,
@@ -911,6 +956,7 @@ export default function useGameEngine() {
         ...(k === "skeleton" ? { health: 2 } : {}),
         isSkeleton: k === "skeleton",
         ...(groupId !== undefined ? { groupId } : {}),
+        ...(highlight ? { highlight: true } : {}),
       } as Fish;
     };
 
@@ -934,6 +980,7 @@ export default function useGameEngine() {
             ...(kind === "skeleton" ? { health: 2 } : {}),
             isSkeleton: kind === "skeleton",
             ...(groupId !== undefined ? { groupId } : {}),
+            highlight: true,
           } as Fish);
         });
       } else {
@@ -953,6 +1000,7 @@ export default function useGameEngine() {
             ...(kind === "skeleton" ? { health: 2 } : {}),
             isSkeleton: kind === "skeleton",
             ...(groupId !== undefined ? { groupId } : {}),
+            highlight: true,
           } as Fish);
         });
       }
@@ -975,13 +1023,27 @@ export default function useGameEngine() {
 
       if (groupId === undefined) {
         for (let i = 0; i < count; i++) {
-          spawned.push(makeFish(kind, x, y, groupId));
+          spawned.push(
+            makeFish(kind, x, y, groupId, specialSingles.includes(kind))
+          );
         }
       } else {
-        const leader = makeFish(kind, x, y, groupId);
+        const leader = makeFish(
+          kind,
+          x,
+          y,
+          groupId,
+          specialSingles.includes(kind)
+        );
         spawned.push(leader);
         for (let i = 1; i < count; i++) {
-          const member = makeFish(kind, leader.x, leader.y, groupId);
+          const member = makeFish(
+            kind,
+            leader.x,
+            leader.y,
+            groupId,
+            specialSingles.includes(kind)
+          );
           member.x = leader.x + (Math.random() - 0.5) * FISH_SIZE;
           member.y = Math.min(
             Math.max(leader.y + (Math.random() - 0.5) * FISH_SIZE, 0),
