@@ -5,6 +5,7 @@ import { useAudio } from "@/hooks/useAudio";
 import { rewindAndPlayAudio } from "@/utils/audio";
 import { drawTextLabels, newTextLabel } from "@/utils/ui";
 import type { GameState, GameUIState, Fish } from "../types";
+import type { AssetMgr } from "@/types/ui";
 import type { TextLabel } from "@/types/ui";
 
 // Initial timer value (in seconds)
@@ -36,6 +37,7 @@ export default function useZombiefishEngine() {
     hits: 0,
     dims,
     fish: [],
+    textLabels: [],
   });
 
   const nextFishId = useRef(1);
@@ -55,6 +57,18 @@ export default function useZombiefishEngine() {
   useEffect(() => {
     state.current.dims = dims;
   }, [dims]);
+
+  const makeText = useCallback(
+    (text: string, x: number, y: number) => {
+      const lbl = newTextLabel(
+        { text, scale: 1, fixed: true, fade: true, x, y },
+        { getImg } as unknown as AssetMgr,
+        state.current.dims
+      );
+      state.current.textLabels.push(lbl);
+    },
+    [getImg]
+  );
 
   const updateFish = useCallback(() => {
     const cur = state.current;
@@ -154,6 +168,29 @@ export default function useZombiefishEngine() {
         f.y < height + margin
     );
 
+    // draw fish and text labels
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext("2d");
+    if (canvas && ctx) {
+      canvas.width = cur.dims.width;
+      canvas.height = cur.dims.height;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      cur.fish.forEach((f) => {
+        const imgMap = getImg(
+          f.isSkeleton ? "skeletonImgs" : "fishImgs"
+        ) as Record<string, HTMLImageElement>;
+        const img = imgMap[f.kind as keyof typeof imgMap];
+        if (img) ctx.drawImage(img, f.x, f.y, FISH_SIZE, FISH_SIZE);
+      });
+
+      cur.textLabels = drawTextLabels({
+        textLabels: cur.textLabels,
+        ctx,
+        cull: true,
+      });
+    }
+
     textLabels.current = drawTextLabels({ textLabels: textLabels.current, ctx });
 
     setUI({ phase: cur.phase, timer: cur.timer, shots: cur.shots, hits: cur.hits });
@@ -215,7 +252,18 @@ export default function useZombiefishEngine() {
           y <= f.y + FISH_SIZE
         ) {
           cur.hits += 1;
-          if (f.isSkeleton) {
+          if (f.kind === "brown") {
+            cur.timer += 3 * 60;
+            makeText("+3", f.x, f.y);
+            cur.fish.splice(i, 1);
+            rewindAndPlayAudio(killSfx);
+          } else if (f.kind === "grey_long_a" || f.kind === "grey_long_b") {
+            cur.timer = Math.max(0, cur.timer - 5 * 60);
+            makeText("-5", f.x, f.y);
+            const gid = f.groupId;
+            cur.fish = cur.fish.filter((fish) => fish.groupId !== gid);
+            rewindAndPlayAudio(killSfx);
+          } else if (f.isSkeleton) {
             f.health = (f.health ?? 0) - 1;
             if ((f.health ?? 0) <= 0) {
               cur.fish.splice(i, 1);
@@ -236,7 +284,7 @@ export default function useZombiefishEngine() {
         hits: cur.hits,
       });
     },
-    [killSfx]
+    [killSfx, makeText]
   );
 
   // suppress context menu
@@ -264,10 +312,10 @@ export default function useZombiefishEngine() {
       const spawned: Fish[] = [];
       const { width, height } = state.current.dims;
 
-      const specialSingles = ["brown"];
+      const specialSingles = ["brown", "grey_long_a", "grey_long_b"];
       const specialPairs = ["grey_long"];
 
-      if (specialSingles.includes(kind)) count = 1;
+      if (specialSingles.includes(kind) || specialPairs.includes(kind)) count = 1;
 
       // decide side and velocity
       const fromLeft = Math.random() < 0.5;
