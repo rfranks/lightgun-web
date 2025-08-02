@@ -3420,6 +3420,17 @@ export function useGameEngine() {
     startSplash();
   };
 
+  useEffect(() => {
+    const handleKeydown = (e: KeyboardEvent) => {
+      if (state.current.phase === "gameover" && e.code === "Space") {
+        resetGame();
+        startSplash();
+      }
+    };
+    window.addEventListener("keydown", handleKeydown);
+    return () => window.removeEventListener("keydown", handleKeydown);
+  }, [resetGame, startSplash]);
+
   // ─── CLEANUP ─────────────────────────────────────────────
   useEffect(() => {
     return () => {

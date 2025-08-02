@@ -6,6 +6,8 @@ import type { GameUIState } from "../types";
 export interface GameUIProps {
   ui: GameUIState;
   canvasRef: React.RefObject<HTMLCanvasElement | null>;
+  /** Current cursor style to display over the canvas */
+  cursor: string;
   handleClick: (e: React.MouseEvent) => void;
   handleContext: (e: React.MouseEvent) => void;
 }
@@ -14,6 +16,7 @@ export interface GameUIProps {
 export function GameUI({
   ui,
   canvasRef,
+  cursor,
   handleClick,
   handleContext,
 }: GameUIProps) {

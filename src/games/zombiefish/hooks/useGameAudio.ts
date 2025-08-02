@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from "react";
 import { AudioMgr } from "@/types/audio";
+import { withBasePath } from "@/utils/basePath";
 
 /**
  * Simple audio manager for Zombie Fish.
@@ -12,25 +13,29 @@ export function useGameAudio(): AudioMgr {
       return {} as Record<string, HTMLAudioElement>;
 
     const shoot = document.createElement("audio");
-    shoot.src = "/audio/laser4.ogg";
+    shoot.src = withBasePath("/audio/laser4.ogg");
     shoot.preload = "auto";
 
     const hit = document.createElement("audio");
-    hit.src = "/audio/laser9.ogg";
+    hit.src = withBasePath("/audio/laser9.ogg");
     hit.preload = "auto";
 
     const bonus = document.createElement("audio");
-    bonus.src = "/audio/powerUp8.ogg"; // special-fish bonus
+    bonus.src = withBasePath("/audio/powerUp8.ogg"); // special-fish bonus
     bonus.preload = "auto";
     const skeleton = document.createElement("audio");
-    skeleton.src = "/audio/splash.ogg";
+    skeleton.src = withBasePath("/audio/splash.ogg");
     skeleton.preload = "auto";
 
+    const death = document.createElement("audio");
+    death.src = "/audio/lowDown.ogg";
+    death.preload = "auto";
+
     const convert = document.createElement("audio");
-    convert.src = "/audio/zap1.ogg";
+    convert.src = withBasePath("/audio/zap1.ogg");
     convert.preload = "auto";
 
-    return { shoot, hit, bonus, skeleton, convert };
+    return { shoot, hit, bonus, skeleton, death, convert };
   }, []);
 
   // Play a sound by key
