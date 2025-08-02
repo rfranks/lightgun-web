@@ -72,6 +72,7 @@ import { useWindowSize } from "@/hooks/useWindowSize";
 import { AudioMgr } from "@/types/audio";
 import { Puff } from "@/types/effects";
 import { PowerupType, AntiPowerupType, Duck } from "@/types/objects";
+import type { ClickEvent } from "@/types/events";
 import { AssetMgr } from "@/types/ui";
 import { Enemy } from "@/types/vehicles";
 import { useState, useRef, useCallback, useEffect } from "react";
@@ -3339,7 +3340,7 @@ export function useGameEngine() {
   }, [ui.phase, dims, canvasRef]);
 
   // ─── CLICK TO FLAP & FIRE ─────────────────────────────────────────────────
-  const handleClick = (e: React.MouseEvent) => {
+  const handleClick = (e: ClickEvent) => {
     // out of play or no ammo → reload flash
     if (ui.phase !== "playing" || ui.crashed || ui.ammo <= 0) {
       if (state.current.ammo <= 1) {

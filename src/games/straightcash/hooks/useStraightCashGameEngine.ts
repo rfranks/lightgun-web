@@ -4,6 +4,7 @@ import { AudioMgr } from "@/types/audio";
 import { TextLabel } from "@/types/ui";
 import { drawTextLabels } from "@/utils/ui";
 import useStraightCashAudio from "./useStraightCashAudio";
+import type { ClickEvent } from "@/types/events";
 import type { JackpotHandle } from "../components/JackpotDisplay";
 
 const REEL_RANKS = [
@@ -197,7 +198,8 @@ export default function useStraightCashGameEngine() {
     []
   );
 
-  const handleClick = useCallback(() => {
+  const handleClick = useCallback((e: ClickEvent) => {
+    void e;
     // placeholder for gameplay interaction
   }, []);
 
