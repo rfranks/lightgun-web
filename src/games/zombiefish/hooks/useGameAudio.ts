@@ -35,7 +35,12 @@ export function useGameAudio(): AudioMgr {
     convert.src = withBasePath("/audio/zap1.ogg");
     convert.preload = "auto";
 
-    return { shoot, hit, bonus, skeleton, death, convert };
+    const bgm = document.createElement("audio");
+    bgm.src = withBasePath("/audio/back_001.ogg");
+    bgm.preload = "auto";
+    bgm.loop = true;
+
+    return { shoot, hit, bonus, skeleton, death, convert, bgm };
   }, []);
 
   // Play a sound by key

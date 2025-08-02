@@ -6,8 +6,6 @@ import { drawTextLabels, newTextLabel } from "@/utils/ui";
 
 import type { GameState, GameUIState, Fish, Bubble } from "../types";
 import {
-  FISH_SPAWN_INTERVAL_MIN,
-  FISH_SPAWN_INTERVAL_MAX,
   SKELETON_SPEED,
   TIME_BONUS_BROWN_FISH,
   TIME_PENALTY_GREY_LONG,
@@ -326,6 +324,7 @@ export default function useGameEngine() {
           cur.phase = "gameover";
           finalAccuracy.current = Math.round(cur.accuracy);
           displayAccuracy.current = 0;
+          audio.pause("bgm");
         }
       }
 
@@ -503,6 +502,8 @@ export default function useGameEngine() {
     const digitHeight = digitImgs["0"]?.height || 0;
     const lineHeight = digitHeight + 8;
 
+    audio.play("bgm");
+
     timerLabel.current = newTextLabel(
       {
         text: cur.timer.toString().padStart(2, "0"),
@@ -590,6 +591,7 @@ export default function useGameEngine() {
     });
     if (animationFrameRef.current)
       cancelAnimationFrame(animationFrameRef.current);
+    audio.pause("bgm");
   }, []);
 
   useEffect(() => {
