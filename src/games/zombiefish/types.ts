@@ -24,6 +24,19 @@ export interface Fish {
   isSkeleton?: boolean;
 }
 
+// Rising bubble drifting upward in the background
+export interface Bubble {
+  id: number;
+  /** Which bubble sprite to draw */
+  kind: string;
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  /** Rendered size in pixels */
+  size: number;
+}
+
 // State exposed to the UI layer
 export interface GameUIState {
   phase: GamePhase;
@@ -44,6 +57,8 @@ export interface GameState extends GameUIState {
   dims: Dims;
   /** Active fish currently in the scene */
   fish: Fish[];
+  /** Bubbles floating up behind the fish */
+  bubbles: Bubble[];
   /** Floating text labels currently displayed */
   textLabels: TextLabel[];
 }
