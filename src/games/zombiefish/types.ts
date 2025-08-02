@@ -21,6 +21,8 @@ export interface Fish {
   health: number;
   /** Frames remaining for the red flash after taking damage. */
   hurtTimer: number;
+  /** Frames remaining before the fish picks a new random heading. */
+  wanderTimer: number;
   /**
    * Optional identifier tying fish together when spawned in a group.
    * Special fish spawn without a groupId.
