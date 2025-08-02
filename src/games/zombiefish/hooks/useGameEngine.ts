@@ -129,9 +129,18 @@ export default function useGameEngine() {
   }, []);
 
   const makeText = useCallback(
-    (text: string, x: number, y: number) => {
+    (text: string, x: number, y: number, color?: string) => {
       const lbl = newTextLabel(
-        { text, scale: 1, fixed: true, fade: true, x, y, vy: -0.5 },
+        {
+          text,
+          scale: 1,
+          fixed: true,
+          fade: true,
+          x,
+          y,
+          vy: -0.5,
+          ...(color ? { color } : {}),
+        },
         { getImg } as unknown as AssetMgr,
         state.current.dims
       );
@@ -991,13 +1000,13 @@ export default function useGameEngine() {
           if (f.kind === "brown") {
             cur.timer += TIME_BONUS_BROWN_FISH;
             updateDigitLabel(timerLabel.current, cur.timer, 2, ":");
-            makeText(`+${TIME_BONUS_BROWN_FISH}`, f.x, f.y);
+            makeText(`+${TIME_BONUS_BROWN_FISH}`, f.x, f.y, "#ff0");
             cur.fish.splice(i, 1);
             audio.play("bonus");
           } else if (f.kind === "grey_long_a" || f.kind === "grey_long_b") {
             cur.timer = Math.max(0, cur.timer - TIME_PENALTY_GREY_LONG);
             updateDigitLabel(timerLabel.current, cur.timer, 2, ":");
-            makeText(`-${TIME_PENALTY_GREY_LONG}`, f.x, f.y);
+            makeText(`-${TIME_PENALTY_GREY_LONG}`, f.x, f.y, "#f00");
             const gid = f.groupId;
             if (gid !== undefined) {
               cur.fish = cur.fish.filter((fish) => fish.groupId !== gid);
