@@ -6,8 +6,6 @@ import { drawTextLabels, newTextLabel } from "@/utils/ui";
 
 import type { GameState, GameUIState, Fish, Bubble } from "../types";
 import {
-  FISH_SPAWN_INTERVAL_MIN,
-  FISH_SPAWN_INTERVAL_MAX,
   SKELETON_SPEED,
   TIME_BONUS_BROWN_FISH,
   TIME_PENALTY_GREY_LONG,
@@ -503,14 +501,43 @@ export default function useGameEngine() {
     const digitHeight = digitImgs["0"]?.height || 0;
     const lineHeight = digitHeight + 8;
 
+    const labelWidth = (lbl: TextLabel) =>
+      lbl.imgs.reduce(
+        (sum, img) => sum + (img ? img.width + 2 : lbl.spaceGap),
+        0
+      );
+
+    const timeText = newTextLabel(
+      {
+        text: "TIME",
+        scale: 1,
+        fixed: true,
+        fade: false,
+        x: 16,
+        y: 16,
+      },
+      assetMgr
+    );
     timerLabel.current = newTextLabel(
       {
         text: cur.timer.toString().padStart(2, "0"),
         scale: 1,
         fixed: true,
         fade: false,
-        x: 16,
+        x: 16 + labelWidth(timeText),
         y: 16,
+      },
+      assetMgr
+    );
+
+    const shotsText = newTextLabel(
+      {
+        text: "SHOTS",
+        scale: 1,
+        fixed: true,
+        fade: false,
+        x: 16,
+        y: 16 + lineHeight,
       },
       assetMgr
     );
@@ -520,8 +547,20 @@ export default function useGameEngine() {
         scale: 1,
         fixed: true,
         fade: false,
-        x: 16,
+        x: 16 + labelWidth(shotsText),
         y: 16 + lineHeight,
+      },
+      assetMgr
+    );
+
+    const hitsText = newTextLabel(
+      {
+        text: "HITS",
+        scale: 1,
+        fixed: true,
+        fade: false,
+        x: 16,
+        y: 16 + lineHeight * 2,
       },
       assetMgr
     );
@@ -531,7 +570,7 @@ export default function useGameEngine() {
         scale: 1,
         fixed: true,
         fade: false,
-        x: 16,
+        x: 16 + labelWidth(hitsText),
         y: 16 + lineHeight * 2,
       },
       assetMgr
@@ -539,8 +578,11 @@ export default function useGameEngine() {
     bubbleSpawnRef.current = 0;
 
     state.current.textLabels = [
+      timeText,
       timerLabel.current!,
+      shotsText,
       shotsLabel.current!,
+      hitsText,
       hitsLabel.current!,
     ];
     cur.cursor = DEFAULT_CURSOR;
