@@ -356,6 +356,7 @@ export default function useGameEngine() {
             localStorage.bestAccuracy = finalAccuracy.current.toString();
           }
           displayAccuracy.current = 0;
+          audio.pause("bgm");
         }
       }
 
@@ -554,6 +555,8 @@ export default function useGameEngine() {
     const digitHeight = digitImgs["0"]?.height || 0;
     const lineHeight = digitHeight + 8;
 
+    audio.play("bgm");
+
     const labelWidth = (lbl: TextLabel) =>
       lbl.imgs.reduce(
         (sum, img) => sum + (img ? img.width + 2 : lbl.spaceGap),
@@ -571,6 +574,7 @@ export default function useGameEngine() {
       },
       assetMgr
     );
+
     timerLabel.current = newTextLabel(
       {
         text: cur.timer.toString().padStart(2, "0"),
@@ -688,6 +692,7 @@ export default function useGameEngine() {
     });
     if (animationFrameRef.current)
       cancelAnimationFrame(animationFrameRef.current);
+    audio.pause("bgm");
   }, []);
 
   useEffect(() => {
