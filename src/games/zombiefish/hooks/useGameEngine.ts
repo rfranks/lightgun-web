@@ -638,6 +638,7 @@ export default function useGameEngine() {
       if (frameRef.current >= FPS) {
         frameRef.current = 0;
         cur.timer = Math.max(0, cur.timer - 1);
+        audio.play("tick");
         updateDigitLabel(timerLabel.current, cur.timer, 2, ":");
         if (cur.timer === 10 && !cur.warningPlayed) {
           audio.play("warning");
