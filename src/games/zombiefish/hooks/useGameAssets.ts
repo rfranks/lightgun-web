@@ -200,11 +200,11 @@ export function useGameAssets(): {
         `/assets/fish/PNG/HUDText/hud_number_${n}.png`
       );
     }
-
-    assetRefs.current.dotImg = loadImg("/assets/fish/PNG/HUDText/hud_dot.png");
-    assetRefs.current.colonImg = loadImg(
+    assetRefs.current.digitImgs[":"] = loadImg(
       "/assets/fish/PNG/HUDText/hud_colon.png"
     );
+
+    assetRefs.current.dotImg = loadImg("/assets/fish/PNG/HUDText/hud_dot.png");
     assetRefs.current.pctImg = loadImg(
       "/assets/fish/PNG/HUDText/hud_percent.png"
     );
