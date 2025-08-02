@@ -6,13 +6,11 @@ import { drawTextLabels, newTextLabel } from "@/utils/ui";
 
 import type { GameState, GameUIState, Fish, Bubble } from "../types";
 import {
-  FISH_SPEED_MIN,
-  FISH_SPEED_MAX,
   SKELETON_SPEED,
   TIME_BONUS_BROWN_FISH,
   TIME_PENALTY_GREY_LONG,
-  DEFAULT_CURSOR, 
-  SHOT_CURSOR
+  DEFAULT_CURSOR,
+  SHOT_CURSOR,
 } from "../constants";
 import type { AssetMgr } from "@/types/ui";
 import type { TextLabel } from "@/types/ui";
@@ -673,9 +671,11 @@ export default function useGameEngine() {
               f.health = 2;
             }
             f.health = (f.health ?? 0) - 1;
-            audio.play("skeleton");
             if ((f.health ?? 0) <= 0) {
               cur.fish.splice(i, 1);
+              audio.play("death");
+            } else {
+              audio.play("skeleton");
             }
           }
           break;

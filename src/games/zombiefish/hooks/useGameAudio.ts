@@ -26,11 +26,15 @@ export function useGameAudio(): AudioMgr {
     skeleton.src = "/audio/splash.ogg";
     skeleton.preload = "auto";
 
+    const death = document.createElement("audio");
+    death.src = "/audio/lowDown.ogg";
+    death.preload = "auto";
+
     const convert = document.createElement("audio");
     convert.src = "/audio/zap1.ogg";
     convert.preload = "auto";
 
-    return { shoot, hit, bonus, skeleton, convert };
+    return { shoot, hit, bonus, skeleton, death, convert };
   }, []);
 
   // Play a sound by key
