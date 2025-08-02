@@ -408,6 +408,7 @@ export default function useGameEngine() {
         const lbl = accuracyLabel.current;
         if (displayAccuracy.current < finalAccuracy.current) {
           displayAccuracy.current += 1;
+          audio.play("tick");
           const pct = Math.min(displayAccuracy.current, finalAccuracy.current);
           const str = pct.toString();
           const digitImgs = getImg("digitImgs") as Record<
