@@ -38,9 +38,6 @@ const BUBBLE_MAX_SIZE = BUBBLE_BASE_SIZE * 1.5;
 const BUBBLE_VX_MAX = 0.5;
 const BUBBLE_VY_MIN = -1.5;
 const BUBBLE_VY_MAX = -0.5;
-const ROCK_SPEED = 0.2;
-const SEAWEED_SPEED = 0.4;
-const BUBBLE_SIZE = BUBBLE_BASE_SIZE;
 const ROCK_SPEED = [0.1, 0.2];
 const SEAWEED_SPEED = [0.2, 0.4];
 const MAX_BUBBLES = 20;
@@ -292,6 +289,7 @@ export default function useGameEngine() {
 
       cur.fish.forEach((t) => {
         if (t.isSkeleton) return;
+        if (t.pendingSkeleton) return;
         if (immuneKinds.has(t.kind)) return;
         const dx = t.x - s.x;
         const dy = t.y - s.y;
@@ -313,7 +311,7 @@ export default function useGameEngine() {
         if (
           dist < SKELETON_CONVERT_DISTANCE &&
           !immuneKinds.has(nearest.kind) &&
-          skeletonCount < MAX_SKELETONS
+          skeletonCount < MAX_SKELETONS &&
           !nearest.pendingSkeleton
         ) {
           // Spawn a brief text effect before converting the fish
@@ -551,20 +549,19 @@ export default function useGameEngine() {
       }
 
 
-      if (cur.phase === "paused") {
-        if (!pausedLabel.current) {
-          pausedLabel.current = newTextLabel(
-            { text: "PAUSED", scale: 2, fixed: true, fade: false },
-            assetMgr,
-            cur.dims
-          );
-          cur.textLabels.push(pausedLabel.current);
-        }
-      } 
-    (pausedLabel.current) {
-        cur.textLabels = cur.textLabels.filter((l) => l !== pausedLabel.current);
-        pausedLabel.current = null;
+    if (cur.phase === "paused") {
+      if (!pausedLabel.current) {
+        pausedLabel.current = newTextLabel(
+          { text: "PAUSED", scale: 2, fixed: true, fade: false },
+          assetMgr,
+          cur.dims
+        );
+        cur.textLabels.push(pausedLabel.current);
       }
+    } else if (pausedLabel.current) {
+      cur.textLabels = cur.textLabels.filter((l) => l !== pausedLabel.current);
+      pausedLabel.current = null;
+    }
 
       // draw bubbles, fish and text labels
       if (canvas && ctx) {
