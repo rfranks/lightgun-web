@@ -84,6 +84,7 @@ export default function useGameEngine() {
     timer: GAME_TIME,
     shots: 0,
     hits: 0,
+    score: 0,
     accuracy: 0,
     cursor: DEFAULT_CURSOR,
     dims,
@@ -119,10 +120,12 @@ export default function useGameEngine() {
   const timerLabel = useRef<TextLabel | null>(null);
   const shotsLabel = useRef<TextLabel | null>(null);
   const hitsLabel = useRef<TextLabel | null>(null);
+  const scoreLabel = useRef<TextLabel | null>(null);
   const pausedLabel = useRef<TextLabel | null>(null);
   const gameoverShotsLabel = useRef<TextLabel | null>(null);
   const gameoverHitsLabel = useRef<TextLabel | null>(null);
   const gameoverTimeLabel = useRef<TextLabel | null>(null);
+  const gameoverScoreLabel = useRef<TextLabel | null>(null);
   const timeTextLabel = useRef<TextLabel | null>(null);
   const timeTextBounds = useRef({ x: 0, y: 0, width: 0, height: 0 });
 
@@ -132,6 +135,7 @@ export default function useGameEngine() {
     timer: GAME_TIME,
     shots: 0,
     hits: 0,
+    score: 0,
     accuracy: 0,
     cursor: DEFAULT_CURSOR,
   });
@@ -148,6 +152,7 @@ export default function useGameEngine() {
       timer: state.current.timer,
       shots: state.current.shots,
       hits: state.current.hits,
+      score: state.current.score,
       accuracy: state.current.accuracy,
       cursor,
     });
@@ -593,6 +598,7 @@ export default function useGameEngine() {
         );
         gameoverShotsLabel.current = makeStat(`SHOTS ${cur.shots}`, baseY + 40);
         gameoverHitsLabel.current = makeStat(`HITS ${cur.hits}`, baseY + 80);
+        gameoverScoreLabel.current = makeStat(`SCORE ${cur.score}`, baseY + 120);
       }
       if (!bestAccuracyLabel.current) {
         const best = Number(localStorage.getItem("bestAccuracy") || 0);
@@ -788,6 +794,7 @@ export default function useGameEngine() {
       timer: cur.timer,
       shots: cur.shots,
       hits: cur.hits,
+      score: cur.score,
       accuracy: cur.accuracy,
       cursor: cur.cursor,
     });
@@ -802,6 +809,7 @@ export default function useGameEngine() {
     cur.timer = GAME_TIME;
     cur.shots = 0;
     cur.hits = 0;
+    cur.score = 0;
     cur.accuracy = 0;
     cur.bubbles = [];
     cur.missParticles = [];
@@ -815,6 +823,10 @@ export default function useGameEngine() {
     seaweedOffsets.current.fill(0);
     seaGrassOffsets.current.fill(0);
     pausedLabel.current = null;
+    gameoverShotsLabel.current = null;
+    gameoverHitsLabel.current = null;
+    gameoverTimeLabel.current = null;
+    gameoverScoreLabel.current = null;
 
     const digitImgs = getImg("digitImgs") as Record<string, HTMLImageElement>;
     const digitHeight = digitImgs["0"]?.height || 0;
@@ -907,6 +919,29 @@ export default function useGameEngine() {
       },
       assetMgr
     );
+
+    const scoreText = newTextLabel(
+      {
+        text: "SCORE",
+        scale: 1,
+        fixed: true,
+        fade: false,
+        x: 16,
+        y: 16 + lineHeight * 3,
+      },
+      assetMgr
+    );
+    scoreLabel.current = newTextLabel(
+      {
+        text: cur.score.toString(),
+        scale: 1,
+        fixed: true,
+        fade: false,
+        x: 16 + labelWidth(scoreText),
+        y: 16 + lineHeight * 3,
+      },
+      assetMgr
+    );
     bubbleSpawnRef.current = 0;
 
     state.current.textLabels = [
@@ -916,6 +951,8 @@ export default function useGameEngine() {
       shotsLabel.current!,
       hitsText,
       hitsLabel.current!,
+      scoreText,
+      scoreLabel.current!,
     ];
     cur.cursor = DEFAULT_CURSOR;
     setUI({
@@ -923,6 +960,7 @@ export default function useGameEngine() {
       timer: cur.timer,
       shots: cur.shots,
       hits: cur.hits,
+      score: cur.score,
       accuracy: cur.accuracy,
       cursor: cur.cursor,
     });
@@ -945,6 +983,7 @@ export default function useGameEngine() {
     cur.timer = GAME_TIME;
     cur.shots = 0;
     cur.hits = 0;
+    cur.score = 0;
     cur.accuracy = 0;
     cur.conversions = 0;
     cur.fish = [];
@@ -960,9 +999,11 @@ export default function useGameEngine() {
     timerLabel.current = null;
     shotsLabel.current = null;
     hitsLabel.current = null;
+    scoreLabel.current = null;
     gameoverShotsLabel.current = null;
     gameoverHitsLabel.current = null;
     gameoverTimeLabel.current = null;
+    gameoverScoreLabel.current = null;
     state.current.textLabels = [];
     bubbleSpawnRef.current = 0;
     nextFishId.current = 1;
@@ -979,6 +1020,7 @@ export default function useGameEngine() {
       timer: cur.timer,
       shots: cur.shots,
       hits: cur.hits,
+      score: cur.score,
       accuracy: cur.accuracy,
       cursor: cur.cursor,
     });
@@ -1009,6 +1051,7 @@ export default function useGameEngine() {
           timer: cur.timer,
           shots: cur.shots,
           hits: cur.hits,
+          score: cur.score,
           accuracy: cur.accuracy,
           cursor: cur.cursor,
         });
@@ -1087,6 +1130,7 @@ export default function useGameEngine() {
           timer: cur.timer,
           shots: cur.shots,
           hits: cur.hits,
+          score: cur.score,
           accuracy: cur.accuracy,
           cursor: cur.cursor,
         });
@@ -1112,6 +1156,7 @@ export default function useGameEngine() {
             timer: cur.timer,
             shots: cur.shots,
             hits: cur.hits,
+            score: cur.score,
             accuracy: cur.accuracy,
             cursor: cur.cursor,
           });
@@ -1148,6 +1193,7 @@ export default function useGameEngine() {
             timer: cur.timer,
             shots: cur.shots,
             hits: cur.hits,
+            score: cur.score,
             accuracy: cur.accuracy,
             cursor: cur.cursor,
           });
@@ -1169,6 +1215,15 @@ export default function useGameEngine() {
           updateDigitLabel(hitsLabel.current, cur.hits);
           audio.play("hit");
           hit = true;
+          const scoreMap: Record<string, number> = {
+            brown: 50,
+            grey_long_a: 5,
+            grey_long_b: 5,
+          };
+          const base = f.isSkeleton ? 20 : scoreMap[f.kind] ?? 10;
+          const gain = base + cur.conversions;
+          cur.score += gain;
+          updateDigitLabel(scoreLabel.current, cur.score);
           if (f.kind === "brown") {
             cur.timer += TIME_BONUS_BROWN_FISH;
             updateDigitLabel(timerLabel.current, cur.timer, 2, ":");
@@ -1232,6 +1287,7 @@ export default function useGameEngine() {
         timer: cur.timer,
         shots: cur.shots,
         hits: cur.hits,
+        score: cur.score,
         accuracy: cur.accuracy,
         cursor: cur.cursor,
       });

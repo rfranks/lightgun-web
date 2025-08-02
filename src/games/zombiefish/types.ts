@@ -74,6 +74,8 @@ export interface GameUIState {
   shots: number;
   /** Total number of successful hits */
   hits: number;
+  /** Current score accumulated by the player */
+  score: number;
   /** Hit accuracy percentage */
   accuracy: number;
   /** Current cursor style */
@@ -82,6 +84,8 @@ export interface GameUIState {
 
 // Internal game state tracked by the engine
 export interface GameState extends GameUIState {
+  /** Current score accumulated by the player */
+  score: number;
   dims: Dims;
   /** Active fish currently in the scene */
   fish: Fish[];
