@@ -6,8 +6,6 @@ import { drawTextLabels, newTextLabel } from "@/utils/ui";
 
 import type { GameState, GameUIState, Fish, Bubble } from "../types";
 import {
-  FISH_SPAWN_INTERVAL_MIN,
-  FISH_SPAWN_INTERVAL_MAX,
   SKELETON_SPEED,
   TIME_BONUS_BROWN_FISH,
   TIME_PENALTY_GREY_LONG,
@@ -693,15 +691,22 @@ export default function useGameEngine() {
             audio.play("hit");
           } else {
             if (!f.isSkeleton) {
-              f.isSkeleton = true;
-              f.health = 2;
-            }
-            f.health = (f.health ?? 0) - 1;
-            if ((f.health ?? 0) <= 0) {
-              cur.fish.splice(i, 1);
-              audio.play("death");
+              if (Math.random() < 0.5) {
+                f.isSkeleton = true;
+                f.health = 1;
+                audio.play("skeleton");
+              } else {
+                cur.fish.splice(i, 1);
+                audio.play("death");
+              }
             } else {
-              audio.play("skeleton");
+              f.health = (f.health ?? 0) - 1;
+              if ((f.health ?? 0) <= 0) {
+                cur.fish.splice(i, 1);
+                audio.play("death");
+              } else {
+                audio.play("skeleton");
+              }
             }
           }
           break;
