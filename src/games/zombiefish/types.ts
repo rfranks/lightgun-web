@@ -25,7 +25,7 @@ export interface Fish {
 // State exposed to the UI layer
 export interface GameUIState {
   phase: GamePhase;
-  /** Remaining time in frames */
+  /** Remaining time in seconds */
   timer: number;
   /** Total number of shots fired */
   shots: number;

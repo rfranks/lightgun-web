@@ -6,8 +6,11 @@ import { rewindAndPlayAudio } from "@/utils/audio";
 import { drawTextLabels, newTextLabel } from "@/utils/ui";
 import type { GameState, GameUIState, Fish } from "../types";
 import type { AssetMgr } from "@/types/ui";
+import type { TextLabel } from "@/types/ui";
 
-const GAME_TIME = 60 * 30; // 30 seconds in frames
+// Initial timer value (in seconds)
+const GAME_TIME = 99;
+const FPS = 60; // assumed frame rate for requestAnimationFrame
 
 const FISH_SIZE = 128;
 const SKELETON_SPEED = 2;
@@ -19,7 +22,8 @@ export default function useZombiefishEngine() {
   const animationFrameRef = useRef<number | null>(null);
 
   // assets
-  const { getImg, ready } = useGameAssets();
+  const assetMgr = useGameAssets();
+  const { getImg, ready } = assetMgr;
   const killSfx = useAudio("/audio/splash.ogg");
 
   // window dimensions
@@ -38,6 +42,8 @@ export default function useZombiefishEngine() {
 
   const nextFishId = useRef(1);
   const nextGroupId = useRef(1);
+  const textLabels = useRef<TextLabel[]>([]);
+  const frameRef = useRef(0); // track frames for one-second ticks
 
   // ui state that triggers re-renders
   const [ui, setUI] = useState<GameUIState>({
@@ -115,12 +121,34 @@ export default function useZombiefishEngine() {
     const cur = state.current;
     if (cur.phase !== "playing") return;
 
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext("2d");
+    if (!canvas || !ctx) {
+      animationFrameRef.current = requestAnimationFrame(loop);
+      return;
+    }
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
     updateFish();
-    
-    // decrement timer and end game when it hits zero
-    cur.timer = Math.max(0, cur.timer - 1);
-    if (cur.timer === 0) {
-      cur.phase = "gameover";
+
+    // track frames and decrement the timer once per second
+    frameRef.current += 1;
+    if (frameRef.current >= FPS) {
+      frameRef.current = 0;
+      cur.timer = Math.max(0, cur.timer - 1);
+
+      const lbl = textLabels.current[0];
+      if (lbl) {
+        const t = cur.timer.toString().padStart(2, "0");
+        lbl.text = t;
+        const digitImgs = getImg("digitImgs") as Record<string, HTMLImageElement>;
+        lbl.imgs = t.split("").map((ch) => digitImgs[ch]);
+      }
+
+      if (cur.timer === 0) {
+        cur.phase = "gameover";
+      }
     }
 
     // move fish based on velocity
@@ -163,6 +191,8 @@ export default function useZombiefishEngine() {
       });
     }
 
+    textLabels.current = drawTextLabels({ textLabels: textLabels.current, ctx });
+
     setUI({ phase: cur.phase, timer: cur.timer, shots: cur.shots, hits: cur.hits });
     animationFrameRef.current = requestAnimationFrame(loop);
   }, [updateFish, getImg]);
@@ -174,10 +204,24 @@ export default function useZombiefishEngine() {
     cur.timer = GAME_TIME;
     cur.shots = 0;
     cur.hits = 0;
+    frameRef.current = 0;
+    textLabels.current = [
+      newTextLabel(
+        {
+          text: cur.timer.toString().padStart(2, "0"),
+          scale: 1,
+          fixed: true,
+          fade: false,
+          x: 16,
+          y: 16,
+        },
+        assetMgr
+      ),
+    ];
     setUI({ phase: cur.phase, timer: cur.timer, shots: cur.shots, hits: cur.hits });
     if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
     animationFrameRef.current = requestAnimationFrame(loop);
-  }, [loop]);
+  }, [loop, assetMgr]);
 
   // handle left click – detect and affect fish
   const handleClick = useCallback(
@@ -256,6 +300,8 @@ export default function useZombiefishEngine() {
     cur.shots = 0;
     cur.hits = 0;
     cur.fish = [];
+    textLabels.current = [];
+    frameRef.current = 0;
     setUI({ phase: cur.phase, timer: cur.timer, shots: cur.shots, hits: cur.hits });
     if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
   }, []);
