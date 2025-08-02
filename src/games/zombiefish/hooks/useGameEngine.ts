@@ -103,13 +103,13 @@ export default function useGameEngine() {
 
     // skeleton behavior
     cur.fish.forEach((s) => {
-      if (s.kind !== "skeleton") return;
+      if (!s.isSkeleton) return;
 
       let nearest: Fish | undefined;
       let nearestDist = Infinity;
 
       cur.fish.forEach((t) => {
-        if (t.kind === "skeleton") return;
+        if (t.isSkeleton) return;
         const dx = t.x - s.x;
         const dy = t.y - s.y;
         const dist2 = dx * dx + dy * dy;
@@ -128,7 +128,7 @@ export default function useGameEngine() {
           s.vy = (dy / dist) * SKELETON_SPEED;
         }
         if (dist < SKELETON_CONVERT_DISTANCE) {
-          nearest.kind = "skeleton";
+          nearest.isSkeleton = true;
           nearest.health = 2;
           nearest.vx = 0;
           nearest.vy = 0;
