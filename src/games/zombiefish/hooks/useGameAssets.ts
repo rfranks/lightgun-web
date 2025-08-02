@@ -85,6 +85,10 @@ export function useGameAssets(): {
       "rock_b",
       "rock_b_outline",
     ]);
+    assetRefs.current.rockBgImgs = [
+      assetRefs.current.rockImgs.background_rock_a,
+      assetRefs.current.rockImgs.background_rock_b,
+    ];
 
     assetRefs.current.seaGrassImgs = build("Objects/SeaGrass", [
       "seaweed_grass_a",
@@ -110,6 +114,9 @@ export function useGameAssets(): {
       seaweedNames.push(`seaweed_pink_${l}_outline`);
     });
     assetRefs.current.seaweedImgs = build("Objects/Seaweed", seaweedNames);
+    assetRefs.current.seaweedBgImgs = "abcdefgh"
+      .split("")
+      .map((l) => assetRefs.current.seaweedImgs[`background_seaweed_${l}`]);
 
     // TERRAIN
     const topLetters = "abcdefgh".split("");
