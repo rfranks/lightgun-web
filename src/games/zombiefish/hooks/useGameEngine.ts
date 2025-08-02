@@ -133,7 +133,7 @@ export default function useGameEngine() {
           nearest.vx = 0;
           nearest.vy = 0;
           delete nearest.groupId;
-          audio.play("skeleton");
+          audio.play("convert");
         }
       }
     });

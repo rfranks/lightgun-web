@@ -26,7 +26,11 @@ export function useGameAudio(): AudioMgr {
     skeleton.src = "/audio/splash.ogg";
     skeleton.preload = "auto";
 
-    return { shoot, hit, bonus, skeleton };
+    const convert = document.createElement("audio");
+    convert.src = "/audio/zap1.ogg";
+    convert.preload = "auto";
+
+    return { shoot, hit, bonus, skeleton, convert };
   }, []);
 
   // Play a sound by key
