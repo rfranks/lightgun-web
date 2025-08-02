@@ -6,11 +6,13 @@ import { drawTextLabels, newTextLabel } from "@/utils/ui";
 
 import type { GameState, GameUIState, Fish, Bubble } from "../types";
 import {
+  FISH_SPAWN_INTERVAL_MIN,
+  FISH_SPAWN_INTERVAL_MAX,
   SKELETON_SPEED,
   TIME_BONUS_BROWN_FISH,
   TIME_PENALTY_GREY_LONG,
   DEFAULT_CURSOR,
-  SHOT_CURSOR
+  SHOT_CURSOR,
 } from "../constants";
 import type { AssetMgr } from "@/types/ui";
 import type { TextLabel } from "@/types/ui";
@@ -210,7 +212,7 @@ export default function useGameEngine() {
       let nearestDist = Infinity;
 
       cur.fish.forEach((t) => {
-        if (!t.isSkeleton) return;
+        if (t.isSkeleton) return;
         const dx = t.x - s.x;
         const dy = t.y - s.y;
         const dist2 = dx * dx + dy * dy;
@@ -264,7 +266,8 @@ export default function useGameEngine() {
     const x = Math.random() * (width - size);
     const y = height + size;
     const vx = (Math.random() - 0.5) * 0.5;
-    const vy = -(Math.random() * 1 + 0.5);
+    // Larger bubbles rise more slowly than smaller ones
+    const vy = -((BUBBLE_SIZE / size) * (Math.random() * 0.5 + 0.5));
     state.current.bubbles.push({
       id: nextBubbleId.current++,
       kind,
@@ -301,6 +304,7 @@ export default function useGameEngine() {
         bubbleSpawnRef.current = Math.floor(Math.random() * 60) + 30;
       }
       cur.bubbles.forEach((b) => {
+        // Update position using each bubble's velocity
         b.x += b.vx;
         b.y += b.vy;
       });
@@ -583,6 +587,17 @@ export default function useGameEngine() {
       cancelAnimationFrame(animationFrameRef.current);
   }, []);
 
+  useEffect(() => {
+    const handleKeydown = (e: KeyboardEvent) => {
+      if (state.current.phase === "gameover" && e.code === "Space") {
+        resetGame();
+        startSplash();
+      }
+    };
+    window.addEventListener("keydown", handleKeydown);
+    return () => window.removeEventListener("keydown", handleKeydown);
+  }, [resetGame, startSplash]);
+
   // handle left click – detect and affect fish
   const handleClick = useCallback(
     (e: React.MouseEvent) => {
@@ -656,15 +671,17 @@ export default function useGameEngine() {
           cur.hits += 1;
           updateDigitLabel(hitsLabel.current, cur.hits);
           if (f.kind === "brown") {
-            cur.timer += TIME_BONUS_BROWN_FISH * FPS;
+            cur.timer += TIME_BONUS_BROWN_FISH;
+            updateDigitLabel(timerLabel.current, cur.timer, 2);
             makeText(`+${TIME_BONUS_BROWN_FISH}`, f.x, f.y);
             cur.fish.splice(i, 1);
             audio.play("bonus");
           } else if (f.kind === "grey_long_a" || f.kind === "grey_long_b") {
             cur.timer = Math.max(
               0,
-              cur.timer - TIME_PENALTY_GREY_LONG * FPS
+              cur.timer - TIME_PENALTY_GREY_LONG
             );
+            updateDigitLabel(timerLabel.current, cur.timer, 2);
             makeText(`-${TIME_PENALTY_GREY_LONG}`, f.x, f.y);
             const gid = f.groupId;
             cur.fish = cur.fish.filter((fish) => fish.groupId !== gid);
@@ -675,9 +692,11 @@ export default function useGameEngine() {
               f.health = 2;
             }
             f.health = (f.health ?? 0) - 1;
-            audio.play("skeleton");
             if ((f.health ?? 0) <= 0) {
               cur.fish.splice(i, 1);
+              audio.play("death");
+            } else {
+              audio.play("skeleton");
             }
           }
           break;
@@ -819,7 +838,7 @@ export default function useGameEngine() {
         const leader = makeFish(kind, x, y, groupId);
         spawned.push(leader);
         for (let i = 1; i < count; i++) {
-          const member = makeFish(kind, 0, groupId);
+          const member = makeFish(kind, leader.x, leader.y, groupId);
           member.x = leader.x + (Math.random() - 0.5) * FISH_SIZE;
           member.y = Math.min(
             Math.max(leader.y + (Math.random() - 0.5) * FISH_SIZE, 0),
@@ -839,15 +858,24 @@ export default function useGameEngine() {
   // spawn scheduler
   useEffect(() => {
     if (ui.phase !== "playing") return;
-    const basicKinds = ["blue", "green", "grey", "orange", "pink", "red"];
+    const basicKinds = ["blue", "green", "orange", "pink", "red"];
     let timer: ReturnType<typeof setTimeout>;
     const schedule = () => {
-      const delay = 1000 + Math.random() * 2000;
+      const minDelay = (FISH_SPAWN_INTERVAL_MIN / FPS) * 1000;
+      const maxDelay = (FISH_SPAWN_INTERVAL_MAX / FPS) * 1000;
+      const delay = minDelay + Math.random() * (maxDelay - minDelay);
       timer = setTimeout(() => {
         if (state.current.phase !== "playing") return;
-        const kind = basicKinds[Math.floor(Math.random() * basicKinds.length)];
-        const count = Math.floor(Math.random() * 5) + 1;
-        spawnFish(kind, count);
+        const roll = Math.random();
+        if (roll < 0.1) {
+          spawnFish("brown", 1);
+        } else if (roll < 0.15) {
+          spawnFish("grey_long", 1);
+        } else {
+          const kind = basicKinds[Math.floor(Math.random() * basicKinds.length)];
+          const count = Math.floor(Math.random() * 5) + 1;
+          spawnFish(kind, count);
+        }
         schedule();
       }, delay);
     };
