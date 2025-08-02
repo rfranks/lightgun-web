@@ -38,9 +38,6 @@ const BUBBLE_MAX_SIZE = BUBBLE_BASE_SIZE * 1.5;
 const BUBBLE_VX_MAX = 0.5;
 const BUBBLE_VY_MIN = -1.5;
 const BUBBLE_VY_MAX = -0.5;
-const ROCK_SPEED = 0.2;
-const SEAWEED_SPEED = 0.4;
-const BUBBLE_SIZE = BUBBLE_BASE_SIZE;
 const ROCK_SPEED = [0.1, 0.2];
 const SEAWEED_SPEED = [0.2, 0.4];
 const MAX_BUBBLES = 20;
@@ -79,6 +76,8 @@ export default function useGameEngine() {
   const nextGroupId = useRef(1);
   const nextBubbleId = useRef(1);
   const bubbleSpawnRef = useRef(0);
+  const spawnTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cursorTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const frameRef = useRef(0); // track frames for one-second ticks
   const fishSpawnTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const rockOffsets = useRef<number[]>(ROCK_SPEED.map(() => 0));
@@ -86,6 +85,7 @@ export default function useGameEngine() {
   const accuracyLabel = useRef<TextLabel | null>(null);
   const finalAccuracy = useRef(0);
   const displayAccuracy = useRef(0);
+  const bestAccuracyLabel = useRef<TextLabel | null>(null);
   const timerLabel = useRef<TextLabel | null>(null);
   const shotsLabel = useRef<TextLabel | null>(null);
   const hitsLabel = useRef<TextLabel | null>(null);
@@ -124,17 +124,6 @@ export default function useGameEngine() {
   const drawBackground = useCallback(
     (ctx: CanvasRenderingContext2D) => {
       const { width, height } = state.current.dims;
-      ROCK_SPEED.forEach((s, i) => {
-        rockOffsets.current[i] -= s;
-        if (rockOffsets.current[i] <= -width)
-          rockOffsets.current[i] += width;
-      });
-      SEAWEED_SPEED.forEach((s, i) => {
-        seaweedOffsets.current[i] -= s;
-        if (seaweedOffsets.current[i] <= -width)
-          seaweedOffsets.current[i] += width;
-      });
-
       const waterImgs = getImg("terrainWaterImgs") as
         | Record<string, HTMLImageElement>
         | undefined;
@@ -176,54 +165,50 @@ export default function useGameEngine() {
       const rockBgImgs = getImg("rockBgImgs") as
         | HTMLImageElement[]
         | undefined;
-      if (rockBgImgs) {
-        const rockLayers = [
-          [
-            { img: rockBgImgs[0], x: width * 0.1 },
-            { img: rockBgImgs[1], x: width * 0.7 },
-          ],
-          [
-            { img: rockBgImgs[1], x: width * 0.3 },
-            { img: rockBgImgs[0], x: width * 0.9 },
-          ],
-        ];
-        rockLayers.forEach((layer, i) => {
-          layer.forEach(({ img, x }) => {
-            if (!img) return;
-            const y = groundY - img.height;
-            const drawX = x + rockOffsets.current[i];
-            ctx.drawImage(img, drawX, y);
-            ctx.drawImage(img, drawX + width, y);
-          });
+      if (rockBgImgs && rockBgImgs.length) {
+        const groupWidth = rockBgImgs[0].width * rockBgImgs.length;
+        ROCK_SPEED.forEach((s, i) => {
+          rockOffsets.current[i] -= s;
+          if (rockOffsets.current[i] <= -groupWidth)
+            rockOffsets.current[i] += groupWidth;
         });
+        for (let i = 0; i < ROCK_SPEED.length; i++) {
+          const offset = rockOffsets.current[i];
+          const y = groundY - rockBgImgs[0].height;
+          for (let x = -groupWidth; x < width + groupWidth; x += groupWidth) {
+            rockBgImgs.forEach((img, idx) => {
+              if (!img) return;
+              ctx.drawImage(img, x + offset + idx * rockBgImgs[0].width, y);
+            });
+          }
+        }
       }
 
       const seaweedBgImgs = getImg("seaweedBgImgs") as
         | HTMLImageElement[]
         | undefined;
-      if (seaweedBgImgs) {
+      if (seaweedBgImgs && seaweedBgImgs.length) {
         const bottom = groundY;
-        const seaweedLayers = [
-          [
-            { img: seaweedBgImgs[0], x: width * 0.2 },
-            { img: seaweedBgImgs[2], x: width * 0.5 },
-            { img: seaweedBgImgs[4], x: width * 0.8 },
-          ],
-          [
-            { img: seaweedBgImgs[1], x: width * 0.1 },
-            { img: seaweedBgImgs[3], x: width * 0.4 },
-            { img: seaweedBgImgs[5], x: width * 0.7 },
-          ],
-        ];
-        seaweedLayers.forEach((layer, i) => {
-          layer.forEach(({ img, x }) => {
-            if (!img) return;
-            const y = bottom - img.height;
-            const drawX = x + seaweedOffsets.current[i];
-            ctx.drawImage(img, drawX, y);
-            ctx.drawImage(img, drawX + width, y);
-          });
+        const groupWidth = seaweedBgImgs[0].width * seaweedBgImgs.length;
+        SEAWEED_SPEED.forEach((s, i) => {
+          seaweedOffsets.current[i] -= s;
+          if (seaweedOffsets.current[i] <= -groupWidth)
+            seaweedOffsets.current[i] += groupWidth;
         });
+        for (let i = 0; i < SEAWEED_SPEED.length; i++) {
+          const offset = seaweedOffsets.current[i];
+          for (let x = -groupWidth; x < width + groupWidth; x += groupWidth) {
+            seaweedBgImgs.forEach((img, idx) => {
+              if (!img) return;
+              const y = bottom - img.height;
+              ctx.drawImage(
+                img,
+                x + offset + idx * seaweedBgImgs[0].width,
+                y
+              );
+            });
+          }
+        }
       }
     },
     [getImg]
@@ -280,10 +265,10 @@ export default function useGameEngine() {
 
     // skeleton behavior
     const immuneKinds = new Set(["brown", "grey_long_a", "grey_long_b"]);
-    const speedMult = 1 + cur.conversions * 0.1;
-    const base = SKELETON_SPEED * speedMult;
-    const extra = SKELETON_SPEED * speedMult;
-    const skeletonSpeed = base + (1 - cur.timer / GAME_TIME) * extra;
+    const progress = 1 - cur.timer / GAME_TIME;
+    let skeletonSpeed =
+      SKELETON_SPEED * (1 + cur.conversions * 0.1) * (1 + progress);
+    skeletonSpeed = Math.min(skeletonSpeed, SKELETON_SPEED * 5);
     let skeletonCount = cur.fish.filter((f) => f.isSkeleton).length;
     cur.fish.forEach((s) => {
       if (!s.isSkeleton) return;
@@ -293,6 +278,7 @@ export default function useGameEngine() {
 
       cur.fish.forEach((t) => {
         if (t.isSkeleton) return;
+        if (t.pendingSkeleton) return;
         if (immuneKinds.has(t.kind)) return;
         const dx = t.x - s.x;
         const dy = t.y - s.y;
@@ -314,7 +300,7 @@ export default function useGameEngine() {
         if (
           dist < SKELETON_CONVERT_DISTANCE &&
           !immuneKinds.has(nearest.kind) &&
-          skeletonCount < MAX_SKELETONS
+          skeletonCount < MAX_SKELETONS &&
           !nearest.pendingSkeleton
         ) {
           // Spawn a brief text effect before converting the fish
@@ -402,7 +388,12 @@ export default function useGameEngine() {
         b.x += b.vx;
         b.y += b.vy;
       });
-      cur.bubbles = cur.bubbles.filter((b) => b.y + b.size > 0);
+      cur.bubbles = cur.bubbles.filter(
+        (b) =>
+          b.y + b.size > 0 &&
+          b.x + b.size > 0 &&
+          b.x - b.size < cur.dims.width
+      );
 
       // track frames and decrement the timer once per second
       frameRef.current += 1;
@@ -467,6 +458,25 @@ export default function useGameEngine() {
         lbl.text = "0%";
         lbl.imgs = initImgs;
         accuracyLabel.current = lbl;
+        cur.textLabels.push(lbl);
+      }
+      if (!bestAccuracyLabel.current) {
+        const best = Number(localStorage.bestAccuracy || 0);
+        const pctImg = getImg("pctImg") as HTMLImageElement;
+        const digitImgs = getImg("digitImgs") as Record<string, HTMLImageElement>;
+        const lbl = newTextLabel(
+          {
+            text: `${best}%`,
+            scale: 1,
+            fixed: true,
+            fade: false,
+            x: 16,
+            y: 16,
+          },
+          assetMgr
+        );
+        lbl.imgs = [...best.toString().split("").map((ch) => digitImgs[ch]), pctImg];
+        bestAccuracyLabel.current = lbl;
         cur.textLabels.push(lbl);
       }
 
@@ -561,65 +571,64 @@ export default function useGameEngine() {
           );
           cur.textLabels.push(pausedLabel.current);
         }
-      } 
-    (pausedLabel.current) {
+      } else if (pausedLabel.current) {
         cur.textLabels = cur.textLabels.filter((l) => l !== pausedLabel.current);
         pausedLabel.current = null;
       }
 
-      // draw bubbles, fish and text labels
-      if (canvas && ctx) {
+        // draw bubbles, fish and text labels
+        if (canvas && ctx) {
         canvas.width = cur.dims.width;
         canvas.height = cur.dims.height;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      drawBackground(ctx);
+        drawBackground(ctx);
 
-      const bubbleImgs = getImg("bubbleImgs") as Record<string, HTMLImageElement>;
-      cur.bubbles.forEach((b) => {
-        const img = bubbleImgs[b.kind as keyof typeof bubbleImgs];
-        if (!img) return;
-        // scale according to the bubble's size before drawing
-        ctx.drawImage(img, b.x, b.y, b.size, b.size);
-      });
+        const bubbleImgs = getImg("bubbleImgs") as Record<string, HTMLImageElement>;
+        cur.bubbles.forEach((b) => {
+          const img = bubbleImgs[b.kind as keyof typeof bubbleImgs];
+          if (!img) return;
+          // scale according to the bubble's size before drawing
+          ctx.drawImage(img, b.x, b.y, b.size, b.size);
+        });
 
-      cur.fish.forEach((f) => {
-        const frameMap = getImg(
-          f.isSkeleton ? "skeletonFrames" : "fishFrames"
-        ) as Record<string, HTMLImageElement[]>;
-        const frames = frameMap[f.kind as keyof typeof frameMap];
-        if (!frames || frames.length === 0) return;
-        f.frameCounter++;
-        if (f.frameCounter >= FISH_FRAME_DELAY) {
-          f.frameCounter = 0;
-          f.frame = (f.frame + 1) % frames.length;
-        }
-        const img = frames[f.frame];
-        if (!img) return;
-        ctx.save();
-        ctx.translate(f.x + FISH_SIZE / 2, f.y + FISH_SIZE / 2);
-        if (f.vx < 0) ctx.scale(-1, 1);
-        ctx.rotate(f.angle);
-        ctx.drawImage(
-          img,
-          -FISH_SIZE / 2,
-          -FISH_SIZE / 2,
-          FISH_SIZE,
-          FISH_SIZE
-        );
-        if (f.hurtTimer && f.hurtTimer > 0) {
-          ctx.fillStyle = "rgba(255,0,0,0.5)";
-          ctx.fillRect(-FISH_SIZE / 2, -FISH_SIZE / 2, FISH_SIZE, FISH_SIZE);
-        }
-        ctx.restore();
-      });
+        cur.fish.forEach((f) => {
+          const frameMap = getImg(
+            f.isSkeleton ? "skeletonFrames" : "fishFrames"
+          ) as Record<string, HTMLImageElement[]>;
+          const frames = frameMap[f.kind as keyof typeof frameMap];
+          if (!frames || frames.length === 0) return;
+          f.frameCounter++;
+          if (f.frameCounter >= FISH_FRAME_DELAY) {
+            f.frameCounter = 0;
+            f.frame = (f.frame + 1) % frames.length;
+          }
+          const img = frames[f.frame];
+          if (!img) return;
+          ctx.save();
+          ctx.translate(f.x + FISH_SIZE / 2, f.y + FISH_SIZE / 2);
+          if (f.vx < 0) ctx.scale(-1, 1);
+          ctx.rotate(f.angle);
+          ctx.drawImage(
+            img,
+            -FISH_SIZE / 2,
+            -FISH_SIZE / 2,
+            FISH_SIZE,
+            FISH_SIZE
+          );
+          if (f.hurtTimer && f.hurtTimer > 0) {
+            ctx.fillStyle = "rgba(255,0,0,0.5)";
+            ctx.fillRect(-FISH_SIZE / 2, -FISH_SIZE / 2, FISH_SIZE, FISH_SIZE);
+          }
+          ctx.restore();
+        });
 
-      cur.textLabels = drawTextLabels({
-        textLabels: cur.textLabels,
-        ctx,
-        cull: true,
-      });
-    }
+        cur.textLabels = drawTextLabels({
+          textLabels: cur.textLabels,
+          ctx,
+          cull: true,
+        });
+      }
 
     cur.accuracy = cur.shots > 0 ? (cur.hits / cur.shots) * 100 : 0;
 
@@ -647,6 +656,7 @@ export default function useGameEngine() {
 
     frameRef.current = 0;
     accuracyLabel.current = null;
+    bestAccuracyLabel.current = null;
     finalAccuracy.current = 0;
     displayAccuracy.current = 0;
     rockOffsets.current.fill(0);
@@ -657,7 +667,7 @@ export default function useGameEngine() {
     const digitHeight = digitImgs["0"]?.height || 0;
     const lineHeight = digitHeight + 8;
 
-    audio.play("bgm");
+    audio.play("bgm", { loop: true });
 
     const labelWidth = (lbl: TextLabel) =>
       lbl.imgs.reduce(
@@ -779,6 +789,7 @@ export default function useGameEngine() {
     cur.bubbles = [];
 
     accuracyLabel.current = null;
+    bestAccuracyLabel.current = null;
     finalAccuracy.current = 0;
     displayAccuracy.current = 0;
     frameRef.current = 0;
@@ -790,6 +801,9 @@ export default function useGameEngine() {
     gameoverTimeLabel.current = null;
     state.current.textLabels = [];
     bubbleSpawnRef.current = 0;
+    nextFishId.current = 1;
+    nextGroupId.current = 1;
+    nextBubbleId.current = 1;
     rockOffsets.current.fill(0);
     seaweedOffsets.current.fill(0);
     pausedLabel.current = null;
@@ -804,7 +818,15 @@ export default function useGameEngine() {
     });
     if (animationFrameRef.current)
       cancelAnimationFrame(animationFrameRef.current);
-    audio.pause("bgm");
+    if (spawnTimeoutRef.current) {
+      clearTimeout(spawnTimeoutRef.current);
+      spawnTimeoutRef.current = null;
+    }
+    if (cursorTimeoutRef.current) {
+      clearTimeout(cursorTimeoutRef.current);
+      cursorTimeoutRef.current = null;
+    }
+    audio.pauseAll();
   }, []);
 
   useEffect(() => {
@@ -838,11 +860,14 @@ export default function useGameEngine() {
     (e: React.MouseEvent) => {
       const cur = state.current;
       if (cur.phase !== "playing" || cur.cursor === SHOT_CURSOR) return;
+
       const canvas = canvasRef.current;
       if (!canvas) return;
-      const rect = canvas.getBoundingClientRect();
-      const x = ((e.clientX - rect.left) / rect.width) * cur.dims.width;
-      const y = ((e.clientY - rect.top) / rect.height) * cur.dims.height;
+      const { left, top, width, height } = canvas.getBoundingClientRect();
+
+      const x = ((e.clientX - left) / width) * cur.dims.width;
+      const y = ((e.clientY - top) / height) * cur.dims.height;
+
       const hovering = cur.fish.some(
         (f) =>
           x >= f.x &&
@@ -850,8 +875,9 @@ export default function useGameEngine() {
           y >= f.y &&
           y <= f.y + FISH_SIZE
       );
+
       const nextCursor = hovering ? TARGET_CURSOR : DEFAULT_CURSOR;
-      if (cur.cursor !== nextCursor) {
+      if (nextCursor !== cur.cursor) {
         cur.cursor = nextCursor;
         setUI({
           phase: cur.phase,
@@ -859,7 +885,7 @@ export default function useGameEngine() {
           shots: cur.shots,
           hits: cur.hits,
           accuracy: cur.accuracy,
-          cursor: cur.cursor,
+          cursor: nextCursor,
         });
       }
     },
@@ -895,7 +921,8 @@ export default function useGameEngine() {
       if (cur.phase !== "playing") return;
 
       cur.cursor = SHOT_CURSOR;
-      setTimeout(() => {
+      if (cursorTimeoutRef.current) clearTimeout(cursorTimeoutRef.current);
+      cursorTimeoutRef.current = setTimeout(() => {
         state.current.cursor = DEFAULT_CURSOR;
         setUI({
           phase: state.current.phase,
@@ -924,10 +951,14 @@ export default function useGameEngine() {
         return;
       }
 
+      // translate click to canvas coordinates so hits are detected correctly
       const rect = canvas.getBoundingClientRect();
-      const x = ((e.clientX - rect.left) / rect.width) * cur.dims.width;
-      const y = ((e.clientY - rect.top) / rect.height) * cur.dims.height;
+      const relX = e.clientX - rect.left;
+      const relY = e.clientY - rect.top;
+      const x = (relX / rect.width) * cur.dims.width;
+      const y = (relY / rect.height) * cur.dims.height;
 
+      // iterate fish from topmost (end of array) so higher-drawn fish are hit first
       for (let i = cur.fish.length - 1; i >= 0; i--) {
         const f = cur.fish[i];
         if (
@@ -938,6 +969,7 @@ export default function useGameEngine() {
         ) {
           cur.hits += 1;
           updateDigitLabel(hitsLabel.current, cur.hits);
+          audio.play("hit");
           if (f.kind === "brown") {
             cur.timer += TIME_BONUS_BROWN_FISH;
             updateDigitLabel(timerLabel.current, cur.timer, 2);
@@ -1184,7 +1216,6 @@ export default function useGameEngine() {
   useEffect(() => {
     if (ui.phase !== "playing") return;
     const basicKinds = ["blue", "green", "orange", "pink", "red"];
-
     const schedule = () => {
       const factor = difficultyFactor();
       // FISH_SPAWN_INTERVAL_* are expressed in frames; convert to ms
