@@ -22,6 +22,10 @@ export interface Fish {
   groupId?: number;
   /** Whether this fish has turned into a skeleton */
   isSkeleton?: boolean;
+  /** Frames remaining for a conversion flash effect */
+  flashTimer?: number;
+  /** Whether this fish is awaiting skeleton conversion */
+  pendingSkeleton?: boolean;
 }
 
 // Rising bubble drifting upward in the background
