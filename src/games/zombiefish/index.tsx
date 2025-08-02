@@ -53,6 +53,7 @@ export default function Game() {
   return (
     <GameUI
       canvasRef={canvasRef}
+      cursor={ui.cursor}
       handleClick={handleClick}
       handleContext={handleContext}
     />
