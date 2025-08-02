@@ -17,6 +17,7 @@ export default function Game() {
     handleContext,
     startSplash,
     ready: assetsReady,
+    getImg,
   } = engine;
 
   const [startRequested, setStartRequested] = useState(false);
@@ -46,6 +47,7 @@ export default function Game() {
         titleSrc={withBasePath("/assets/titles/zombiefish_title.png")}
         backgroundColor={SKY_COLOR}
         cursor={DEFAULT_CURSOR}
+        getImg={getImg}
       />
     );
   }
