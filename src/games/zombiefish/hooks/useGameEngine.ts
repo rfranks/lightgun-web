@@ -1005,7 +1005,11 @@ export default function useGameEngine() {
             updateDigitLabel(timerLabel.current, cur.timer, 2);
             makeText(`-${TIME_PENALTY_GREY_LONG}`, f.x, f.y);
             const gid = f.groupId;
-            cur.fish = cur.fish.filter((fish) => fish.groupId !== gid);
+            if (gid !== undefined) {
+              cur.fish = cur.fish.filter((fish) => fish.groupId !== gid);
+            } else {
+              cur.fish.splice(i, 1);
+            }
             audio.play("penalty");
           } else {
             const skeletonCount = cur.fish.filter(
@@ -1120,6 +1124,7 @@ export default function useGameEngine() {
     };
 
     if (specialPairs.includes(kind)) {
+      // grey_long spawns as two pieces that move together
       const groupId = nextGroupId.current++;
       const { vx, vy } = genVelocity(); // keep pair aligned
       if (edge === 0 || edge === 1) {
