@@ -500,14 +500,16 @@ export default function useGameEngine() {
       if (f.isSkeleton) return;
       f.wanderTimer -= 1;
       if (f.wanderTimer <= 0) {
-        f.wanderTimer = Math.floor(Math.random() * FPS) + FPS;
-        // apply a small random drift to the current velocity
-        const drift = 0.1;
-        f.vx += (Math.random() - 0.5) * drift;
-        f.vy += (Math.random() - 0.5) * drift;
-        const limited = clampIncline(f.vx, f.vy);
+        // pick a new random velocity
+        const range = FISH_SPEED_MAX - FISH_SPEED_MIN;
+        const speed = Math.random() * range + FISH_SPEED_MIN;
+        let vx = (Math.random() * 2 - 1) * speed;
+        let vy = (Math.random() * 2 - 1) * speed;
+        const limited = clampIncline(vx, vy);
         f.vx = limited.vx;
         f.vy = limited.vy;
+        // reset timer
+        f.wanderTimer = Math.floor(Math.random() * FPS) + FPS;
       }
     });
 
