@@ -328,6 +328,10 @@ export default function useGameEngine() {
         if (cur.timer === 0) {
           cur.phase = "gameover";
           finalAccuracy.current = Math.round(cur.accuracy);
+          const best = Number(localStorage.bestAccuracy || 0);
+          if (finalAccuracy.current > best) {
+            localStorage.bestAccuracy = finalAccuracy.current.toString();
+          }
           displayAccuracy.current = 0;
         }
       }
