@@ -44,14 +44,34 @@ export default function useZombiefishEngine() {
     state.current.dims = dims;
   }, [dims]);
 
-  // main loop updates timer
+  // main loop updates timer and fish positions
   const loop = useCallback(() => {
     const cur = state.current;
     if (cur.phase !== "playing") return;
+
+    // decrement timer and end game when it hits zero
     cur.timer = Math.max(0, cur.timer - 1);
     if (cur.timer === 0) {
       cur.phase = "gameover";
     }
+
+    // move fish based on velocity
+    cur.fish.forEach((f) => {
+      f.x += f.vx;
+      f.y += f.vy;
+    });
+
+    // cull fish that have moved completely off-screen
+    const { width, height } = cur.dims;
+    const margin = FISH_SIZE * 2;
+    cur.fish = cur.fish.filter(
+      (f) =>
+        f.x > -margin &&
+        f.x < width + margin &&
+        f.y > -margin &&
+        f.y < height + margin
+    );
+
     setUI({ phase: cur.phase, timer: cur.timer, shots: cur.shots, hits: cur.hits });
     animationFrameRef.current = requestAnimationFrame(loop);
   }, []);
