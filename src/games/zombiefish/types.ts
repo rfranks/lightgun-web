@@ -15,13 +15,21 @@ export interface Fish {
   angle: number;
   /** Health points, used by skeleton fish. */
   health?: number;
+  /** Frames remaining for the red flash after taking damage. */
+  hurtTimer?: number;
   /**
    * Optional identifier tying fish together when spawned in a group.
    * Special fish spawn without a groupId.
    */
   groupId?: number;
+  /** Whether this fish should draw with a highlighted variant */
+  highlight?: boolean;
   /** Whether this fish has turned into a skeleton */
   isSkeleton?: boolean;
+  /** Frames remaining for a conversion flash effect */
+  flashTimer?: number;
+  /** Whether this fish is awaiting skeleton conversion */
+  pendingSkeleton?: boolean;
 }
 
 // Rising bubble drifting upward in the background
