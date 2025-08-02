@@ -40,7 +40,6 @@ const BUBBLE_VY_MIN = -1.5;
 const BUBBLE_VY_MAX = -0.5;
 const ROCK_SPEED = 0.2;
 const SEAWEED_SPEED = 0.4;
-const BUBBLE_SIZE = BUBBLE_BASE_SIZE;
 const ROCK_SPEED = [0.1, 0.2];
 const SEAWEED_SPEED = [0.2, 0.4];
 const MAX_BUBBLES = 20;
@@ -313,7 +312,7 @@ export default function useGameEngine() {
         if (
           dist < SKELETON_CONVERT_DISTANCE &&
           !immuneKinds.has(nearest.kind) &&
-          skeletonCount < MAX_SKELETONS
+          skeletonCount < MAX_SKELETONS &&
           !nearest.pendingSkeleton
         ) {
           // Spawn a brief text effect before converting the fish
@@ -560,8 +559,7 @@ export default function useGameEngine() {
           );
           cur.textLabels.push(pausedLabel.current);
         }
-      } 
-    (pausedLabel.current) {
+      } else if (pausedLabel.current) {
         cur.textLabels = cur.textLabels.filter((l) => l !== pausedLabel.current);
         pausedLabel.current = null;
       }
@@ -656,7 +654,7 @@ export default function useGameEngine() {
     const digitHeight = digitImgs["0"]?.height || 0;
     const lineHeight = digitHeight + 8;
 
-    audio.play("bgm");
+    audio.play("bgm", { loop: true });
 
     const labelWidth = (lbl: TextLabel) =>
       lbl.imgs.reduce(
