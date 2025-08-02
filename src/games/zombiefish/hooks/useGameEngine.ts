@@ -1236,11 +1236,14 @@ export default function useGameEngine() {
     if (ui.phase !== "playing") return;
     const basicKinds = ["blue", "green", "orange", "pink", "red"];
     const schedule = () => {
-      const factor = difficultyFactor();
+      const { timer, conversions } = state.current;
+      const difficultyFactor =
+        1 + (1 - timer / GAME_TIME) + conversions * 0.1;
       // FISH_SPAWN_INTERVAL_* are expressed in frames; convert to ms
       const min = (FISH_SPAWN_INTERVAL_MIN / FPS) * 1000;
       const max = (FISH_SPAWN_INTERVAL_MAX / FPS) * 1000;
-      const delay = (min + Math.random() * (max - min)) * (1 / factor);
+      const baseDelay = min + Math.random() * (max - min);
+      const delay = Math.max(baseDelay / difficultyFactor, 250);
 
       fishSpawnTimeout.current = setTimeout(() => {
         if (state.current.phase !== "playing") return;
