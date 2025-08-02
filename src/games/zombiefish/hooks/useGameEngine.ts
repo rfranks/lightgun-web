@@ -726,6 +726,9 @@ export default function useGameEngine() {
     e.preventDefault();
   }, []);
 
+  // factor that ramps up difficulty as time runs out
+  const difficultyFactor = () => 1 + (1 - state.current.timer / GAME_TIME);
+
   // spawn a group of fish just outside the viewport edges
   const spawnFish = useCallback((kind: string, count: number): Fish[] => {
     const spawned: Fish[] = [];
@@ -745,8 +748,9 @@ export default function useGameEngine() {
 
     // generate a velocity based on the entry edge
     const genVelocity = () => {
-      const main = Math.random() * 2 + 1;
-      const cross = Math.random() * 2 - 1;
+      const factor = difficultyFactor();
+      const main = (Math.random() * 2 + 1) * factor;
+      const cross = (Math.random() * 2 - 1) * factor;
       switch (edge) {
         case 0:
           return { vx: main, vy: cross };
@@ -866,9 +870,9 @@ export default function useGameEngine() {
     const basicKinds = ["blue", "green", "orange", "pink", "red"];
     let timer: ReturnType<typeof setTimeout>;
     const schedule = () => {
-      const minDelay = (FISH_SPAWN_INTERVAL_MIN / FPS) * 1000;
-      const maxDelay = (FISH_SPAWN_INTERVAL_MAX / FPS) * 1000;
-      const delay = minDelay + Math.random() * (maxDelay - minDelay);
+      const factor = difficultyFactor();
+      const delay = (1000 + Math.random() * 2000) / factor;
+
       timer = setTimeout(() => {
         if (state.current.phase !== "playing") return;
         const roll = Math.random();
