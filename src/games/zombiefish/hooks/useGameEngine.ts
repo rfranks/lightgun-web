@@ -38,6 +38,8 @@ const FPS = 60; // assumed frame rate for requestAnimationFrame
 const FISH_SIZE = 128;
 const FISH_FRAME_DELAY = 6;
 const MAX_SCHOOL_SIZE = 4;
+// limit for how steep fish swim (cross-velocity relative to main)
+const MAX_FISH_INCLINE = 0.5;
 const SKELETON_CONVERT_DISTANCE = FISH_SIZE / 2;
 const BUBBLE_BASE_SIZE = 64;
 const BUBBLE_MIN_SIZE = BUBBLE_BASE_SIZE * 0.5;
@@ -53,6 +55,15 @@ const HURT_FRAMES = 10;
 const CONVERT_FLASH_FRAMES = 5;
 const MISS_GROWTH = 4;
 const MISS_FADE = 0.05;
+
+const clampIncline = (vx: number, vy: number) => {
+  if (Math.abs(vx) >= Math.abs(vy)) {
+    const limit = Math.abs(vx) * MAX_FISH_INCLINE;
+    return { vx, vy: Math.max(Math.min(vy, limit), -limit) };
+  }
+  const limit = Math.abs(vy) * MAX_FISH_INCLINE;
+  return { vx: Math.max(Math.min(vx, limit), -limit), vy };
+};
 
 export default function useGameEngine() {
   // canvas and animation frame refs
@@ -428,10 +439,18 @@ export default function useGameEngine() {
     cur.fish.forEach((f) => {
       if (f.hurtTimer > 0) f.hurtTimer -= 1;
       const osc = Math.sin((frameRef.current + f.id) / 20) * 0.5;
-      const vy = f.vy + osc;
-      f.x += f.vx;
+      let vx = f.vx;
+      let vy = f.vy + osc;
+      if (Math.abs(f.vx) >= Math.abs(f.vy)) {
+        const limit = Math.abs(f.vx) * MAX_FISH_INCLINE;
+        vy = Math.max(Math.min(vy, limit), -limit);
+      } else {
+        const limit = Math.abs(f.vy) * MAX_FISH_INCLINE;
+        vx = Math.max(Math.min(vx, limit), -limit);
+      }
+      f.x += vx;
       f.y += vy;
-      f.angle = Math.atan2(vy, Math.abs(f.vx));
+      f.angle = Math.atan2(vy, Math.abs(vx));
       if (f.isSkeleton) {
         f.x = Math.max(0, Math.min(f.x, width - FISH_SIZE));
         f.y = Math.max(0, Math.min(f.y, height - FISH_SIZE));
@@ -1264,17 +1283,28 @@ export default function useGameEngine() {
       const range = FISH_SPEED_MAX - FISH_SPEED_MIN;
       const main = (Math.random() * range + FISH_SPEED_MIN) * factor;
       const cross = (Math.random() * range - range / 2) * factor;
+      let vx: number;
+      let vy: number;
       switch (edge) {
         case 0:
-          return { vx: main, vy: cross };
+          vx = main;
+          vy = cross;
+          break;
         case 1:
-          return { vx: -main, vy: cross };
+          vx = -main;
+          vy = cross;
+          break;
         case 2:
-          return { vx: cross, vy: main };
+          vx = cross;
+          vy = main;
+          break;
         case 3:
         default:
-          return { vx: cross, vy: -main };
+          vx = cross;
+          vy = -main;
+          break;
       }
+      return clampIncline(vx, vy);
     };
 
     // helper to create a fish
@@ -1395,6 +1425,9 @@ export default function useGameEngine() {
           member.y = my;
           member.vx = leader.vx + (Math.random() - 0.5) * speedVariance;
           member.vy = leader.vy + (Math.random() - 0.5) * speedVariance;
+          const limited = clampIncline(member.vx, member.vy);
+          member.vx = limited.vx;
+          member.vy = limited.vy;
           spawned.push(member);
           existingPositions.push(member);
         }
