@@ -41,6 +41,8 @@ const MAX_SCHOOL_SIZE = 4;
 // limit for how steep fish swim (cross-velocity relative to main)
 const MAX_FISH_INCLINE = 0.5;
 const SKELETON_CONVERT_DISTANCE = FISH_SIZE / 2;
+const SKELETON_REPEL_DISTANCE = FISH_SIZE;
+const SKELETON_REPEL_FORCE = 0.05;
 const BUBBLE_BASE_SIZE = 64;
 const BUBBLE_MIN_SIZE = BUBBLE_BASE_SIZE * 0.5;
 const BUBBLE_MAX_SIZE = BUBBLE_BASE_SIZE * 1.5;
@@ -440,6 +442,33 @@ export default function useGameEngine() {
       }
 
     });
+
+    // repel skeletons that get too close to each other
+    const skeletons = cur.fish.filter((f) => f.isSkeleton);
+    for (let i = 0; i < skeletons.length; i++) {
+      const a = skeletons[i];
+      for (let j = i + 1; j < skeletons.length; j++) {
+        const b = skeletons[j];
+        const dx = b.x - a.x;
+        const dy = b.y - a.y;
+        const dist2 = dx * dx + dy * dy;
+        if (
+          dist2 < SKELETON_REPEL_DISTANCE * SKELETON_REPEL_DISTANCE &&
+          dist2 > 0
+        ) {
+          const dist = Math.sqrt(dist2);
+          const force =
+            ((SKELETON_REPEL_DISTANCE - dist) / SKELETON_REPEL_DISTANCE) *
+            SKELETON_REPEL_FORCE;
+          const fx = (dx / dist) * force;
+          const fy = (dy / dist) * force;
+          a.vx -= fx;
+          a.vy -= fy;
+          b.vx += fx;
+          b.vy += fy;
+        }
+      }
+    }
 
     // move fish with a slight oscillation and update their angle
     cur.fish.forEach((f) => {
