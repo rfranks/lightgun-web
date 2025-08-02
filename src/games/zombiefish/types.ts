@@ -1,133 +1,20 @@
-/**
- * Zombiefish-specific types/extensions.
- * (Add any unique, game-specific interfaces here.)
- */
-import type { AssetMgr, Dims, TextLabel } from "@/types/ui";
-import type { Enemy, Airship } from "@/types/vehicles";
-import type {
-  HomingMissile,
-  NapalmMissile,
-  NapalmTile,
-  ArtilleryShell,
-} from "@/types/weapons";
-import type { Puff, SparkEffect } from "@/types/effects";
-import type { Tree, Mountain, Cloud, Water } from "@/types/environment";
-import type { Powerup, PowerupType, Medal, Duck } from "@/types/objects";
-import { AudioMgr } from "@/types/audio";
+import type { Dims } from "@/types/ui";
 
-export type GamePhase = "title" | "ready" | "go" | "playing";
+// Game phases for the simple zombiefish prototype
+export type GamePhase = "title" | "playing" | "gameover";
 
+// State exposed to the UI layer
 export interface GameUIState {
-  score: number;
-  medalCount: number;
-  duckCount: number;
-  enemyCount: number;
-  ammo: number;
-  crashed: boolean;
-  frameCount: number;
-  activePowerups: Record<PowerupType, { expires: number }>;
-  cursor: string;
-  countdown: number | null;
   phase: GamePhase;
+  /** Remaining time in frames */
+  timer: number;
+  /** Total number of shots fired */
+  shots: number;
+  /** Total number of successful hits */
+  hits: number;
 }
 
-/**
- * All mutable gameplay state, lifted out of index.tsx refs & useState.
- */
+// Internal game state tracked by the engine
 export interface GameState extends GameUIState {
-  // wiring
   dims: Dims;
-  assets: AssetMgr;
-  audio: AudioMgr;
-
-  gameOver: boolean;
-
-  // player physics & position
-  y: number;
-  vy: number;
-  groundOffset: number;
-
-  // spawn density
-  dynamicDensity: number;
-
-  // entity lists
-  enemies: Enemy[];
-  airships: Airship[];
-  ducks: Duck[];
-  mountains: Mountain[];
-  trees: Tree[];
-  clouds: Cloud[];
-  waters: Water[];
-  shotLakes: Set<Water>;
-  powerups: Powerup[];
-  medals: Medal[];
-
-  // projectiles & weapons
-  cannonballs: { x: number; y: number; vx: number; img: HTMLImageElement }[];
-  homingMissiles: HomingMissile[];
-  napalmMissiles: NapalmMissile[];
-  napalmTiles: NapalmTile[];
-  artilleryShells: ArtilleryShell[];
-  laserBeams: {
-    x: number;
-    y: number;
-    frame: 0 | 1;
-    frameCounter: number;
-  }[];
-  laserBurstRemaining: number;
-  laserBurstCooldown: number;
-  burstRemaining: number;
-  burstCooldown: number;
-
-  // visual effects
-  puffs: Puff[];
-  sparkEffects: SparkEffect[];
-  bulletHoles: { x: number; y: number; age: number; maxAge: number }[];
-  floatingScores: {
-    x: number;
-    y: number;
-    vy: number;
-    age: number;
-    maxAge: number;
-    amount: number;
-  }[];
-  falling: { x: number; y: number; vy: number; img: HTMLImageElement }[];
-
-  // power‐up timers & flags
-  shieldFlash: number;
-  screenShake: number;
-  thunderCooldown: number;
-
-  // animation state
-  planeFrame: number;
-  planeFrameCounter: number;
-  groundIndex: number;
-  planeAngle: number;
-  smokeSpawned: boolean;
-  groundContactFrames: number; // frames since last ground contact
-
-  // crash flags
-  crashHandled: boolean;
-  groundCrashPuffsLeft: number;
-
-  whooshPlaying: boolean;
-  artilleryPlaying: boolean;
-  missileThrusterPlaying: boolean;
-
-  // text & UI helpers
-  textLabels: TextLabel[];
-  streak: number;
-  ouchFrames: number;
-  ouchExplodeIdx: number;
-
-  // (splash) timers — you may choose to drop these once splash logic moves out
-  readyTimeout: number;
-  goTimeout: number;
-  beepTimeouts: number[];
-  /** Timeout handles for resetting the countdown */
-  countdownTimeouts: number[];
-
-  isActive: (t: PowerupType, frameCount: number) => boolean;
-  enemySpeed: (frameCount: number) => number;
-  groundSpeed: (frameCount: number) => number;
 }
