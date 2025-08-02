@@ -652,15 +652,17 @@ export default function useGameEngine() {
           cur.hits += 1;
           updateDigitLabel(hitsLabel.current, cur.hits);
           if (f.kind === "brown") {
-            cur.timer += TIME_BONUS_BROWN_FISH * FPS;
+            cur.timer += TIME_BONUS_BROWN_FISH;
+            updateDigitLabel(timerLabel.current, cur.timer, 2);
             makeText(`+${TIME_BONUS_BROWN_FISH}`, f.x, f.y);
             cur.fish.splice(i, 1);
             audio.play("bonus");
           } else if (f.kind === "grey_long_a" || f.kind === "grey_long_b") {
             cur.timer = Math.max(
               0,
-              cur.timer - TIME_PENALTY_GREY_LONG * FPS
+              cur.timer - TIME_PENALTY_GREY_LONG
             );
+            updateDigitLabel(timerLabel.current, cur.timer, 2);
             makeText(`-${TIME_PENALTY_GREY_LONG}`, f.x, f.y);
             const gid = f.groupId;
             cur.fish = cur.fish.filter((fish) => fish.groupId !== gid);
