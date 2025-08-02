@@ -25,6 +25,8 @@ const FPS = 60; // assumed frame rate for requestAnimationFrame
 const FISH_SIZE = 128;
 const SKELETON_CONVERT_DISTANCE = FISH_SIZE / 2;
 const BUBBLE_SIZE = 64;
+const ROCK_SPEED = 0.2;
+const SEAWEED_SPEED = 0.4;
 const MAX_BUBBLES = 20;
 
 export default function useGameEngine() {
@@ -59,6 +61,8 @@ export default function useGameEngine() {
   const nextBubbleId = useRef(1);
   const bubbleSpawnRef = useRef(0);
   const frameRef = useRef(0); // track frames for one-second ticks
+  const rockOffset = useRef(0);
+  const seaweedOffset = useRef(0);
   const accuracyLabel = useRef<TextLabel | null>(null);
   const finalAccuracy = useRef(0);
   const displayAccuracy = useRef(0);
@@ -97,6 +101,10 @@ export default function useGameEngine() {
   const drawBackground = useCallback(
     (ctx: CanvasRenderingContext2D) => {
       const { width, height } = state.current.dims;
+      rockOffset.current -= ROCK_SPEED;
+      seaweedOffset.current -= SEAWEED_SPEED;
+      if (rockOffset.current <= -width) rockOffset.current += width;
+      if (seaweedOffset.current <= -width) seaweedOffset.current += width;
 
       const waterImgs = getImg("terrainWaterImgs") as
         | Record<string, HTMLImageElement>
@@ -142,10 +150,17 @@ export default function useGameEngine() {
       if (rockImgs) {
         const rA = rockImgs.background_rock_a;
         const rB = rockImgs.background_rock_b;
-        // Rock positions roughly match the layout in
-        // public/assets/fish/Sample.png
-        if (rA) ctx.drawImage(rA, width * 0.1, groundY - rA.height);
-        if (rB) ctx.drawImage(rB, width * 0.7, groundY - rB.height);
+        const rocks = [
+          { img: rA, x: width * 0.1 },
+          { img: rB, x: width * 0.7 },
+        ];
+        rocks.forEach(({ img, x }) => {
+          if (!img) return;
+          const y = groundY - img.height;
+          const drawX = x + rockOffset.current;
+          ctx.drawImage(img, drawX, y);
+          ctx.drawImage(img, drawX + width, y);
+        });
       }
 
       const seaweedImgs = getImg("seaweedImgs") as
@@ -158,10 +173,12 @@ export default function useGameEngine() {
           { img: seaweedImgs.background_seaweed_c, x: width * 0.5 },
           { img: seaweedImgs.background_seaweed_e, x: width * 0.8 },
         ];
-        // Seaweed clusters are placed near the rocks as seen in
-        // public/assets/fish/Sample.png
         sw.forEach(({ img, x }) => {
-          if (img) ctx.drawImage(img, x, bottom - img.height);
+          if (!img) return;
+          const y = bottom - img.height;
+          const drawX = x + seaweedOffset.current;
+          ctx.drawImage(img, drawX, y);
+          ctx.drawImage(img, drawX + width, y);
         });
       }
     },
@@ -528,7 +545,10 @@ export default function useGameEngine() {
     accuracyLabel.current = null;
     finalAccuracy.current = 0;
     displayAccuracy.current = 0;
+    rockOffset.current = 0;
+    seaweedOffset.current = 0;
     pausedLabel.current = null;
+
     const digitImgs = getImg("digitImgs") as Record<string, HTMLImageElement>;
     const digitHeight = digitImgs["0"]?.height || 0;
     const lineHeight = digitHeight + 8;
@@ -653,6 +673,8 @@ export default function useGameEngine() {
     hitsLabel.current = null;
     state.current.textLabels = [];
     bubbleSpawnRef.current = 0;
+    rockOffset.current = 0;
+    seaweedOffset.current = 0;
     pausedLabel.current = null;
 
     setUI({
