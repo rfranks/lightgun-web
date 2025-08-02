@@ -4,7 +4,13 @@ import { useGameAssets } from "./useGameAssets";
 import { useGameAudio } from "./useGameAudio";
 import { drawTextLabels, newTextLabel } from "@/utils/ui";
 
-import type { GameState, GameUIState, Fish, Bubble } from "../types";
+import type {
+  GameState,
+  GameUIState,
+  Fish,
+  Bubble,
+  MissParticle,
+} from "../types";
 import {
   FISH_SPEED_MIN,
   FISH_SPEED_MAX,
@@ -44,6 +50,8 @@ const SEAWEED_SPEED = [0.2, 0.4];
 const MAX_BUBBLES = 20;
 const HURT_FRAMES = 10;
 const CONVERT_FLASH_FRAMES = 5;
+const MISS_GROWTH = 4;
+const MISS_FADE = 0.05;
 
 export default function useGameEngine() {
   // canvas and animation frame refs
@@ -70,6 +78,7 @@ export default function useGameEngine() {
     fish: [],
     bubbles: [],
     textLabels: [],
+    missParticles: [],
     conversions: 0,
   });
 
@@ -101,6 +110,8 @@ export default function useGameEngine() {
   const gameoverShotsLabel = useRef<TextLabel | null>(null);
   const gameoverHitsLabel = useRef<TextLabel | null>(null);
   const gameoverTimeLabel = useRef<TextLabel | null>(null);
+  const timeTextLabel = useRef<TextLabel | null>(null);
+  const timeTextBounds = useRef({ x: 0, y: 0, width: 0, height: 0 });
 
   // ui state that triggers re-renders
   const [ui, setUI] = useState<GameUIState>({
@@ -130,9 +141,18 @@ export default function useGameEngine() {
   }, []);
 
   const makeText = useCallback(
-    (text: string, x: number, y: number) => {
+    (text: string, x: number, y: number, color?: string) => {
       const lbl = newTextLabel(
-        { text, scale: 1, fixed: true, fade: true, x, y, vy: -0.5 },
+        {
+          text,
+          scale: 1,
+          fixed: true,
+          fade: true,
+          x,
+          y,
+          vy: -0.5,
+          ...(color ? { color } : {}),
+        },
         { getImg } as unknown as AssetMgr,
         state.current.dims
       );
@@ -393,6 +413,8 @@ export default function useGameEngine() {
     const y = height + size;
     const vx = Math.random() * (BUBBLE_VX_MAX * 2) - BUBBLE_VX_MAX;
     const vy = Math.random() * (BUBBLE_VY_MAX - BUBBLE_VY_MIN) + BUBBLE_VY_MIN;
+    const amp = Math.random() * 2 + 0.5;
+    const freq = Math.random() * 0.05 + 0.01;
     state.current.bubbles.push({
       id: nextBubbleId.current++,
       kind,
@@ -401,6 +423,8 @@ export default function useGameEngine() {
       vx,
       vy,
       size,
+      amp,
+      freq,
     } as Bubble);
     if (state.current.bubbles.length > MAX_BUBBLES) {
       state.current.bubbles = state.current.bubbles.slice(-MAX_BUBBLES);
@@ -410,6 +434,21 @@ export default function useGameEngine() {
   // main loop updates timer and fish
   const loop = useCallback(() => {
     const cur = state.current;
+
+    if (timeTextLabel.current) {
+      const lbl = timeTextLabel.current;
+      const width = lbl.imgs.reduce(
+        (sum, img) =>
+          sum + (img ? img.width * lbl.scale + 2 : lbl.spaceGap),
+        0
+      );
+      const height = lbl.imgs.reduce(
+        (max, img) =>
+          Math.max(max, (img?.height || 0) * lbl.scale),
+        0
+      );
+      timeTextBounds.current = { x: lbl.x, y: lbl.y, width, height };
+    }
 
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");
@@ -428,8 +467,8 @@ export default function useGameEngine() {
         bubbleSpawnRef.current = Math.floor(Math.random() * 60) + 30;
       }
       cur.bubbles.forEach((b) => {
-        // Update position using each bubble's velocity
-        b.x += b.vx;
+        // Update position using velocity and per-bubble wiggle
+        b.x += b.vx + Math.sin(frameRef.current * b.freq) * b.amp;
         b.y += b.vy;
       });
       cur.bubbles = cur.bubbles.filter(
@@ -541,6 +580,13 @@ export default function useGameEngine() {
       );
     }
 
+    // update miss particles
+    cur.missParticles.forEach((p) => {
+      p.radius += MISS_GROWTH;
+      p.alpha -= MISS_FADE;
+    });
+    cur.missParticles = cur.missParticles.filter((p) => p.alpha > 0);
+
     // update accuracy label during gameover
     if (cur.phase === "gameover" && accuracyLabel.current) {
       const lbl = accuracyLabel.current;
@@ -602,12 +648,25 @@ export default function useGameEngine() {
 
       drawBackground(ctx);
 
+      // draw timer bar at top of screen
+      const barWidth = (cur.timer / GAME_TIME) * canvas.width;
+      ctx.fillStyle = "rgba(0,0,0,0.5)";
+      ctx.fillRect(0, 0, barWidth, 8);
+
       const bubbleImgs = getImg("bubbleImgs") as Record<string, HTMLImageElement>;
       cur.bubbles.forEach((b) => {
         const img = bubbleImgs[b.kind as keyof typeof bubbleImgs];
         if (!img) return;
         // scale according to the bubble's size before drawing
         ctx.drawImage(img, b.x, b.y, b.size, b.size);
+      });
+
+      cur.missParticles.forEach((p) => {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(255,255,255,${p.alpha})`;
+        ctx.lineWidth = 2;
+        ctx.stroke();
       });
 
       cur.fish.forEach((f) => {
@@ -671,6 +730,7 @@ export default function useGameEngine() {
     cur.hits = 0;
     cur.accuracy = 0;
     cur.bubbles = [];
+    cur.missParticles = [];
 
     frameRef.current = 0;
     accuracyLabel.current = null;
@@ -704,6 +764,16 @@ export default function useGameEngine() {
       },
       assetMgr
     );
+    timeTextLabel.current = timeText;
+    timeTextBounds.current = {
+      x: timeText.x,
+      y: timeText.y,
+      width: labelWidth(timeText),
+      height: timeText.imgs.reduce(
+        (max, img) => Math.max(max, (img?.height || 0) * timeText.scale),
+        0
+      ),
+    };
 
     timerLabel.current = newTextLabel(
       {
@@ -805,6 +875,7 @@ export default function useGameEngine() {
     cur.fish = [];
     cur.cursor = DEFAULT_CURSOR;
     cur.bubbles = [];
+    cur.missParticles = [];
 
     accuracyLabel.current = null;
     bestAccuracyLabel.current = null;
@@ -933,6 +1004,45 @@ export default function useGameEngine() {
         return;
       }
 
+      const canvas = canvasRef.current;
+      if (!canvas) {
+        setUI({
+          phase: cur.phase,
+          timer: cur.timer,
+          shots: cur.shots,
+          hits: cur.hits,
+          accuracy: cur.accuracy,
+          cursor: cur.cursor,
+        });
+        return;
+      }
+      const rect = canvas.getBoundingClientRect();
+      const canvasX =
+        ((e.clientX - rect.left) / rect.width) * cur.dims.width;
+      const canvasY =
+        ((e.clientY - rect.top) / rect.height) * cur.dims.height;
+
+      const bounds = timeTextBounds.current;
+      if (
+        canvasX >= bounds.x &&
+        canvasX <= bounds.x + bounds.width &&
+        canvasY >= bounds.y &&
+        canvasY <= bounds.y + bounds.height
+      ) {
+        if (cur.phase === "playing" || cur.phase === "paused") {
+          cur.phase = cur.phase === "playing" ? "paused" : "playing";
+          setUI({
+            phase: cur.phase,
+            timer: cur.timer,
+            shots: cur.shots,
+            hits: cur.hits,
+            accuracy: cur.accuracy,
+            cursor: cur.cursor,
+          });
+        }
+        return;
+      }
+
       if (cur.phase !== "playing") return;
 
       syncCursor(SHOT_CURSOR);
@@ -944,28 +1054,33 @@ export default function useGameEngine() {
       cur.shots += 1;
       updateDigitLabel(shotsLabel.current, cur.shots);
       audio.play("shoot");
-      const canvas = canvasRef.current;
-      if (!canvas) {
-        cur.accuracy = cur.shots > 0 ? (cur.hits / cur.shots) * 100 : 0;
-        setUI({
-          phase: cur.phase,
-          timer: cur.timer,
-          shots: cur.shots,
-          hits: cur.hits,
-          accuracy: cur.accuracy,
-          cursor: cur.cursor,
-        });
-        return;
+
+      // check bubbles first so they are popped before fish hits
+      for (let i = cur.bubbles.length - 1; i >= 0; i--) {
+        const b = cur.bubbles[i];
+        if (
+          canvasX >= b.x &&
+          canvasX <= b.x + b.size &&
+          canvasY >= b.y &&
+          canvasY <= b.y + b.size
+        ) {
+          cur.bubbles.splice(i, 1);
+          audio.play("pop");
+          cur.accuracy = cur.shots > 0 ? (cur.hits / cur.shots) * 100 : 0;
+          setUI({
+            phase: cur.phase,
+            timer: cur.timer,
+            shots: cur.shots,
+            hits: cur.hits,
+            accuracy: cur.accuracy,
+            cursor: cur.cursor,
+          });
+          return;
+        }
       }
 
-      // translate mouse coordinates into canvas space
-      const rect = canvas.getBoundingClientRect();
-      const canvasX =
-        ((e.clientX - rect.left) / rect.width) * cur.dims.width;
-      const canvasY =
-        ((e.clientY - rect.top) / rect.height) * cur.dims.height;
-
       // iterate fish in reverse draw order so topmost fish are hit first
+      let hit = false;
       for (let i = cur.fish.length - 1; i >= 0; i--) {
         const f = cur.fish[i];
         if (
@@ -977,10 +1092,11 @@ export default function useGameEngine() {
           cur.hits += 1;
           updateDigitLabel(hitsLabel.current, cur.hits);
           audio.play("hit");
+          hit = true;
           if (f.kind === "brown") {
             cur.timer += TIME_BONUS_BROWN_FISH;
             updateDigitLabel(timerLabel.current, cur.timer, 2, ":");
-            makeText(`+${TIME_BONUS_BROWN_FISH}`, f.x, f.y);
+            makeText(`+${TIME_BONUS_BROWN_FISH}`, f.x, f.y, "#ff0");
             cur.fish.splice(i, 1);
             audio.play("bonus");
           } else if (f.kind === "grey_long_a" || f.kind === "grey_long_b") {
@@ -1023,6 +1139,15 @@ export default function useGameEngine() {
           }
           break;
         }
+      }
+
+      if (!hit) {
+        cur.missParticles.push({
+          x: canvasX,
+          y: canvasY,
+          radius: 0,
+          alpha: 1,
+        } as MissParticle);
       }
 
       cur.accuracy = cur.shots > 0 ? (cur.hits / cur.shots) * 100 : 0;
@@ -1212,6 +1337,34 @@ export default function useGameEngine() {
           member.vy = leader.vy + (Math.random() - 0.5) * speedVariance;
           spawned.push(member);
           existingPositions.push(member);
+        }
+
+        // repulsion loop to ensure group members don't overlap
+        const groupMembers = spawned.filter((f) => f.groupId === groupId);
+        for (let iter = 0; iter < 5; iter++) {
+          for (let i = 0; i < groupMembers.length; i++) {
+            for (let j = i + 1; j < groupMembers.length; j++) {
+              const a = groupMembers[i];
+              const b = groupMembers[j];
+              if (
+                Math.abs(a.x - b.x) < FISH_SIZE &&
+                Math.abs(a.y - b.y) < FISH_SIZE
+              ) {
+                const overlapX = FISH_SIZE - Math.abs(a.x - b.x);
+                const overlapY = FISH_SIZE - Math.abs(a.y - b.y);
+                const dirX = a.x < b.x ? -1 : 1;
+                const dirY = a.y < b.y ? -1 : 1;
+                a.x += (dirX * overlapX) / 2;
+                b.x -= (dirX * overlapX) / 2;
+                a.y += (dirY * overlapY) / 2;
+                b.y -= (dirY * overlapY) / 2;
+                a.x = Math.min(Math.max(a.x, 0), width - FISH_SIZE);
+                b.x = Math.min(Math.max(b.x, 0), width - FISH_SIZE);
+                a.y = Math.min(Math.max(a.y, 0), height - FISH_SIZE);
+                b.y = Math.min(Math.max(b.y, 0), height - FISH_SIZE);
+              }
+            }
+          }
         }
       }
     }

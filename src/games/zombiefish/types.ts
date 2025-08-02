@@ -49,6 +49,20 @@ export interface Bubble {
   vy: number;
   /** Rendered size in pixels */
   size: number;
+  /** Horizontal wiggle amplitude */
+  amp: number;
+  /** Horizontal wiggle frequency */
+  freq: number;
+}
+
+// Expanding ring drawn when a shot misses
+export interface MissParticle {
+  x: number;
+  y: number;
+  /** Current radius of the ring */
+  radius: number;
+  /** Current opacity from 1 to 0 */
+  alpha: number;
 }
 
 // State exposed to the UI layer
@@ -75,6 +89,8 @@ export interface GameState extends GameUIState {
   bubbles: Bubble[];
   /** Floating text labels currently displayed */
   textLabels: TextLabel[];
+  /** Ring particles displayed when shots miss */
+  missParticles: MissParticle[];
   /** Total number of fish converted into skeletons */
   conversions: number;
 }
