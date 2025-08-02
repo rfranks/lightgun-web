@@ -853,11 +853,14 @@ export default function useGameEngine() {
     (e: React.MouseEvent) => {
       const cur = state.current;
       if (cur.phase !== "playing" || cur.cursor === SHOT_CURSOR) return;
+
       const canvas = canvasRef.current;
       if (!canvas) return;
-      const rect = canvas.getBoundingClientRect();
-      const x = ((e.clientX - rect.left) / rect.width) * cur.dims.width;
-      const y = ((e.clientY - rect.top) / rect.height) * cur.dims.height;
+      const { left, top, width, height } = canvas.getBoundingClientRect();
+
+      const x = ((e.clientX - left) / width) * cur.dims.width;
+      const y = ((e.clientY - top) / height) * cur.dims.height;
+
       const hovering = cur.fish.some(
         (f) =>
           x >= f.x &&
@@ -865,8 +868,9 @@ export default function useGameEngine() {
           y >= f.y &&
           y <= f.y + FISH_SIZE
       );
+
       const nextCursor = hovering ? TARGET_CURSOR : DEFAULT_CURSOR;
-      if (cur.cursor !== nextCursor) {
+      if (nextCursor !== cur.cursor) {
         cur.cursor = nextCursor;
         setUI({
           phase: cur.phase,
@@ -874,7 +878,7 @@ export default function useGameEngine() {
           shots: cur.shots,
           hits: cur.hits,
           accuracy: cur.accuracy,
-          cursor: cur.cursor,
+          cursor: nextCursor,
         });
       }
     },
