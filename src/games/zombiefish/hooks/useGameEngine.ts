@@ -93,6 +93,7 @@ export default function useGameEngine() {
     textLabels: [],
     missParticles: [],
     conversions: 0,
+    warningPlayed: false,
   });
 
   const nextFishId = useRef(1);
@@ -542,6 +543,10 @@ export default function useGameEngine() {
         frameRef.current = 0;
         cur.timer = Math.max(0, cur.timer - 1);
         updateDigitLabel(timerLabel.current, cur.timer, 2, ":");
+        if (cur.timer === 10 && !cur.warningPlayed) {
+          audio.play("warning");
+          cur.warningPlayed = true;
+        }
       }
 
       // check for game over once timer hits zero
@@ -813,6 +818,7 @@ export default function useGameEngine() {
     cur.accuracy = 0;
     cur.bubbles = [];
     cur.missParticles = [];
+    cur.warningPlayed = false;
 
     frameRef.current = 0;
     accuracyLabel.current = null;
@@ -990,6 +996,7 @@ export default function useGameEngine() {
     cur.cursor = DEFAULT_CURSOR;
     cur.bubbles = [];
     cur.missParticles = [];
+    cur.warningPlayed = false;
 
     accuracyLabel.current = null;
     bestAccuracyLabel.current = null;
