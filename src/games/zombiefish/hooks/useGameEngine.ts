@@ -6,12 +6,10 @@ import { drawTextLabels, newTextLabel } from "@/utils/ui";
 
 import type { GameState, GameUIState, Fish, Bubble } from "../types";
 import {
-  FISH_SPEED_MIN,
-  FISH_SPEED_MAX,
   SKELETON_SPEED,
   TIME_BONUS_BROWN_FISH,
   TIME_PENALTY_GREY_LONG,
-  DEFAULT_CURSOR, 
+  DEFAULT_CURSOR,
   SHOT_CURSOR
 } from "../constants";
 import type { AssetMgr } from "@/types/ui";
@@ -843,9 +841,16 @@ export default function useGameEngine() {
       const delay = 1000 + Math.random() * 2000;
       timer = setTimeout(() => {
         if (state.current.phase !== "playing") return;
-        const kind = basicKinds[Math.floor(Math.random() * basicKinds.length)];
-        const count = Math.floor(Math.random() * 5) + 1;
-        spawnFish(kind, count);
+        const roll = Math.random();
+        if (roll < 0.1) {
+          spawnFish("brown", 1);
+        } else if (roll < 0.15) {
+          spawnFish("grey_long", 1);
+        } else {
+          const kind = basicKinds[Math.floor(Math.random() * basicKinds.length)];
+          const count = Math.floor(Math.random() * 5) + 1;
+          spawnFish(kind, count);
+        }
         schedule();
       }, delay);
     };
