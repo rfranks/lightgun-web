@@ -6,8 +6,6 @@ import { drawTextLabels, newTextLabel } from "@/utils/ui";
 
 import type { GameState, GameUIState, Fish, Bubble } from "../types";
 import {
-  FISH_SPAWN_INTERVAL_MIN,
-  FISH_SPAWN_INTERVAL_MAX,
   SKELETON_SPEED,
   TIME_BONUS_BROWN_FISH,
   TIME_PENALTY_GREY_LONG,
@@ -594,8 +592,11 @@ export default function useGameEngine() {
 
   useEffect(() => {
     const handleKeydown = (e: KeyboardEvent) => {
-      if (state.current.phase === "gameover" && e.code === "Space") {
+      if (e.code !== "Space") return;
+      if (state.current.phase === "gameover") {
         resetGame();
+        startSplash();
+      } else if (state.current.phase === "title") {
         startSplash();
       }
     };
