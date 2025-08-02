@@ -230,6 +230,7 @@ export default function useGameEngine() {
         if (f.flashTimer <= 0) {
           f.isSkeleton = true;
           f.health = 2;
+          f.hurtTimer = 0;
           f.pendingSkeleton = undefined;
           f.flashTimer = undefined;
         }
@@ -325,7 +326,7 @@ export default function useGameEngine() {
 
     // move fish with a slight oscillation and update their angle
     cur.fish.forEach((f) => {
-      if (f.hurtTimer && f.hurtTimer > 0) f.hurtTimer -= 1;
+      if (f.hurtTimer > 0) f.hurtTimer -= 1;
       const osc = Math.sin((frameRef.current + f.id) / 20) * 0.5;
       const vy = f.vy + osc;
       f.x += f.vx;
@@ -547,7 +548,7 @@ export default function useGameEngine() {
       if (f.vx < 0) ctx.scale(-1, 1);
       ctx.rotate(f.angle);
       ctx.drawImage(img, -FISH_SIZE / 2, -FISH_SIZE / 2, FISH_SIZE, FISH_SIZE);
-      if (f.hurtTimer && f.hurtTimer > 0) {
+      if (f.isSkeleton && f.hurtTimer > 0) {
         ctx.fillStyle = "rgba(255,0,0,0.5)";
         ctx.fillRect(-FISH_SIZE / 2, -FISH_SIZE / 2, FISH_SIZE, FISH_SIZE);
       } else if (f.flashTimer && f.flashTimer > 0) {
@@ -643,7 +644,7 @@ export default function useGameEngine() {
           FISH_SIZE,
           FISH_SIZE
         );
-        if (f.hurtTimer && f.hurtTimer > 0) {
+        if (f.isSkeleton && f.hurtTimer > 0) {
           ctx.fillStyle = "rgba(255,0,0,0.5)";
           ctx.fillRect(-FISH_SIZE / 2, -FISH_SIZE / 2, FISH_SIZE, FISH_SIZE);
         }
@@ -1015,6 +1016,7 @@ export default function useGameEngine() {
               if (Math.random() < 0.5 && skeletonCount < MAX_SKELETONS) {
                 f.isSkeleton = true;
                 f.health = 1;
+                f.hurtTimer = 0;
                 f.frame = 0;
                 f.frameCounter = 0;
                 audio.play("skeleton");
@@ -1023,13 +1025,13 @@ export default function useGameEngine() {
                 audio.play("death");
               }
             } else {
-              f.health = (f.health ?? 0) - 1;
-              if ((f.health ?? 0) <= 0) {
-                cur.fish.splice(i, 1);
-                audio.play("death");
-              } else {
+              f.health = Math.max(0, f.health - 1);
+              if (f.health > 0) {
                 f.hurtTimer = HURT_FRAMES;
                 audio.play("skeleton");
+              } else {
+                cur.fish.splice(i, 1);
+                audio.play("death");
               }
             }
           }
@@ -1112,7 +1114,9 @@ export default function useGameEngine() {
         vy,
         frame: 0,
         frameCounter: 0,
-        ...(k === "skeleton" ? { health: 2 } : {}),
+        angle: 0,
+        health: k === "skeleton" ? 2 : 0,
+        hurtTimer: 0,
         isSkeleton: k === "skeleton",
         ...(groupId !== undefined ? { groupId } : {}),
         ...(highlight ? { highlight: true } : {}),
@@ -1136,10 +1140,10 @@ export default function useGameEngine() {
             vx,
             vy,
             angle: 0,
-            groupId,
-            ...(kind === "skeleton" ? { health: 2 } : {}),
+            health: kind === "skeleton" ? 2 : 0,
+            hurtTimer: 0,
             isSkeleton: kind === "skeleton",
-            ...(groupId !== undefined ? { groupId } : {}),
+            groupId,
             frame: 0,
             frameCounter: 0,
             highlight: true,
@@ -1158,10 +1162,10 @@ export default function useGameEngine() {
             vx,
             vy,
             angle: 0,
-            groupId,
-            ...(kind === "skeleton" ? { health: 2 } : {}),
+            health: kind === "skeleton" ? 2 : 0,
+            hurtTimer: 0,
             isSkeleton: kind === "skeleton",
-            ...(groupId !== undefined ? { groupId } : {}),
+            groupId,
             frame: 0,
             frameCounter: 0,
             highlight: true,
