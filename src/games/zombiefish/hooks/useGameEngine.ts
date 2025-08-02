@@ -205,6 +205,9 @@ export default function useGameEngine() {
 
     // skeleton behavior
     const immuneKinds = new Set(["brown", "grey_long_a", "grey_long_b"]);
+    const base = SKELETON_SPEED;
+    const extra = SKELETON_SPEED;
+    const skeletonSpeed = base + (1 - cur.timer / GAME_TIME) * extra;
     cur.fish.forEach((s) => {
       if (!s.isSkeleton) return;
 
@@ -228,13 +231,15 @@ export default function useGameEngine() {
         const dy = nearest.y - s.y;
         const dist = Math.hypot(dx, dy);
         if (dist > 0) {
-          s.vx = (dx / dist) * SKELETON_SPEED;
-          s.vy = (dy / dist) * SKELETON_SPEED;
+          s.vx = (dx / dist) * skeletonSpeed;
+          s.vy = (dy / dist) * skeletonSpeed;
         }
         if (
           dist < SKELETON_CONVERT_DISTANCE &&
           !immuneKinds.has(nearest.kind)
         ) {
+          // Spawn a brief text effect before converting the fish
+          makeText("POOF", nearest.x, nearest.y);
           nearest.isSkeleton = true;
           nearest.health = 2;
           nearest.vx = 0;
@@ -246,10 +251,10 @@ export default function useGameEngine() {
 
       // steer skeletons back onto the playfield if they hit an edge
       const { width, height } = cur.dims;
-      if (s.x < 0) s.vx = Math.abs(s.vx) || SKELETON_SPEED;
-      else if (s.x + FISH_SIZE > width) s.vx = -Math.abs(s.vx) || -SKELETON_SPEED;
-      if (s.y < 0) s.vy = Math.abs(s.vy) || SKELETON_SPEED;
-      else if (s.y + FISH_SIZE > height) s.vy = -Math.abs(s.vy) || -SKELETON_SPEED;
+      if (s.x < 0) s.vx = Math.abs(s.vx) || skeletonSpeed;
+      else if (s.x + FISH_SIZE > width) s.vx = -Math.abs(s.vx) || -skeletonSpeed;
+      if (s.y < 0) s.vy = Math.abs(s.vy) || skeletonSpeed;
+      else if (s.y + FISH_SIZE > height) s.vy = -Math.abs(s.vy) || -skeletonSpeed;
     });
 
     // move fish with a slight oscillation and update their angle
@@ -260,7 +265,7 @@ export default function useGameEngine() {
       f.y += vy;
       f.angle = Math.atan2(vy, Math.abs(f.vx));
     });
-  }, [audio]);
+  }, [audio, makeText]);
 
   const spawnBubble = useCallback(() => {
     const { width, height } = state.current.dims;
@@ -324,6 +329,10 @@ export default function useGameEngine() {
         if (cur.timer === 0) {
           cur.phase = "gameover";
           finalAccuracy.current = Math.round(cur.accuracy);
+          const best = Number(localStorage.bestAccuracy || 0);
+          if (finalAccuracy.current > best) {
+            localStorage.bestAccuracy = finalAccuracy.current.toString();
+          }
           displayAccuracy.current = 0;
         }
       }
@@ -519,14 +528,43 @@ export default function useGameEngine() {
     const digitHeight = digitImgs["0"]?.height || 0;
     const lineHeight = digitHeight + 8;
 
+    const labelWidth = (lbl: TextLabel) =>
+      lbl.imgs.reduce(
+        (sum, img) => sum + (img ? img.width + 2 : lbl.spaceGap),
+        0
+      );
+
+    const timeText = newTextLabel(
+      {
+        text: "TIME",
+        scale: 1,
+        fixed: true,
+        fade: false,
+        x: 16,
+        y: 16,
+      },
+      assetMgr
+    );
     timerLabel.current = newTextLabel(
       {
         text: cur.timer.toString().padStart(2, "0"),
         scale: 1,
         fixed: true,
         fade: false,
-        x: 16,
+        x: 16 + labelWidth(timeText),
         y: 16,
+      },
+      assetMgr
+    );
+
+    const shotsText = newTextLabel(
+      {
+        text: "SHOTS",
+        scale: 1,
+        fixed: true,
+        fade: false,
+        x: 16,
+        y: 16 + lineHeight,
       },
       assetMgr
     );
@@ -536,8 +574,20 @@ export default function useGameEngine() {
         scale: 1,
         fixed: true,
         fade: false,
-        x: 16,
+        x: 16 + labelWidth(shotsText),
         y: 16 + lineHeight,
+      },
+      assetMgr
+    );
+
+    const hitsText = newTextLabel(
+      {
+        text: "HITS",
+        scale: 1,
+        fixed: true,
+        fade: false,
+        x: 16,
+        y: 16 + lineHeight * 2,
       },
       assetMgr
     );
@@ -547,7 +597,7 @@ export default function useGameEngine() {
         scale: 1,
         fixed: true,
         fade: false,
-        x: 16,
+        x: 16 + labelWidth(hitsText),
         y: 16 + lineHeight * 2,
       },
       assetMgr
@@ -555,8 +605,11 @@ export default function useGameEngine() {
     bubbleSpawnRef.current = 0;
 
     state.current.textLabels = [
+      timeText,
       timerLabel.current!,
+      shotsText,
       shotsLabel.current!,
+      hitsText,
       hitsLabel.current!,
     ];
     cur.cursor = DEFAULT_CURSOR;
@@ -626,6 +679,8 @@ export default function useGameEngine() {
       }
       if (cur.phase === "gameover" && e.code === "Space") {
         resetGame();
+        startSplash();
+      } else if (state.current.phase === "title") {
         startSplash();
       }
     };
