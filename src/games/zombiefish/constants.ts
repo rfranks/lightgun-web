@@ -31,5 +31,5 @@ export const MAX_SKELETONS = 20;
 
 // Time adjustments when hitting special fish (in seconds).
 export const TIME_BONUS_BROWN_FISH = 3;
-export const TIME_PENALTY_GREY_LONG = 5;
+export const TIME_BONUS_GREY_LONG = 5;
 

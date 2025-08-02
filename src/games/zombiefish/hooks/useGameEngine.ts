@@ -19,7 +19,7 @@ import {
   SKELETON_SPEED,
   MAX_SKELETONS,
   TIME_BONUS_BROWN_FISH,
-  TIME_PENALTY_GREY_LONG,
+  TIME_BONUS_GREY_LONG,
   DEFAULT_CURSOR,
   SHOT_CURSOR,
   TARGET_CURSOR,
@@ -1357,14 +1357,14 @@ export default function useGameEngine() {
           if (f.kind === "brown") {
             cur.timer += TIME_BONUS_BROWN_FISH;
             updateDigitLabel(timerLabel.current, cur.timer, 2, ":");
-            makeText(`+${TIME_BONUS_BROWN_FISH}`, f.x, f.y, "#ff0");
+            makeText("+3", f.x, f.y, "#0f0");
             const [removed] = cur.fish.splice(i, 1);
             if (removed) inactiveFish.current.push(removed);
             audio.play("bonus");
           } else if (f.kind === "grey_long_a" || f.kind === "grey_long_b") {
-            cur.timer = Math.max(0, cur.timer - TIME_PENALTY_GREY_LONG);
+            cur.timer += TIME_BONUS_GREY_LONG;
             updateDigitLabel(timerLabel.current, cur.timer, 2, ":");
-            makeText(`-${TIME_PENALTY_GREY_LONG}`, f.x, f.y);
+            makeText("+5", f.x, f.y, "#f00");
             const pid = f.pairId;
             if (pid !== undefined) {
               const removed = cur.fish.filter((fish) => fish.pairId === pid);
@@ -1374,7 +1374,7 @@ export default function useGameEngine() {
               const [removed] = cur.fish.splice(i, 1);
               if (removed) inactiveFish.current.push(removed);
             }
-            audio.play("penalty");
+            audio.play("bonus");
           } else {
             const skeletonCount = cur.fish.filter(
               (fish) => fish.isSkeleton
