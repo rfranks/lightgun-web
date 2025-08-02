@@ -383,6 +383,18 @@ export default function useGameEngine() {
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");
     cur.fish.forEach((f) => {
+      const frameMap = getImg(
+        f.isSkeleton ? "skeletonFrames" : "fishFrames"
+      ) as Record<string, HTMLImageElement[]>;
+      const frames = frameMap[f.kind as keyof typeof frameMap];
+      if (frames && frames.length > 0) {
+        f.frameCounter += 1;
+        if (f.frameCounter >= FISH_FRAME_DELAY) {
+          f.frameCounter = 0;
+          f.frame = (f.frame + 1) % frames.length;
+        }
+      }
+
       if (f.pendingSkeleton) {
         if (ctx && flashImg) {
           ctx.drawImage(flashImg, f.x, f.y, FISH_SIZE, FISH_SIZE);
@@ -855,11 +867,6 @@ export default function useGameEngine() {
         ) as Record<string, HTMLImageElement[]>;
         const frames = frameMap[f.kind as keyof typeof frameMap];
         if (!frames || frames.length === 0) return;
-        f.frameCounter++;
-        if (f.frameCounter >= FISH_FRAME_DELAY) {
-          f.frameCounter = 0;
-          f.frame = (f.frame + 1) % frames.length;
-        }
         const img = frames[f.frame];
         if (!img) return;
         ctx.save();
