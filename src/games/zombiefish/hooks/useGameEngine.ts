@@ -1188,6 +1188,34 @@ export default function useGameEngine() {
           spawned.push(member);
           existingPositions.push(member);
         }
+
+        // repulsion loop to ensure group members don't overlap
+        const groupMembers = spawned.filter((f) => f.groupId === groupId);
+        for (let iter = 0; iter < 5; iter++) {
+          for (let i = 0; i < groupMembers.length; i++) {
+            for (let j = i + 1; j < groupMembers.length; j++) {
+              const a = groupMembers[i];
+              const b = groupMembers[j];
+              if (
+                Math.abs(a.x - b.x) < FISH_SIZE &&
+                Math.abs(a.y - b.y) < FISH_SIZE
+              ) {
+                const overlapX = FISH_SIZE - Math.abs(a.x - b.x);
+                const overlapY = FISH_SIZE - Math.abs(a.y - b.y);
+                const dirX = a.x < b.x ? -1 : 1;
+                const dirY = a.y < b.y ? -1 : 1;
+                a.x += (dirX * overlapX) / 2;
+                b.x -= (dirX * overlapX) / 2;
+                a.y += (dirY * overlapY) / 2;
+                b.y -= (dirY * overlapY) / 2;
+                a.x = Math.min(Math.max(a.x, 0), width - FISH_SIZE);
+                b.x = Math.min(Math.max(b.x, 0), width - FISH_SIZE);
+                a.y = Math.min(Math.max(a.y, 0), height - FISH_SIZE);
+                b.y = Math.min(Math.max(b.y, 0), height - FISH_SIZE);
+              }
+            }
+          }
+        }
       }
     }
 
