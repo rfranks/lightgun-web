@@ -1016,8 +1016,12 @@ export function useGameEngine() {
     if (!ctx) return;
 
     const { width, height } = dims;
-    canvas.width = width;
-    canvas.height = height;
+    const dpr = typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1;
+    canvas.width = width * dpr;
+    canvas.height = height * dpr;
+    canvas.style.width = `${width}px`;
+    canvas.style.height = `${height}px`;
+    ctx.scale(dpr, dpr);
 
     resetState();
     // ensure we stay in the playing phase after resetting state
@@ -1358,7 +1362,7 @@ export function useGameEngine() {
         ctx.drawImage(m.img, m.x, m.y + 40, m.width, m.height);
         ctx.globalAlpha = 1;
         // remove once it drifts fully off left edge
-        if (m.x + canvas.width < 0) {
+        if (m.x + width < 0) {
           state.current.mountains.splice(i, 1);
         }
       });
@@ -1375,7 +1379,7 @@ export function useGameEngine() {
         ctx.drawImage(t.img, t.x, t.y, t.width, t.height);
         ctx.globalAlpha = 1;
         // remove once it drifts off left
-        if (t.x + t.width + canvas.width < 0) state.current.trees.splice(i, 1);
+        if (t.x + t.width + width < 0) state.current.trees.splice(i, 1);
       });
 
       // maybe spawn a new drifting cloud, but only if none are still off-screen to the right
@@ -1396,7 +1400,7 @@ export function useGameEngine() {
           ctx.drawImage(img, c.x + dx, c.y + dy, w, h);
         });
         ctx.globalAlpha = 1;
-        if (c.x + canvas.width * 1.5 < 0) state.current.clouds.splice(i, 1);
+        if (c.x + width * 1.5 < 0) state.current.clouds.splice(i, 1);
       });
 
       // maybe spawn an airship
@@ -3081,7 +3085,7 @@ export function useGameEngine() {
         w.x -= state.current.groundSpeed(state.current.frameCount);
 
         // remove once off–screen
-        if (w.x + w.size * tileW + canvas.width < 0)
+        if (w.x + w.size * tileW + width < 0)
           state.current.waters.splice(idx, 1);
       });
 
@@ -3308,10 +3312,17 @@ export function useGameEngine() {
       const canvas = canvasRef.current;
       const ctx = canvas?.getContext("2d");
       if (!canvas || !ctx) return;
+      const { width, height } = dims;
+      const dpr = typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1;
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+      canvas.style.width = `${width}px`;
+      canvas.style.height = `${height}px`;
+      ctx.scale(dpr, dpr);
       let raf: number;
       const render = () => {
         ctx.fillStyle = SKY_COLOR;
-        ctx.fillRect(0, 0, dims.width, dims.height);
+        ctx.fillRect(0, 0, width, height);
         state.current.textLabels = drawTextLabels({
           textLabels: state.current.textLabels,
           ctx,
