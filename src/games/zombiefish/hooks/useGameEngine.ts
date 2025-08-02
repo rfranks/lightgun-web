@@ -216,9 +216,7 @@ export default function useGameEngine() {
       const surfaceImgs = getImg("surfaceImgs") as
         | HTMLImageElement[]
         | undefined;
-      const cloudImgs = getImg("cloudImgs") as
-        | HTMLImageElement[]
-        | undefined;
+      const cloudImgs = getImg("cloudImgs") as HTMLImageElement[] | undefined;
       if (surfaceImgs && surfaceImgs.length) {
         const groupWidth = surfaceImgs[0].width * surfaceImgs.length;
         SURFACE_SPEED.forEach((speed, i) => {
@@ -230,11 +228,7 @@ export default function useGameEngine() {
           const offset = surfaceOffsets.current[i];
           for (let x = -groupWidth; x < width + groupWidth; x += groupWidth) {
             surfaceImgs.forEach((img, idx) => {
-              ctx.drawImage(
-                img,
-                x + offset + idx * surfaceImgs[0].width,
-                0
-              );
+              ctx.drawImage(img, x + offset + idx * surfaceImgs[0].width, 0);
             });
           }
         }
@@ -245,11 +239,7 @@ export default function useGameEngine() {
           const offset = surfaceOffsets.current[i];
           for (let x = -groupWidth; x < width + groupWidth; x += groupWidth) {
             cloudImgs.forEach((img, idx) => {
-              ctx.drawImage(
-                img,
-                x + offset + idx * cloudImgs[0].width,
-                0
-              );
+              ctx.drawImage(img, x + offset + idx * cloudImgs[0].width, 0);
             });
           }
         }
@@ -345,11 +335,7 @@ export default function useGameEngine() {
           for (let x = -groupWidth; x < width + groupWidth; x += groupWidth) {
             seaGrassImgs.forEach((img, idx) => {
               if (!img) return;
-              ctx.drawImage(
-                img,
-                x + offset + idx * seaGrassImgs[0].width,
-                y
-              );
+              ctx.drawImage(img, x + offset + idx * seaGrassImgs[0].width, y);
             });
           }
         }
@@ -359,12 +345,7 @@ export default function useGameEngine() {
   );
 
   const updateDigitLabel = useCallback(
-    (
-      label: TextLabel | null,
-      value: number,
-      pad = 0,
-      suffix = ""
-    ) => {
+    (label: TextLabel | null, value: number, pad = 0, suffix = "") => {
       if (!label) return;
       const str =
         (pad > 0 ? value.toString().padStart(pad, "0") : value.toString()) +
@@ -447,8 +428,9 @@ export default function useGameEngine() {
     const skeletonSpeed = SKELETON_SPEED + cur.conversions * 0.05;
     const detectionRadius2 =
       SKELETON_DETECTION_RADIUS * SKELETON_DETECTION_RADIUS;
-    let skeletonCount = cur.fish.filter((f) => f.isSkeleton || f.pendingSkeleton)
-      .length;
+    let skeletonCount = cur.fish.filter(
+      (f) => f.isSkeleton || f.pendingSkeleton
+    ).length;
     cur.fish.forEach((s) => {
       if (!s.isSkeleton) return;
 
@@ -594,13 +576,11 @@ export default function useGameEngine() {
     if (timeTextLabel.current) {
       const lbl = timeTextLabel.current;
       const width = lbl.imgs.reduce(
-        (sum, img) =>
-          sum + (img ? img.width * lbl.scale + 2 : lbl.spaceGap),
+        (sum, img) => sum + (img ? img.width * lbl.scale + 2 : lbl.spaceGap),
         0
       );
       const height = lbl.imgs.reduce(
-        (max, img) =>
-          Math.max(max, (img?.height || 0) * lbl.scale),
+        (max, img) => Math.max(max, (img?.height || 0) * lbl.scale),
         0
       );
       timeTextBounds.current = {
@@ -634,9 +614,7 @@ export default function useGameEngine() {
       });
       cur.bubbles = cur.bubbles.filter((b) => {
         const onScreen =
-          b.y + b.size > 0 &&
-          b.x + b.size > 0 &&
-          b.x - b.size < cur.dims.width;
+          b.y + b.size > 0 && b.x + b.size > 0 && b.x - b.size < cur.dims.width;
         if (!onScreen) inactiveBubbles.current.push(b);
         return onScreen;
       });
@@ -720,7 +698,10 @@ export default function useGameEngine() {
             makeStat(text, y);
             y += 40;
           });
-        gameoverScoreLabel.current = makeStat(`SCORE ${cur.score}`, baseY + 120);
+        gameoverScoreLabel.current = makeStat(
+          `SCORE ${cur.score}`,
+          baseY + 120
+        );
       }
       if (!bestAccuracyLabel.current) {
         const best = Number(localStorage.getItem("bestAccuracy") || 0);
@@ -842,7 +823,10 @@ export default function useGameEngine() {
       ctx.fillRect(0, 0, barWidth, 8);
 
       // draw bubbles beneath fish
-      const bubbleImgs = getImg("bubbleImgs") as Record<string, HTMLImageElement>;
+      const bubbleImgs = getImg("bubbleImgs") as Record<
+        string,
+        HTMLImageElement
+      >;
       cur.bubbles.forEach((b) => {
         const img = bubbleImgs[b.kind as keyof typeof bubbleImgs];
         if (!img) return;
@@ -883,10 +867,12 @@ export default function useGameEngine() {
         ctx.translate(pivotX, pivotY);
         ctx.rotate(f.angle);
         if (f.highlight) {
-          const fishImgs = getImg("fishImgs") as Record<string, HTMLImageElement>;
-          const outline = fishImgs[
-            `${f.kind}_outline` as keyof typeof fishImgs
-          ];
+          const fishImgs = getImg("fishImgs") as Record<
+            string,
+            HTMLImageElement
+          >;
+          const outline =
+            fishImgs[`${f.kind}_outline` as keyof typeof fishImgs];
           if (outline) {
             ctx.globalAlpha = (Math.sin(frameRef.current / 10) + 1) / 2;
             ctx.drawImage(outline, drawX, drawY, FISH_SIZE, FISH_SIZE);
@@ -987,13 +973,14 @@ export default function useGameEngine() {
     timeTextLabel.current = timeText;
     timeTextBounds.current = {
       x: timeText.x,
-      y: timeText.y - timeText.py,
+      y: timeText.y - (timeText?.py || 0),
       width: labelWidth(timeText),
       height:
         timeText.imgs.reduce(
           (max, img) => Math.max(max, (img?.height || 0) * timeText.scale),
           0
-        ) + timeText.py * 2,
+        ) +
+        (timeText?.py || 0) * 2,
     };
 
     timerLabel.current = newTextLabel(
@@ -1230,10 +1217,7 @@ export default function useGameEngine() {
 
       const hovering = cur.fish.some(
         (f) =>
-          x >= f.x &&
-          x <= f.x + FISH_SIZE &&
-          y >= f.y &&
-          y <= f.y + FISH_SIZE
+          x >= f.x && x <= f.x + FISH_SIZE && y >= f.y && y <= f.y + FISH_SIZE
       );
 
       const nextCursor = hovering ? TARGET_CURSOR : DEFAULT_CURSOR;
@@ -1269,10 +1253,8 @@ export default function useGameEngine() {
         return;
       }
       const rect = canvas.getBoundingClientRect();
-      const canvasX =
-        ((e.clientX - rect.left) / rect.width) * cur.dims.width;
-      const canvasY =
-        ((e.clientY - rect.top) / rect.height) * cur.dims.height;
+      const canvasX = ((e.clientX - rect.left) / rect.width) * cur.dims.width;
+      const canvasY = ((e.clientY - rect.top) / rect.height) * cur.dims.height;
 
       const bounds = timeTextBounds.current;
       if (
@@ -1454,7 +1436,8 @@ export default function useGameEngine() {
 
     const specialSingles = ["brown", "grey_long_a", "grey_long_b"];
     const specialPairs = ["grey_long"];
-    const isSpecial = specialSingles.includes(kind) || specialPairs.includes(kind);
+    const isSpecial =
+      specialSingles.includes(kind) || specialPairs.includes(kind);
 
     const reuseFish = () => inactiveFish.current.pop() || ({} as Fish);
 
@@ -1581,9 +1564,10 @@ export default function useGameEngine() {
       const baseX = edge === 0 || edge === 1 ? startX : Math.random() * width;
       const baseY = edge === 2 || edge === 3 ? startY : Math.random() * height;
       const baseVel = genVelocity();
-      const groupId = count > 1 && !specialSingles.includes(kind)
-        ? nextGroupId.current++
-        : undefined;
+      const groupId =
+        count > 1 && !specialSingles.includes(kind)
+          ? nextGroupId.current++
+          : undefined;
 
       for (let i = 0; i < count; i++) {
         let px = baseX;
@@ -1594,14 +1578,16 @@ export default function useGameEngine() {
         if (groupId !== undefined && i > 0) {
           if (edge === 0 || edge === 1) {
             py += (Math.random() - 0.5) * FISH_SIZE;
-            px += edge === 0
-              ? -Math.random() * (FISH_SIZE / 2)
-              : Math.random() * (FISH_SIZE / 2);
+            px +=
+              edge === 0
+                ? -Math.random() * (FISH_SIZE / 2)
+                : Math.random() * (FISH_SIZE / 2);
           } else {
             px += (Math.random() - 0.5) * FISH_SIZE;
-            py += edge === 2
-              ? -Math.random() * (FISH_SIZE / 2)
-              : Math.random() * (FISH_SIZE / 2);
+            py +=
+              edge === 2
+                ? -Math.random() * (FISH_SIZE / 2)
+                : Math.random() * (FISH_SIZE / 2);
           }
           vx += (Math.random() - 0.5) * speedVariance;
           vy += (Math.random() - 0.5) * speedVariance;
@@ -1639,8 +1625,7 @@ export default function useGameEngine() {
     const basicKinds = ["blue", "green", "orange", "pink", "red"];
     const schedule = () => {
       const { timer, conversions } = state.current;
-      const difficultyFactor =
-        1 + (1 - timer / GAME_TIME) + conversions * 0.1;
+      const difficultyFactor = 1 + (1 - timer / GAME_TIME) + conversions * 0.1;
       // FISH_SPAWN_INTERVAL_* are expressed in frames; convert to ms
       const min = (FISH_SPAWN_INTERVAL_MIN / FPS) * 1000;
       const max = (FISH_SPAWN_INTERVAL_MAX / FPS) * 1000;
