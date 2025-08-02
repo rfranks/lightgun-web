@@ -15,6 +15,7 @@ import {
   TIME_PENALTY_GREY_LONG,
   DEFAULT_CURSOR,
   SHOT_CURSOR,
+  TARGET_CURSOR,
 } from "../constants";
 import type { AssetMgr } from "@/types/ui";
 import type { TextLabel } from "@/types/ui";
@@ -722,6 +723,39 @@ export default function useGameEngine() {
     return () => window.removeEventListener("keydown", handleKeydown);
   }, [resetGame, startSplash]);
 
+  // handle mouse move – change cursor when hovering over fish
+  const handleMouseMove = useCallback(
+    (e: React.MouseEvent) => {
+      const cur = state.current;
+      if (cur.phase !== "playing" || cur.cursor === SHOT_CURSOR) return;
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const rect = canvas.getBoundingClientRect();
+      const x = ((e.clientX - rect.left) / rect.width) * cur.dims.width;
+      const y = ((e.clientY - rect.top) / rect.height) * cur.dims.height;
+      const hovering = cur.fish.some(
+        (f) =>
+          x >= f.x &&
+          x <= f.x + FISH_SIZE &&
+          y >= f.y &&
+          y <= f.y + FISH_SIZE
+      );
+      const nextCursor = hovering ? TARGET_CURSOR : DEFAULT_CURSOR;
+      if (cur.cursor !== nextCursor) {
+        cur.cursor = nextCursor;
+        setUI({
+          phase: cur.phase,
+          timer: cur.timer,
+          shots: cur.shots,
+          hits: cur.hits,
+          accuracy: cur.accuracy,
+          cursor: cur.cursor,
+        });
+      }
+    },
+    []
+  );
+
   // handle left click – detect and affect fish
   const handleClick = useCallback(
     (e: React.MouseEvent) => {
@@ -1035,6 +1069,7 @@ export default function useGameEngine() {
   return {
     ui,
     canvasRef,
+    handleMouseMove,
     handleClick,
     handleContext,
     resetGame,

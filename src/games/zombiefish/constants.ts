@@ -9,6 +9,8 @@ export const DEFAULT_CURSOR =
   `url('${BASE_PATH}/assets/shooting-gallery/PNG/HUD/crosshair_blue_small.png') 16 16, auto`;
 export const SHOT_CURSOR =
   `url('${BASE_PATH}/assets/shooting-gallery/PNG/HUD/crosshair_white_small.png') 16 16, auto`;
+export const TARGET_CURSOR =
+  `url('${BASE_PATH}/assets/shooting-gallery/PNG/HUD/crosshair_red_small.png') 16 16, auto`;
 
 // Background color representing the underwater environment
 export const SKY_COLOR = "#1d8fde";
