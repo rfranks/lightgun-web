@@ -39,6 +39,10 @@ export function useGameAudio(): AudioMgr {
     convert.src = withBasePath("/audio/zap1.ogg");
     convert.preload = "auto";
 
+    const pop = document.createElement("audio");
+    pop.src = withBasePath("/audio/glass_001.ogg");
+    pop.preload = "auto";
+
     const bgm = document.createElement("audio");
     bgm.src = withBasePath("/audio/back_001.ogg");
     bgm.preload = "auto";
@@ -48,7 +52,18 @@ export function useGameAudio(): AudioMgr {
     tick.src = withBasePath("/audio/tick_002.ogg");
     tick.preload = "auto";
 
-    return { shoot, hit, bonus, penalty, skeleton, death, convert, tick, bgm };
+    return {
+      shoot,
+      hit,
+      bonus,
+      penalty,
+      skeleton,
+      death,
+      convert,
+      pop,
+      tick,
+      bgm,
+    };
   }, []);
 
   // Play a sound by key
