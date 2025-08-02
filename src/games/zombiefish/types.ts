@@ -61,4 +61,6 @@ export interface GameState extends GameUIState {
   bubbles: Bubble[];
   /** Floating text labels currently displayed */
   textLabels: TextLabel[];
+  /** Total number of fish converted into skeletons */
+  conversions: number;
 }

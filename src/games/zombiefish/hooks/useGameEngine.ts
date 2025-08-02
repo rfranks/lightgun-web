@@ -58,6 +58,7 @@ export default function useGameEngine() {
     fish: [],
     bubbles: [],
     textLabels: [],
+    conversions: 0,
   });
 
   const nextFishId = useRef(1);
@@ -227,8 +228,9 @@ export default function useGameEngine() {
 
     // skeleton behavior
     const immuneKinds = new Set(["brown", "grey_long_a", "grey_long_b"]);
-    const base = SKELETON_SPEED;
-    const extra = SKELETON_SPEED;
+    const speedMult = 1 + cur.conversions * 0.1;
+    const base = SKELETON_SPEED * speedMult;
+    const extra = SKELETON_SPEED * speedMult;
     const skeletonSpeed = base + (1 - cur.timer / GAME_TIME) * extra;
     cur.fish.forEach((s) => {
       if (!s.isSkeleton) return;
@@ -267,6 +269,7 @@ export default function useGameEngine() {
           nearest.vx = 0;
           nearest.vy = 0;
           delete nearest.groupId;
+          cur.conversions += 1;
           audio.play("convert");
         }
       }
@@ -666,6 +669,7 @@ export default function useGameEngine() {
     cur.shots = 0;
     cur.hits = 0;
     cur.accuracy = 0;
+    cur.conversions = 0;
     cur.fish = [];
     cur.cursor = DEFAULT_CURSOR;
     cur.bubbles = [];
