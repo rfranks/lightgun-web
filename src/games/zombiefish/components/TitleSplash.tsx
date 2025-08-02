@@ -41,6 +41,9 @@ export const TitleSplash: React.FC<TitleSplashProps> = ({
       },
       assetMgr
     );
+    const pctImg = getImg("pctImg") as HTMLImageElement;
+    const digitImgs = getImg("digitImgs") as Record<string, HTMLImageElement>;
+    lbl.imgs = [...best.toString().split("").map((ch) => digitImgs[ch]), pctImg];
     drawTextLabels({ textLabels: [lbl], ctx });
   }, [getImg]);
 

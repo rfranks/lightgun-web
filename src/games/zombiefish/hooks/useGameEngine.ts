@@ -82,6 +82,7 @@ export default function useGameEngine() {
   const accuracyLabel = useRef<TextLabel | null>(null);
   const finalAccuracy = useRef(0);
   const displayAccuracy = useRef(0);
+  const bestAccuracyLabel = useRef<TextLabel | null>(null);
   const timerLabel = useRef<TextLabel | null>(null);
   const shotsLabel = useRef<TextLabel | null>(null);
   const hitsLabel = useRef<TextLabel | null>(null);
@@ -274,6 +275,7 @@ export default function useGameEngine() {
 
       cur.fish.forEach((t) => {
         if (t.isSkeleton) return;
+        if (t.pendingSkeleton) return;
         if (immuneKinds.has(t.kind)) return;
         const dx = t.x - s.x;
         const dy = t.y - s.y;
@@ -455,6 +457,25 @@ export default function useGameEngine() {
         accuracyLabel.current = lbl;
         cur.textLabels.push(lbl);
       }
+      if (!bestAccuracyLabel.current) {
+        const best = Number(localStorage.bestAccuracy || 0);
+        const pctImg = getImg("pctImg") as HTMLImageElement;
+        const digitImgs = getImg("digitImgs") as Record<string, HTMLImageElement>;
+        const lbl = newTextLabel(
+          {
+            text: `${best}%`,
+            scale: 1,
+            fixed: true,
+            fade: false,
+            x: 16,
+            y: 16,
+          },
+          assetMgr
+        );
+        lbl.imgs = [...best.toString().split("").map((ch) => digitImgs[ch]), pctImg];
+        bestAccuracyLabel.current = lbl;
+        cur.textLabels.push(lbl);
+      }
 
       const lbl = accuracyLabel.current!;
       if (displayAccuracy.current < finalAccuracy.current) {
@@ -632,6 +653,7 @@ export default function useGameEngine() {
 
     frameRef.current = 0;
     accuracyLabel.current = null;
+    bestAccuracyLabel.current = null;
     finalAccuracy.current = 0;
     displayAccuracy.current = 0;
     rockOffsets.current.fill(0);
@@ -758,6 +780,7 @@ export default function useGameEngine() {
     cur.bubbles = [];
 
     accuracyLabel.current = null;
+    bestAccuracyLabel.current = null;
     finalAccuracy.current = 0;
     displayAccuracy.current = 0;
     frameRef.current = 0;
@@ -903,10 +926,14 @@ export default function useGameEngine() {
         return;
       }
 
+      // translate click to canvas coordinates so hits are detected correctly
       const rect = canvas.getBoundingClientRect();
-      const x = ((e.clientX - rect.left) / rect.width) * cur.dims.width;
-      const y = ((e.clientY - rect.top) / rect.height) * cur.dims.height;
+      const relX = e.clientX - rect.left;
+      const relY = e.clientY - rect.top;
+      const x = (relX / rect.width) * cur.dims.width;
+      const y = (relY / rect.height) * cur.dims.height;
 
+      // iterate fish from topmost (end of array) so higher-drawn fish are hit first
       for (let i = cur.fish.length - 1; i >= 0; i--) {
         const f = cur.fish[i];
         if (
@@ -917,6 +944,7 @@ export default function useGameEngine() {
         ) {
           cur.hits += 1;
           updateDigitLabel(hitsLabel.current, cur.hits);
+          audio.play("hit");
           if (f.kind === "brown") {
             cur.timer += TIME_BONUS_BROWN_FISH;
             updateDigitLabel(timerLabel.current, cur.timer, 2);
