@@ -38,10 +38,13 @@ export function useGameAssets(): {
     const fishTypes = [
       "blue",
       "brown",
+      "brown_outline",
       "green",
       "grey",
       "grey_long_a",
+      "grey_long_a_outline",
       "grey_long_b",
+      "grey_long_b_outline",
       "orange",
       "pink",
       "red",
@@ -60,6 +63,11 @@ export function useGameAssets(): {
         name,
         loadImg(`/assets/fish/PNG/Objects/Fish/fish_${name}_skeleton.png`),
       ])
+    );
+
+    // FLASH OVERLAY
+    assetRefs.current.fishFlashImg = loadImg(
+      "/assets/smoke/PNG/Flash/flash00.png"
     );
 
     // OBJECTS
