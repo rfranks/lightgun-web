@@ -6,12 +6,10 @@ import { drawTextLabels, newTextLabel } from "@/utils/ui";
 
 import type { GameState, GameUIState, Fish, Bubble } from "../types";
 import {
-  FISH_SPEED_MIN,
-  FISH_SPEED_MAX,
   SKELETON_SPEED,
   TIME_BONUS_BROWN_FISH,
   TIME_PENALTY_GREY_LONG,
-  DEFAULT_CURSOR, 
+  DEFAULT_CURSOR,
   SHOT_CURSOR
 } from "../constants";
 import type { AssetMgr } from "@/types/ui";
@@ -262,7 +260,8 @@ export default function useGameEngine() {
     const x = Math.random() * (width - size);
     const y = height + size;
     const vx = (Math.random() - 0.5) * 0.5;
-    const vy = -(Math.random() * 1 + 0.5);
+    // Larger bubbles rise more slowly than smaller ones
+    const vy = -((BUBBLE_SIZE / size) * (Math.random() * 0.5 + 0.5));
     state.current.bubbles.push({
       id: nextBubbleId.current++,
       kind,
@@ -299,6 +298,7 @@ export default function useGameEngine() {
         bubbleSpawnRef.current = Math.floor(Math.random() * 60) + 30;
       }
       cur.bubbles.forEach((b) => {
+        // Update position using each bubble's velocity
         b.x += b.vx;
         b.y += b.vy;
       });
