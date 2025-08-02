@@ -162,7 +162,8 @@ export function useGameAssets(): {
     assetRefs.current.seaweedImgs = build("Objects/Seaweed", seaweedNames);
     assetRefs.current.seaweedBgImgs = "abcdefgh"
       .split("")
-      .map((l) => assetRefs.current.seaweedImgs[`background_seaweed_${l}`]);
+      .map((l) => (assetRefs.current.seaweedImgs as Record<string, HTMLImageElement>)[`background_seaweed_${l}`] ||
+        undefined);
 
     // TERRAIN
     const topLetters = "abcdefgh".split("");
