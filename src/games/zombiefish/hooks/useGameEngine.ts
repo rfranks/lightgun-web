@@ -377,7 +377,6 @@ export default function useGameEngine() {
       bubbleSpawnRef.current -= 1;
       if (bubbleSpawnRef.current <= 0) {
         spawnBubble();
-        cur.bubbles = cur.bubbles.slice(-MAX_BUBBLES);
         bubbleSpawnRef.current = Math.floor(Math.random() * 60) + 30;
       }
       cur.bubbles.forEach((b) => {
@@ -527,53 +526,6 @@ export default function useGameEngine() {
       lbl.x = (cur.dims.width - totalWidth) / 2;
     }
 
-    drawBackground(ctx);
-
-    cur.fish.forEach((f) => {
-      const frameMap = getImg(
-        f.isSkeleton ? "skeletonFrames" : "fishFrames"
-      ) as Record<string, HTMLImageElement[]>;
-      const frames = frameMap[f.kind as keyof typeof frameMap];
-      if (!frames || frames.length === 0) return;
-      f.frameCounter++;
-      if (f.frameCounter >= FISH_FRAME_DELAY) {
-        f.frameCounter = 0;
-        f.frame = (f.frame + 1) % frames.length;
-      }
-      const img = frames[f.frame];
-
-      if (!img) return;
-      ctx.save();
-      ctx.translate(f.x + FISH_SIZE / 2, f.y + FISH_SIZE / 2);
-      if (f.vx < 0) ctx.scale(-1, 1);
-      ctx.rotate(f.angle);
-      ctx.drawImage(img, -FISH_SIZE / 2, -FISH_SIZE / 2, FISH_SIZE, FISH_SIZE);
-      if (f.hurtTimer && f.hurtTimer > 0) {
-        ctx.fillStyle = "rgba(255,0,0,0.5)";
-        ctx.fillRect(-FISH_SIZE / 2, -FISH_SIZE / 2, FISH_SIZE, FISH_SIZE);
-      } else if (f.flashTimer && f.flashTimer > 0) {
-        const overlay = getImg("fishFlashImg") as HTMLImageElement;
-        if (overlay) {
-          ctx.globalAlpha = f.flashTimer / CONVERT_FLASH_FRAMES;
-          ctx.drawImage(
-            overlay,
-            -FISH_SIZE / 2,
-            -FISH_SIZE / 2,
-            FISH_SIZE,
-            FISH_SIZE
-          );
-          ctx.globalAlpha = 1;
-        }
-      }
-      ctx.restore();
-    });
-
-    cur.textLabels = drawTextLabels({
-      textLabels: cur.textLabels,
-      ctx,
-      cull: true,
-    });
-
     // cull fish that have moved completely off-screen
     if (cur.phase === "playing") {
       const { width, height } = cur.dims;
@@ -609,10 +561,7 @@ export default function useGameEngine() {
 
       drawBackground(ctx);
 
-      const bubbleImgs = getImg("bubbleImgs") as Record<
-        string,
-        HTMLImageElement
-      >;
+      const bubbleImgs = getImg("bubbleImgs") as Record<string, HTMLImageElement>;
       cur.bubbles.forEach((b) => {
         const img = bubbleImgs[b.kind as keyof typeof bubbleImgs];
         if (!img) return;
