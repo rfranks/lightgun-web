@@ -93,4 +93,6 @@ export interface GameState extends GameUIState {
   missParticles: MissParticle[];
   /** Total number of fish converted into skeletons */
   conversions: number;
+  /** Hit counts grouped by fish type */
+  hitCounts: Record<string, number>;
 }
