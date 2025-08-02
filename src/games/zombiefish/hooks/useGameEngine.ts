@@ -839,7 +839,7 @@ export default function useGameEngine() {
   // spawn scheduler
   useEffect(() => {
     if (ui.phase !== "playing") return;
-    const basicKinds = ["blue", "green", "grey", "orange", "pink", "red"];
+    const basicKinds = ["blue", "green", "orange", "pink", "red"];
     let timer: ReturnType<typeof setTimeout>;
     const schedule = () => {
       const minDelay = (FISH_SPAWN_INTERVAL_MIN / FPS) * 1000;
