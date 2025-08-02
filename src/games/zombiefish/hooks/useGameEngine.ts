@@ -31,7 +31,15 @@ const FPS = 60; // assumed frame rate for requestAnimationFrame
 const FISH_SIZE = 128;
 const MAX_SCHOOL_SIZE = 4;
 const SKELETON_CONVERT_DISTANCE = FISH_SIZE / 2;
-const BUBBLE_SIZE = 64;
+const BUBBLE_BASE_SIZE = 64;
+const BUBBLE_MIN_SIZE = BUBBLE_BASE_SIZE * 0.5;
+const BUBBLE_MAX_SIZE = BUBBLE_BASE_SIZE * 1.5;
+const BUBBLE_VX_MAX = 0.5;
+const BUBBLE_VY_MIN = -1.5;
+const BUBBLE_VY_MAX = -0.5;
+const ROCK_SPEED = 0.2;
+const SEAWEED_SPEED = 0.4;
+const BUBBLE_SIZE = BUBBLE_BASE_SIZE;
 const ROCK_SPEED = [0.1, 0.2];
 const SEAWEED_SPEED = [0.2, 0.4];
 const MAX_BUBBLES = 20;
@@ -337,12 +345,13 @@ export default function useGameEngine() {
     const { width, height } = state.current.dims;
     const kinds = ["bubble_a", "bubble_b", "bubble_c"];
     const kind = kinds[Math.floor(Math.random() * kinds.length)];
-    const size = BUBBLE_SIZE * (Math.random() * 0.5 + 0.5);
+    const size =
+      Math.random() * (BUBBLE_MAX_SIZE - BUBBLE_MIN_SIZE) + BUBBLE_MIN_SIZE;
     const x = Math.random() * (width - size);
     const y = height + size;
-    const vx = (Math.random() - 0.5) * 0.5;
-    // Larger bubbles rise more slowly than smaller ones
-    const vy = -((BUBBLE_SIZE / size) * (Math.random() * 0.5 + 0.5));
+    const vx = Math.random() * (BUBBLE_VX_MAX * 2) - BUBBLE_VX_MAX;
+    const vy =
+      Math.random() * (BUBBLE_VY_MAX - BUBBLE_VY_MIN) + BUBBLE_VY_MIN;
     state.current.bubbles.push({
       id: nextBubbleId.current++,
       kind,
@@ -557,6 +566,7 @@ export default function useGameEngine() {
       cur.bubbles.forEach((b) => {
         const img = bubbleImgs[b.kind as keyof typeof bubbleImgs];
         if (!img) return;
+        // scale according to the bubble's size before drawing
         ctx.drawImage(img, b.x, b.y, b.size, b.size);
       });
 
