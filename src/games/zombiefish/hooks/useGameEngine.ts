@@ -1343,14 +1343,14 @@ export default function useGameEngine() {
           if (f.kind === "brown") {
             cur.timer += TIME_BONUS_BROWN_FISH;
             updateDigitLabel(timerLabel.current, cur.timer, 2, ":");
-            makeText("+3", f.x, f.y, "#0f0");
+            makeText(`+${TIME_BONUS_BROWN_FISH}`, f.x, f.y, "#0f0");
             const [removed] = cur.fish.splice(i, 1);
             if (removed) inactiveFish.current.push(removed);
             audio.play("bonus");
           } else if (f.kind === "grey_long_a" || f.kind === "grey_long_b") {
             cur.timer += TIME_BONUS_GREY_LONG;
             updateDigitLabel(timerLabel.current, cur.timer, 2, ":");
-            makeText("+5", f.x, f.y, "#f00");
+            makeText(`+${TIME_BONUS_GREY_LONG}`, f.x, f.y, "#f00");
             const pid = f.pairId;
             if (pid !== undefined) {
               const removed = cur.fish.filter((fish) => fish.pairId === pid);
@@ -1631,16 +1631,16 @@ export default function useGameEngine() {
 
       fishSpawnTimeout.current = setTimeout(() => {
         if (state.current.phase !== "playing") return;
+        const kind =
+          basicKinds[Math.floor(Math.random() * basicKinds.length)];
+        const count = Math.floor(Math.random() * 5) + 1;
+        spawnFish(kind, count);
+
         const roll = Math.random();
         if (roll < 0.1) {
           spawnFish("brown", 1);
         } else if (roll < 0.15) {
           spawnFish("grey_long", 1);
-        } else {
-          const kind =
-            basicKinds[Math.floor(Math.random() * basicKinds.length)];
-          const count = Math.floor(Math.random() * 5) + 1;
-          spawnFish(kind, count);
         }
         if (state.current.phase === "playing") schedule();
       }, delay);
