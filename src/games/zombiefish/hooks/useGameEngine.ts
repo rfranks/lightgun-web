@@ -6,8 +6,6 @@ import { drawTextLabels, newTextLabel } from "@/utils/ui";
 
 import type { GameState, GameUIState, Fish, Bubble } from "../types";
 import {
-  FISH_SPAWN_INTERVAL_MIN,
-  FISH_SPAWN_INTERVAL_MAX,
   SKELETON_SPEED,
   TIME_BONUS_BROWN_FISH,
   TIME_PENALTY_GREY_LONG,
@@ -206,6 +204,9 @@ export default function useGameEngine() {
 
     // skeleton behavior
     const immuneKinds = new Set(["brown", "grey_long_a", "grey_long_b"]);
+    const base = SKELETON_SPEED;
+    const extra = SKELETON_SPEED;
+    const skeletonSpeed = base + (1 - cur.timer / GAME_TIME) * extra;
     cur.fish.forEach((s) => {
       if (!s.isSkeleton) return;
 
@@ -229,8 +230,8 @@ export default function useGameEngine() {
         const dy = nearest.y - s.y;
         const dist = Math.hypot(dx, dy);
         if (dist > 0) {
-          s.vx = (dx / dist) * SKELETON_SPEED;
-          s.vy = (dy / dist) * SKELETON_SPEED;
+          s.vx = (dx / dist) * skeletonSpeed;
+          s.vy = (dy / dist) * skeletonSpeed;
         }
         if (
           dist < SKELETON_CONVERT_DISTANCE &&
@@ -247,10 +248,10 @@ export default function useGameEngine() {
 
       // steer skeletons back onto the playfield if they hit an edge
       const { width, height } = cur.dims;
-      if (s.x < 0) s.vx = Math.abs(s.vx) || SKELETON_SPEED;
-      else if (s.x + FISH_SIZE > width) s.vx = -Math.abs(s.vx) || -SKELETON_SPEED;
-      if (s.y < 0) s.vy = Math.abs(s.vy) || SKELETON_SPEED;
-      else if (s.y + FISH_SIZE > height) s.vy = -Math.abs(s.vy) || -SKELETON_SPEED;
+      if (s.x < 0) s.vx = Math.abs(s.vx) || skeletonSpeed;
+      else if (s.x + FISH_SIZE > width) s.vx = -Math.abs(s.vx) || -skeletonSpeed;
+      if (s.y < 0) s.vy = Math.abs(s.vy) || skeletonSpeed;
+      else if (s.y + FISH_SIZE > height) s.vy = -Math.abs(s.vy) || -skeletonSpeed;
     });
 
     // move fish with a slight oscillation and update their angle
