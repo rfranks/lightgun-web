@@ -1,6 +1,8 @@
 import { useRef, useState, useEffect, useCallback } from "react";
 import { useWindowSize } from "@/hooks/useWindowSize";
 import { useGameAssets } from "./useGameAssets";
+import { useAudio } from "@/hooks/useAudio";
+import { rewindAndPlayAudio } from "@/utils/audio";
 import type { GameState, GameUIState, Fish } from "../types";
 
 const GAME_TIME = 60 * 30; // 30 seconds in frames
@@ -16,6 +18,7 @@ export default function useZombiefishEngine() {
 
   // assets
   const { getImg, ready } = useGameAssets();
+  const killSfx = useAudio("/audio/splash.ogg");
 
   // window dimensions
   const dims = useWindowSize();
@@ -96,11 +99,32 @@ export default function useZombiefishEngine() {
   const loop = useCallback(() => {
     const cur = state.current;
     if (cur.phase !== "playing") return;
+
     updateFish();
+    
+    // decrement timer and end game when it hits zero
     cur.timer = Math.max(0, cur.timer - 1);
     if (cur.timer === 0) {
       cur.phase = "gameover";
     }
+
+    // move fish based on velocity
+    cur.fish.forEach((f) => {
+      f.x += f.vx;
+      f.y += f.vy;
+    });
+
+    // cull fish that have moved completely off-screen
+    const { width, height } = cur.dims;
+    const margin = FISH_SIZE * 2;
+    cur.fish = cur.fish.filter(
+      (f) =>
+        f.x > -margin &&
+        f.x < width + margin &&
+        f.y > -margin &&
+        f.y < height + margin
+    );
+
     setUI({ phase: cur.phase, timer: cur.timer, shots: cur.shots, hits: cur.hits });
     animationFrameRef.current = requestAnimationFrame(loop);
   }, [updateFish]);
@@ -117,15 +141,58 @@ export default function useZombiefishEngine() {
     animationFrameRef.current = requestAnimationFrame(loop);
   }, [loop]);
 
-  // handle left click – record a shot and a hit (placeholder)
-  const handleClick = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    const cur = state.current;
-    if (cur.phase !== "playing") return;
-    cur.shots += 1;
-    cur.hits += 1; // TODO: collision detection to determine real hits
-    setUI({ phase: cur.phase, timer: cur.timer, shots: cur.shots, hits: cur.hits });
-  }, []);
+  // handle left click – detect and affect fish
+  const handleClick = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      const cur = state.current;
+      if (cur.phase !== "playing") return;
+
+      cur.shots += 1;
+      const canvas = canvasRef.current;
+      if (!canvas) {
+        setUI({ phase: cur.phase, timer: cur.timer, shots: cur.shots, hits: cur.hits });
+        return;
+      }
+
+      const rect = canvas.getBoundingClientRect();
+      const x =
+        ((e.clientX - rect.left) / rect.width) * cur.dims.width;
+      const y =
+        ((e.clientY - rect.top) / rect.height) * cur.dims.height;
+
+      for (let i = cur.fish.length - 1; i >= 0; i--) {
+        const f = cur.fish[i];
+        if (
+          x >= f.x &&
+          x <= f.x + FISH_SIZE &&
+          y >= f.y &&
+          y <= f.y + FISH_SIZE
+        ) {
+          cur.hits += 1;
+          if (f.isSkeleton) {
+            f.health = (f.health ?? 0) - 1;
+            if ((f.health ?? 0) <= 0) {
+              cur.fish.splice(i, 1);
+              rewindAndPlayAudio(killSfx);
+            }
+          } else {
+            f.isSkeleton = true;
+            f.health = 1;
+          }
+          break;
+        }
+      }
+
+      setUI({
+        phase: cur.phase,
+        timer: cur.timer,
+        shots: cur.shots,
+        hits: cur.hits,
+      });
+    },
+    [killSfx]
+  );
 
   // suppress context menu
   const handleContext = useCallback((e: React.MouseEvent) => {
@@ -171,6 +238,7 @@ export default function useZombiefishEngine() {
           vx: baseVx,
           vy: 0,
           ...(k === "skeleton" ? { health: 2 } : {}),
+          isSkeleton: k === "skeleton",
           ...(groupId !== undefined ? { groupId } : {}),
         } as Fish;
       };
@@ -189,6 +257,7 @@ export default function useZombiefishEngine() {
             vx: baseVx,
             vy: 0,
             groupId,
+            isSkeleton: false,
           });
         });
       } else {
