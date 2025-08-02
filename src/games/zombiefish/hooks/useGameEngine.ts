@@ -3,7 +3,7 @@ import { useWindowSize } from "@/hooks/useWindowSize";
 import { useGameAssets } from "./useGameAssets";
 import { useGameAudio } from "./useGameAudio";
 import { drawTextLabels, newTextLabel } from "@/utils/ui";
-import type { GameState, GameUIState, Fish } from "../types";
+import type { GameState, GameUIState, Fish, Bubble } from "../types";
 import {
   FISH_SPEED_MIN,
   FISH_SPEED_MAX,
@@ -23,6 +23,7 @@ const FPS = 60; // assumed frame rate for requestAnimationFrame
 
 const FISH_SIZE = 128;
 const SKELETON_CONVERT_DISTANCE = FISH_SIZE / 2;
+const BUBBLE_SIZE = 64;
 
 export default function useGameEngine() {
   // canvas and animation frame refs
@@ -46,11 +47,14 @@ export default function useGameEngine() {
     accuracy: 0,
     dims,
     fish: [],
+    bubbles: [],
     textLabels: [],
   });
 
   const nextFishId = useRef(1);
   const nextGroupId = useRef(1);
+  const nextBubbleId = useRef(1);
+  const bubbleSpawnRef = useRef(0);
   const frameRef = useRef(0); // track frames for one-second ticks
   const accuracyLabel = useRef<TextLabel | null>(null);
   const finalAccuracy = useRef(0);
@@ -154,6 +158,26 @@ export default function useGameEngine() {
     });
   }, [audio]);
 
+  const spawnBubble = useCallback(() => {
+    const { width, height } = state.current.dims;
+    const kinds = ["bubble_a", "bubble_b", "bubble_c"];
+    const kind = kinds[Math.floor(Math.random() * kinds.length)];
+    const size = BUBBLE_SIZE * (Math.random() * 0.5 + 0.5);
+    const x = Math.random() * (width - size);
+    const y = height + size;
+    const vx = (Math.random() - 0.5) * 0.5;
+    const vy = -(Math.random() * 1 + 0.5);
+    state.current.bubbles.push({
+      id: nextBubbleId.current++,
+      kind,
+      x,
+      y,
+      vx,
+      vy,
+      size,
+    } as Bubble);
+  }, []);
+
   // main loop updates timer and fish
   const loop = useCallback(() => {
     const cur = state.current;
@@ -171,6 +195,18 @@ export default function useGameEngine() {
 
     if (cur.phase === "playing") {
       updateFish();
+
+      // spawn and animate bubbles
+      bubbleSpawnRef.current -= 1;
+      if (bubbleSpawnRef.current <= 0) {
+        spawnBubble();
+        bubbleSpawnRef.current = Math.floor(Math.random() * 60) + 30;
+      }
+      cur.bubbles.forEach((b) => {
+        b.x += b.vx;
+        b.y += b.vy;
+      });
+      cur.bubbles = cur.bubbles.filter((b) => b.y + b.size > 0);
 
       // track frames and decrement the timer once per second
       frameRef.current += 1;
@@ -294,11 +330,18 @@ export default function useGameEngine() {
         f.y < height + margin
     );
 
-    // draw fish and text labels
+    // draw bubbles, fish and text labels
     if (canvas && ctx) {
       canvas.width = cur.dims.width;
       canvas.height = cur.dims.height;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const bubbleImgs = getImg("bubbleImgs") as Record<string, HTMLImageElement>;
+      cur.bubbles.forEach((b) => {
+        const img = bubbleImgs[b.kind as keyof typeof bubbleImgs];
+        if (!img) return;
+        ctx.drawImage(img, b.x, b.y, b.size, b.size);
+      });
 
       cur.fish.forEach((f) => {
         const imgMap = getImg(
@@ -338,7 +381,7 @@ export default function useGameEngine() {
     });
 
     animationFrameRef.current = requestAnimationFrame(loop);
-  }, [updateFish, getImg, assetMgr]);
+  }, [updateFish, getImg, assetMgr, spawnBubble]);
 
   // start the game
   const startSplash = useCallback(() => {
@@ -348,11 +391,13 @@ export default function useGameEngine() {
     cur.shots = 0;
     cur.hits = 0;
     cur.accuracy = 0;
+    cur.bubbles = [];
 
     frameRef.current = 0;
     accuracyLabel.current = null;
     finalAccuracy.current = 0;
     displayAccuracy.current = 0;
+    bubbleSpawnRef.current = 0;
     state.current.textLabels = [
       newTextLabel(
         {
@@ -388,11 +433,13 @@ export default function useGameEngine() {
     cur.hits = 0;
     cur.accuracy = 0;
     cur.fish = [];
+    cur.bubbles = [];
 
     accuracyLabel.current = null;
     finalAccuracy.current = 0;
     displayAccuracy.current = 0;
     frameRef.current = 0;
+    bubbleSpawnRef.current = 0;
 
     setUI({
       phase: cur.phase,
