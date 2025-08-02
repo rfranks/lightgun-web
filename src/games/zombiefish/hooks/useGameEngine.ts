@@ -719,7 +719,15 @@ export default function useGameEngine() {
         const img = frames[f.frame];
         if (!img) return;
         ctx.save();
-        ctx.translate(f.x + FISH_SIZE / 2, f.y + FISH_SIZE / 2);
+        let pivotX = f.x + FISH_SIZE / 2;
+        const pivotY = f.y + FISH_SIZE / 2;
+        let drawX = -FISH_SIZE / 2;
+        const drawY = -FISH_SIZE / 2;
+        if (f.kind === "grey_long_a" || f.kind === "grey_long_b") {
+          pivotX = f.x + (f.kind === "grey_long_a" ? FISH_SIZE : 0);
+          drawX = f.kind === "grey_long_a" ? -FISH_SIZE : 0;
+        }
+        ctx.translate(pivotX, pivotY);
         if (f.vx < 0) ctx.scale(-1, 1);
         ctx.rotate(f.angle);
         if (f.highlight) {
@@ -729,38 +737,20 @@ export default function useGameEngine() {
           ];
           if (outline) {
             ctx.globalAlpha = (Math.sin(frameRef.current / 10) + 1) / 2;
-            ctx.drawImage(
-              outline,
-              -FISH_SIZE / 2,
-              -FISH_SIZE / 2,
-              FISH_SIZE,
-              FISH_SIZE
-            );
+            ctx.drawImage(outline, drawX, drawY, FISH_SIZE, FISH_SIZE);
             ctx.globalAlpha = 1;
           }
         }
-        ctx.drawImage(
-          img,
-          -FISH_SIZE / 2,
-          -FISH_SIZE / 2,
-          FISH_SIZE,
-          FISH_SIZE
-        );
+        ctx.drawImage(img, drawX, drawY, FISH_SIZE, FISH_SIZE);
         if (f.pendingSkeleton) {
           const flash = getImg("fishFlashImg") as HTMLImageElement;
           if (flash) {
-            ctx.drawImage(
-              flash,
-              -FISH_SIZE / 2,
-              -FISH_SIZE / 2,
-              FISH_SIZE,
-              FISH_SIZE
-            );
+            ctx.drawImage(flash, drawX, drawY, FISH_SIZE, FISH_SIZE);
           }
         }
         if (f.isSkeleton && f.hurtTimer > 0) {
           ctx.fillStyle = "rgba(255,0,0,0.5)";
-          ctx.fillRect(-FISH_SIZE / 2, -FISH_SIZE / 2, FISH_SIZE, FISH_SIZE);
+          ctx.fillRect(drawX, drawY, FISH_SIZE, FISH_SIZE);
         }
         ctx.restore();
       });
