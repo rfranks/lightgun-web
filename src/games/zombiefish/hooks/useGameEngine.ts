@@ -446,7 +446,6 @@ export default function useGameEngine() {
 
     // skeleton behavior
     const immuneKinds = new Set(["brown", "grey_long_a", "grey_long_b"]);
-    const skeletonSpeed = SKELETON_SPEED + cur.conversions * 0.05;
     const detectionRadius2 =
       SKELETON_DETECTION_RADIUS * SKELETON_DETECTION_RADIUS;
     let skeletonCount = cur.fish.filter(
@@ -507,8 +506,8 @@ export default function useGameEngine() {
         // pick a new random velocity
         const range = FISH_SPEED_MAX - FISH_SPEED_MIN;
         const speed = Math.random() * range + FISH_SPEED_MIN;
-        let vx = (Math.random() * 2 - 1) * speed;
-        let vy = (Math.random() * 2 - 1) * speed;
+        const vx = (Math.random() * 2 - 1) * speed;
+        const vy = (Math.random() * 2 - 1) * speed;
         const limited = clampIncline(vx, vy);
         f.vx = limited.vx;
         f.vy = limited.vy;
@@ -1657,8 +1656,7 @@ export default function useGameEngine() {
 
       fishSpawnTimeout.current = setTimeout(() => {
         if (state.current.phase !== "playing") return;
-        const kind =
-          basicKinds[Math.floor(Math.random() * basicKinds.length)];
+        const kind = basicKinds[Math.floor(Math.random() * basicKinds.length)];
         const count = Math.floor(Math.random() * 5) + 1;
         spawnFish(kind, count);
 
