@@ -15,6 +15,32 @@ import type { Tree, Mountain, Cloud, Water } from "@/types/environment";
 import type { Powerup, PowerupType, Medal, Duck } from "@/types/objects";
 import { AudioMgr } from "@/types/audio";
 
+/**
+ * Represents a single fish entity in the game.
+ */
+export interface Fish {
+  /** Unique numeric identifier */
+  id: number;
+  /** Fish color/type identifier */
+  kind: string;
+  /** Horizontal position (px) */
+  x: number;
+  /** Vertical position (px) */
+  y: number;
+  /** Horizontal velocity (px/frame) */
+  vx: number;
+  /** Vertical velocity (px/frame) */
+  vy: number;
+  /** Rotation angle in radians */
+  angle: number;
+  /** Remaining hit points */
+  health: number;
+  /** True if this fish is a skeleton variant */
+  isSkeleton: boolean;
+  /** Group identifier for synchronized movement */
+  groupId: number;
+}
+
 export type GamePhase = "title" | "ready" | "go" | "playing";
 
 export interface GameUIState {
@@ -53,6 +79,7 @@ export interface GameState extends GameUIState {
   // entity lists
   enemies: Enemy[];
   airships: Airship[];
+  fish: Fish[];
   ducks: Duck[];
   mountains: Mountain[];
   trees: Tree[];
@@ -130,4 +157,28 @@ export interface GameState extends GameUIState {
   isActive: (t: PowerupType, frameCount: number) => boolean;
   enemySpeed: (frameCount: number) => number;
   groundSpeed: (frameCount: number) => number;
+}
+
+/** Options for spawning new fish. */
+export interface SpawnOptions {
+  /** Number of fish to spawn (defaults to 1) */
+  count?: number;
+  /** Fish type identifier */
+  kind?: string;
+  /** Initial horizontal position */
+  x?: number;
+  /** Initial vertical position */
+  y?: number;
+  /** Initial horizontal velocity */
+  vx?: number;
+  /** Initial vertical velocity */
+  vy?: number;
+  /** Starting angle */
+  angle?: number;
+  /** Starting health */
+  health?: number;
+  /** Whether to spawn as skeletons */
+  isSkeleton?: boolean;
+  /** Group identifier */
+  groupId?: number;
 }
