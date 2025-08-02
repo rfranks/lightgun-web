@@ -1231,23 +1231,8 @@ export default function useGameEngine() {
       e.preventDefault?.();
       const cur = state.current;
       if (cur.phase === "gameover") {
-        const canvas = canvasRef.current;
-        const lbl = accuracyLabel.current;
-        if (!canvas || !lbl) return;
-        const rect = canvas.getBoundingClientRect();
-        const x = ((e.clientX - rect.left) / rect.width) * cur.dims.width;
-        const y = ((e.clientY - rect.top) / rect.height) * cur.dims.height;
-        const w = lbl.imgs.reduce(
-          (sum, img) => sum + (img?.width || 0) * lbl.scale + 2,
-          0
-        );
-        const h = lbl.imgs.reduce(
-          (max, img) => Math.max(max, (img?.height || 0) * lbl.scale),
-          0
-        );
-        if (x >= lbl.x && x <= lbl.x + w && y >= lbl.y && y <= lbl.y + h) {
-          resetGame();
-        }
+        resetGame();
+        startSplash();
         return;
       }
 
@@ -1428,7 +1413,7 @@ export default function useGameEngine() {
         cursor: cur.cursor,
       });
     },
-    [audio, makeText, updateDigitLabel, resetGame]
+    [audio, makeText, updateDigitLabel, resetGame, startSplash]
   );
 
   // suppress context menu
