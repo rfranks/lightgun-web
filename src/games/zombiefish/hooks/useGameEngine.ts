@@ -6,6 +6,8 @@ import { drawTextLabels, newTextLabel } from "@/utils/ui";
 
 import type { GameState, GameUIState, Fish, Bubble } from "../types";
 import {
+  FISH_SPEED_MIN,
+  FISH_SPEED_MAX,
   SKELETON_SPEED,
   TIME_BONUS_BROWN_FISH,
   TIME_PENALTY_GREY_LONG,
@@ -874,8 +876,11 @@ export default function useGameEngine() {
     // generate a velocity based on the entry edge
     const genVelocity = () => {
       const factor = difficultyFactor();
-      const main = (Math.random() * 2 + 1) * factor;
-      const cross = (Math.random() * 2 - 1) * factor;
+      const range = FISH_SPEED_MAX - FISH_SPEED_MIN;
+      const main =
+        (Math.random() * range + FISH_SPEED_MIN) * factor;
+      const cross =
+        (Math.random() * range - range / 2) * factor;
       switch (edge) {
         case 0:
           return { vx: main, vy: cross };
