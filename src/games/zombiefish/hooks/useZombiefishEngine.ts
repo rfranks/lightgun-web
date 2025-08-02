@@ -1,11 +1,13 @@
 import { useRef, useState, useEffect, useCallback } from "react";
 import { useWindowSize } from "@/hooks/useWindowSize";
 import { useGameAssets } from "./useGameAssets";
-import type { GameState, GameUIState } from "../types";
+import type { GameState, GameUIState, Fish } from "../types";
 
 const GAME_TIME = 60 * 30; // 30 seconds in frames
 
-export default function useGameEngine() {
+const FISH_SIZE = 128;
+
+export default function useZombiefishEngine() {
   // canvas and animation frame refs
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationFrameRef = useRef<number | null>(null);
@@ -23,7 +25,11 @@ export default function useGameEngine() {
     shots: 0,
     hits: 0,
     dims,
+    fish: [],
   });
+
+  const nextFishId = useRef(1);
+  const nextGroupId = useRef(1);
 
   // ui state that triggers re-renders
   const [ui, setUI] = useState<GameUIState>({
@@ -84,9 +90,71 @@ export default function useGameEngine() {
     cur.timer = GAME_TIME;
     cur.shots = 0;
     cur.hits = 0;
+    cur.fish = [];
     setUI({ phase: cur.phase, timer: cur.timer, shots: cur.shots, hits: cur.hits });
     if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
   }, []);
+
+  // spawn a group of fish just outside the viewport edges
+  const spawnFish = useCallback(
+    (kind: string, count: number): Fish[] => {
+      const spawned: Fish[] = [];
+      const { width, height } = state.current.dims;
+
+      const specialSingles = ["brown"];
+      const specialPairs = ["grey_long"];
+
+      if (specialSingles.includes(kind)) count = 1;
+
+      // decide side and velocity
+      const fromLeft = Math.random() < 0.5;
+      const baseVx = (Math.random() * 2 + 1) * (fromLeft ? 1 : -1);
+      const startX = fromLeft ? -FISH_SIZE : width + FISH_SIZE;
+
+      // helper to create a fish
+      const makeFish = (k: string, xOffset = 0, groupId?: number) => {
+        const y = Math.random() * height;
+        return {
+          id: nextFishId.current++,
+          kind: k,
+          x: startX + xOffset,
+          y,
+          vx: baseVx,
+          vy: 0,
+          ...(groupId !== undefined ? { groupId } : {}),
+        } as Fish;
+      };
+
+      if (specialPairs.includes(kind)) {
+        const groupId = nextGroupId.current++;
+        const pairStart = fromLeft ? -2 * FISH_SIZE : width + 2 * FISH_SIZE;
+        const y = Math.random() * height;
+        ["grey_long_a", "grey_long_b"].forEach((name, idx) => {
+          const x = pairStart + (fromLeft ? idx * FISH_SIZE : -idx * FISH_SIZE);
+          spawned.push({
+            id: nextFishId.current++,
+            kind: name,
+            x,
+            y,
+            vx: baseVx,
+            vy: 0,
+            groupId,
+          });
+        });
+      } else {
+        const groupId = specialSingles.includes(kind)
+          ? undefined
+          : nextGroupId.current++;
+        for (let i = 0; i < count; i++) {
+          spawned.push(makeFish(kind, 0, groupId));
+        }
+      }
+
+      state.current.fish.push(...spawned);
+      return spawned;
+    },
+    []
+  );
 
   // cleanup on unmount
   useEffect(() => {
@@ -104,5 +172,6 @@ export default function useGameEngine() {
     startSplash,
     getImg,
     ready,
+    spawnFish,
   };
 }

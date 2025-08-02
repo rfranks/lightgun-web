@@ -5,10 +5,10 @@ import { DEFAULT_CURSOR, SKY_COLOR } from "./constants";
 import { withBasePath } from "@/utils/basePath";
 import { TitleSplash } from "./components/TitleSplash";
 import GameUI from "./components/GameUI";
-import useGameEngine from "./hooks/useGameEngine";
+import useZombiefishEngine from "./hooks/useZombiefishEngine";
 
 export default function Game() {
-  const engine = useGameEngine();
+  const engine = useZombiefishEngine();
 
   const {
     ui,
