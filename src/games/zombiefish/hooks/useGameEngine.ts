@@ -651,7 +651,8 @@ export default function useGameEngine() {
       // check for game over once timer hits zero
       if (cur.timer === 0) {
         cur.phase = "gameover";
-        finalAccuracy.current = Math.round(cur.accuracy);
+        finalAccuracy.current =
+          cur.shots > 0 ? Math.round((cur.hits / cur.shots) * 100) : 0;
         updateBestAccuracy(finalAccuracy.current);
         displayAccuracy.current = 0;
         audio.pause("bgm");
