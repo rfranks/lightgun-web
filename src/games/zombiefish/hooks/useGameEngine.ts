@@ -489,6 +489,19 @@ export default function useGameEngine() {
 
     });
 
+    // natural wandering for non-skeleton fish
+    cur.fish.forEach((f) => {
+      if (f.isSkeleton) return;
+      f.wanderTimer -= 1;
+      if (f.wanderTimer <= 0) {
+        const speed = Math.hypot(f.vx, f.vy) || 0;
+        const angle = Math.random() * Math.PI * 2;
+        f.vx = Math.cos(angle) * speed;
+        f.vy = Math.sin(angle) * speed;
+        f.wanderTimer = Math.floor(Math.random() * FPS) + FPS;
+      }
+    });
+
     // repel skeletons that get too close to each other
     const skeletons = cur.fish.filter((f) => f.isSkeleton);
     for (let i = 0; i < skeletons.length; i++) {
@@ -1458,6 +1471,7 @@ export default function useGameEngine() {
         angle: 0,
         health: k === "skeleton" ? 2 : 0,
         hurtTimer: 0,
+        wanderTimer: Math.floor(Math.random() * FPS) + FPS,
         isSkeleton: k === "skeleton",
         ...(groupId !== undefined ? { groupId } : {}),
         ...(highlight ? { highlight: true } : {}),
@@ -1485,6 +1499,7 @@ export default function useGameEngine() {
             angle: 0,
             health: kind === "skeleton" ? 2 : 0,
             hurtTimer: 0,
+            wanderTimer: Math.floor(Math.random() * FPS) + FPS,
             isSkeleton: kind === "skeleton",
             groupId,
             pairId,
@@ -1508,6 +1523,7 @@ export default function useGameEngine() {
             angle: 0,
             health: kind === "skeleton" ? 2 : 0,
             hurtTimer: 0,
+            wanderTimer: Math.floor(Math.random() * FPS) + FPS,
             isSkeleton: kind === "skeleton",
             groupId,
             pairId,
