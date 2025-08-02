@@ -59,6 +59,9 @@ export default function useGameEngine() {
   const accuracyLabel = useRef<TextLabel | null>(null);
   const finalAccuracy = useRef(0);
   const displayAccuracy = useRef(0);
+  const timerLabel = useRef<TextLabel | null>(null);
+  const shotsLabel = useRef<TextLabel | null>(null);
+  const hitsLabel = useRef<TextLabel | null>(null);
 
   // ui state that triggers re-renders
   const [ui, setUI] = useState<GameUIState>({
@@ -85,7 +88,7 @@ export default function useGameEngine() {
     },
     [getImg]
   );
-
+  
   const drawBackground = useCallback(
     (ctx: CanvasRenderingContext2D) => {
       const { width, height } = state.current.dims;
@@ -152,6 +155,17 @@ export default function useGameEngine() {
           if (img) ctx.drawImage(img, x, bottom - img.height);
         });
       }
+    },
+    [getImg]
+  );
+
+  const updateDigitLabel = useCallback(
+    (label: TextLabel | null, value: number, pad = 0) => {
+      if (!label) return;
+      const str = pad > 0 ? value.toString().padStart(pad, "0") : value.toString();
+      const digitImgs = getImg("digitImgs") as Record<string, HTMLImageElement>;
+      label.text = str;
+      label.imgs = str.split("").map((ch) => digitImgs[ch]);
     },
     [getImg]
   );
@@ -283,17 +297,7 @@ export default function useGameEngine() {
       if (frameRef.current >= FPS) {
         frameRef.current = 0;
         cur.timer = Math.max(0, cur.timer - 1);
-
-        const lbl = cur.textLabels[0];
-        if (lbl) {
-          const t = cur.timer.toString().padStart(2, "0");
-          lbl.text = t;
-          const digitImgs = getImg("digitImgs") as Record<
-            string,
-            HTMLImageElement
-          >;
-          lbl.imgs = t.split("").map((ch) => digitImgs[ch]);
-        }
+        updateDigitLabel(timerLabel.current, cur.timer, 2);
 
         if (cur.timer === 0) {
           cur.phase = "gameover";
@@ -455,7 +459,7 @@ export default function useGameEngine() {
     });
 
     animationFrameRef.current = requestAnimationFrame(loop);
-  }, [updateFish, getImg, assetMgr, spawnBubble]);
+  }, [updateFish, getImg, assetMgr, spawnBubble, updateDigitLabel]);
 
   // start the game
   const startSplash = useCallback(() => {
@@ -471,19 +475,49 @@ export default function useGameEngine() {
     accuracyLabel.current = null;
     finalAccuracy.current = 0;
     displayAccuracy.current = 0;
+    const digitImgs = getImg("digitImgs") as Record<string, HTMLImageElement>;
+    const digitHeight = digitImgs["0"]?.height || 0;
+    const lineHeight = digitHeight + 8;
+
+    timerLabel.current = newTextLabel(
+      {
+        text: cur.timer.toString().padStart(2, "0"),
+        scale: 1,
+        fixed: true,
+        fade: false,
+        x: 16,
+        y: 16,
+      },
+      assetMgr
+    );
+    shotsLabel.current = newTextLabel(
+      {
+        text: cur.shots.toString(),
+        scale: 1,
+        fixed: true,
+        fade: false,
+        x: 16,
+        y: 16 + lineHeight,
+      },
+      assetMgr
+    );
+    hitsLabel.current = newTextLabel(
+      {
+        text: cur.hits.toString(),
+        scale: 1,
+        fixed: true,
+        fade: false,
+        x: 16,
+        y: 16 + lineHeight * 2,
+      },
+      assetMgr
+    );
     bubbleSpawnRef.current = 0;
+
     state.current.textLabels = [
-      newTextLabel(
-        {
-          text: cur.timer.toString().padStart(2, "0"),
-          scale: 1,
-          fixed: true,
-          fade: false,
-          x: 16,
-          y: 16,
-        },
-        assetMgr
-      ),
+      timerLabel.current!,
+      shotsLabel.current!,
+      hitsLabel.current!,
     ];
     setUI({
       phase: cur.phase,
@@ -496,7 +530,7 @@ export default function useGameEngine() {
     if (animationFrameRef.current)
       cancelAnimationFrame(animationFrameRef.current);
     animationFrameRef.current = requestAnimationFrame(loop);
-  }, [loop, assetMgr]);
+  }, [loop, assetMgr, getImg]);
 
   // reset back to title screen
   const resetGame = useCallback(() => {
@@ -513,6 +547,10 @@ export default function useGameEngine() {
     finalAccuracy.current = 0;
     displayAccuracy.current = 0;
     frameRef.current = 0;
+    timerLabel.current = null;
+    shotsLabel.current = null;
+    hitsLabel.current = null;
+    state.current.textLabels = [];
     bubbleSpawnRef.current = 0;
 
     setUI({
@@ -555,6 +593,7 @@ export default function useGameEngine() {
       if (cur.phase !== "playing") return;
 
       cur.shots += 1;
+      updateDigitLabel(shotsLabel.current, cur.shots);
       audio.play("shoot");
       const canvas = canvasRef.current;
       if (!canvas) {
@@ -582,6 +621,7 @@ export default function useGameEngine() {
           y <= f.y + FISH_SIZE
         ) {
           cur.hits += 1;
+          updateDigitLabel(hitsLabel.current, cur.hits);
           if (f.kind === "brown") {
             cur.timer += TIME_BONUS_BROWN_FISH * FPS;
             makeText(`+${TIME_BONUS_BROWN_FISH}`, f.x, f.y);
@@ -620,7 +660,7 @@ export default function useGameEngine() {
         accuracy: cur.accuracy,
       });
     },
-    [audio, makeText]
+    [audio, makeText, updateDigitLabel]
   );
 
   // suppress context menu
