@@ -312,9 +312,9 @@ export default function useGameEngine() {
         }
         if (
           dist < SKELETON_CONVERT_DISTANCE &&
-          !immuneKinds.has(nearest.kind) &&
-          skeletonCount < MAX_SKELETONS
-          !nearest.pendingSkeleton
+            !immuneKinds.has(nearest.kind) &&
+            skeletonCount < MAX_SKELETONS &&
+            !nearest.pendingSkeleton
         ) {
           // Spawn a brief text effect before converting the fish
           makeText("POOF", nearest.x, nearest.y);
@@ -409,46 +409,29 @@ export default function useGameEngine() {
         frameRef.current = 0;
         cur.timer = Math.max(0, cur.timer - 1);
         updateDigitLabel(timerLabel.current, cur.timer, 2);
-
-        if (cur.timer === 0) {
-          cur.phase = "gameover";
-          finalAccuracy.current = Math.round(cur.accuracy);
-          const best = Number(localStorage.bestAccuracy || 0);
-          if (finalAccuracy.current > best) {
-            localStorage.bestAccuracy = finalAccuracy.current.toString();
-          }
-          displayAccuracy.current = 0;
-          audio.pause("bgm");
-        }
       }
 
-      // cull fish that have moved completely off-screen
-      const { width, height } = cur.dims;
-      const margin = FISH_SIZE * 2;
-      cur.fish = cur.fish.filter(
-        (f) =>
-          f.x > -margin &&
-          f.x < width + margin &&
-          f.y > -margin &&
-          f.y < height + margin
-      );
-    }
+      // check for game over once timer hits zero
+      if (cur.timer === 0 && cur.phase !== "gameover") {
+        cur.phase = "gameover";
+        finalAccuracy.current = Math.round(cur.accuracy);
+        const best = Number(localStorage.bestAccuracy || 0);
+        if (finalAccuracy.current > best) {
+          localStorage.bestAccuracy = finalAccuracy.current.toString();
+        }
+        displayAccuracy.current = 0;
+        audio.pause("bgm");
 
-    // create/update accuracy label during gameover
-    if (cur.phase === "gameover") {
-      if (!accuracyLabel.current) {
+        // create accuracy label
         const pctImg = getImg("pctImg") as HTMLImageElement;
-        const digitImgs = getImg("digitImgs") as Record<
-          string,
-          HTMLImageElement
-        >;
+        const digitImgs = getImg("digitImgs") as Record<string, HTMLImageElement>;
         const scale = 1;
         const initImgs = [digitImgs["0"], pctImg];
         const totalWidth = initImgs.reduce(
           (w, img) => w + img.width * scale + 2,
           0
         );
-        const lbl = newTextLabel(
+        const accLbl = newTextLabel(
           {
             text: "0",
             scale,
@@ -463,13 +446,52 @@ export default function useGameEngine() {
           },
           assetMgr
         );
-        lbl.text = "0%";
-        lbl.imgs = initImgs;
-        accuracyLabel.current = lbl;
-        cur.textLabels.push(lbl);
+        accLbl.text = "0%";
+        accLbl.imgs = initImgs;
+        accuracyLabel.current = accLbl;
+        cur.textLabels.push(accLbl);
+
+        // create game over stat labels
+        const makeStat = (text: string, y: number) => {
+          const lbl = newTextLabel(
+            { text, scale: 1, fixed: true, fade: false, y },
+            assetMgr,
+            cur.dims
+          );
+          cur.textLabels.push(lbl);
+          return lbl;
+        };
+
+        const baseY = accLbl.y + 40;
+        gameoverTimeLabel.current = makeStat(
+          `TIME ${cur.timer.toString().padStart(2, "0")}`,
+          baseY
+        );
+        gameoverShotsLabel.current = makeStat(
+          `SHOTS ${cur.shots}`,
+          baseY + 40
+        );
+        gameoverHitsLabel.current = makeStat(
+          `HITS ${cur.hits}`,
+          baseY + 80
+        );
       }
 
-      const lbl = accuracyLabel.current!;
+      // cull fish that have moved completely off-screen
+      const { width, height } = cur.dims;
+      const margin = FISH_SIZE * 2;
+      cur.fish = cur.fish.filter(
+        (f) =>
+          f.x > -margin &&
+          f.x < width + margin &&
+          f.y > -margin &&
+          f.y < height + margin
+      );
+    }
+
+    // update accuracy label during gameover
+    if (cur.phase === "gameover" && accuracyLabel.current) {
+      const lbl = accuracyLabel.current;
       if (displayAccuracy.current < finalAccuracy.current) {
         displayAccuracy.current += 1;
         audio.play("tick");
@@ -550,7 +572,6 @@ export default function useGameEngine() {
         );
       }
 
-
       if (cur.phase === "paused") {
         if (!pausedLabel.current) {
           pausedLabel.current = newTextLabel(
@@ -560,8 +581,7 @@ export default function useGameEngine() {
           );
           cur.textLabels.push(pausedLabel.current);
         }
-      } 
-    (pausedLabel.current) {
+      } else if (pausedLabel.current) {
         cur.textLabels = cur.textLabels.filter((l) => l !== pausedLabel.current);
         pausedLabel.current = null;
       }
@@ -572,10 +592,10 @@ export default function useGameEngine() {
         canvas.height = cur.dims.height;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      drawBackground(ctx);
+        drawBackground(ctx);
 
-      const bubbleImgs = getImg("bubbleImgs") as Record<string, HTMLImageElement>;
-      cur.bubbles.forEach((b) => {
+        const bubbleImgs = getImg("bubbleImgs") as Record<string, HTMLImageElement>;
+        cur.bubbles.forEach((b) => {
         const img = bubbleImgs[b.kind as keyof typeof bubbleImgs];
         if (!img) return;
         // scale according to the bubble's size before drawing
@@ -1197,7 +1217,7 @@ export default function useGameEngine() {
           const count = Math.floor(Math.random() * 5) + 1;
           spawnFish(kind, count);
         }
-        schedule();
+        if (state.current.phase === "playing") schedule();
       }, delay);
     };
     schedule();
