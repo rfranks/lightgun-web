@@ -256,6 +256,7 @@ export default function useGameEngine() {
 
   const updateFish = useCallback(() => {
     const cur = state.current;
+    const { width, height } = cur.dims;
 
     // handle conversion flashes
     cur.fish.forEach((f) => {
@@ -295,10 +296,7 @@ export default function useGameEngine() {
 
     // skeleton behavior
     const immuneKinds = new Set(["brown", "grey_long_a", "grey_long_b"]);
-    const progress = 1 - cur.timer / GAME_TIME;
-    let skeletonSpeed =
-      SKELETON_SPEED * (1 + cur.conversions * 0.1) * (1 + progress);
-    skeletonSpeed = Math.min(skeletonSpeed, SKELETON_SPEED * 5);
+    const skeletonSpeed = SKELETON_SPEED;
     let skeletonCount = cur.fish.filter((f) => f.isSkeleton).length;
     cur.fish.forEach((s) => {
       if (!s.isSkeleton) return;
@@ -329,7 +327,6 @@ export default function useGameEngine() {
         }
         if (
           dist < SKELETON_CONVERT_DISTANCE &&
-          !immuneKinds.has(nearest.kind) &&
           skeletonCount < MAX_SKELETONS &&
           !nearest.pendingSkeleton
         ) {
@@ -348,14 +345,6 @@ export default function useGameEngine() {
         }
       }
 
-      // steer skeletons back onto the playfield if they hit an edge
-      const { width, height } = cur.dims;
-      if (s.x < 0) s.vx = Math.abs(s.vx) || skeletonSpeed;
-      else if (s.x + FISH_SIZE > width)
-        s.vx = -Math.abs(s.vx) || -skeletonSpeed;
-      if (s.y < 0) s.vy = Math.abs(s.vy) || skeletonSpeed;
-      else if (s.y + FISH_SIZE > height)
-        s.vy = -Math.abs(s.vy) || -skeletonSpeed;
     });
 
     // move fish with a slight oscillation and update their angle
@@ -366,6 +355,10 @@ export default function useGameEngine() {
       f.x += f.vx;
       f.y += vy;
       f.angle = Math.atan2(vy, Math.abs(f.vx));
+      if (f.isSkeleton) {
+        f.x = Math.max(0, Math.min(f.x, width - FISH_SIZE));
+        f.y = Math.max(0, Math.min(f.y, height - FISH_SIZE));
+      }
     });
   }, [audio, makeText]);
 
