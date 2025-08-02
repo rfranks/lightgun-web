@@ -43,7 +43,6 @@ export default function useZombiefishEngine() {
 
   const nextFishId = useRef(1);
   const nextGroupId = useRef(1);
-  const textLabels = useRef<TextLabel[]>([]);
   const frameRef = useRef(0); // track frames for one-second ticks
   const accuracyLabel = useRef<TextLabel | null>(null);
   const finalAccuracy = useRef(0);
@@ -145,7 +144,7 @@ export default function useZombiefishEngine() {
         frameRef.current = 0;
         cur.timer = Math.max(0, cur.timer - 1);
 
-        const lbl = textLabels.current[0];
+        const lbl = cur.textLabels[0];
         if (lbl) {
           const t = cur.timer.toString().padStart(2, "0");
           lbl.text = t;
@@ -159,12 +158,6 @@ export default function useZombiefishEngine() {
           displayAccuracy.current = 0;
         }
       }
-
-      // move fish based on velocity
-      cur.fish.forEach((f) => {
-        f.x += f.vx;
-        f.y += f.vy;
-      });
 
       // cull fish that have moved completely off-screen
       const { width, height } = cur.dims;
@@ -203,7 +196,7 @@ export default function useZombiefishEngine() {
         lbl.text = "0%";
         lbl.imgs = initImgs;
         accuracyLabel.current = lbl;
-        textLabels.current.push(lbl);
+        cur.textLabels.push(lbl);
       } else {
         const lbl = accuracyLabel.current;
         if (displayAccuracy.current < finalAccuracy.current) {
@@ -223,7 +216,6 @@ export default function useZombiefishEngine() {
       }
     }
 
-    // draw fish and text labels
     cur.fish.forEach((f) => {
       const imgMap = getImg(
         f.isSkeleton ? "skeletonImgs" : "fishImgs"
@@ -232,39 +224,11 @@ export default function useZombiefishEngine() {
       if (img) ctx.drawImage(img, f.x, f.y, FISH_SIZE, FISH_SIZE);
     });
 
-    // cull fish that have moved completely off-screen
-    const { width, height } = cur.dims;
-    const margin = FISH_SIZE * 2;
-    cur.fish = cur.fish.filter(
-      (f) =>
-        f.x > -margin &&
-        f.x < width + margin &&
-        f.y > -margin &&
-        f.y < height + margin
-    );
-
-    // draw fish and text labels
-    if (canvas && ctx) {
-      canvas.width = cur.dims.width;
-      canvas.height = cur.dims.height;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      cur.fish.forEach((f) => {
-        const imgMap = getImg(
-          f.isSkeleton ? "skeletonImgs" : "fishImgs"
-        ) as Record<string, HTMLImageElement>;
-        const img = imgMap[f.kind as keyof typeof imgMap];
-        if (img) ctx.drawImage(img, f.x, f.y, FISH_SIZE, FISH_SIZE);
-      });
-
-      cur.textLabels = drawTextLabels({
-        textLabels: cur.textLabels,
-        ctx,
-        cull: true,
-      });
-    }
-
-    textLabels.current = drawTextLabels({ textLabels: textLabels.current, ctx });
+    cur.textLabels = drawTextLabels({
+      textLabels: cur.textLabels,
+      ctx,
+      cull: true,
+    });
 
     cur.accuracy = cur.shots > 0 ? (cur.hits / cur.shots) * 100 : 0;
 
@@ -292,7 +256,7 @@ export default function useZombiefishEngine() {
     accuracyLabel.current = null;
     finalAccuracy.current = 0;
     displayAccuracy.current = 0;
-    textLabels.current = [
+    state.current.textLabels = [
       newTextLabel(
         {
           text: cur.timer.toString().padStart(2, "0"),
@@ -422,7 +386,7 @@ export default function useZombiefishEngine() {
     cur.accuracy = 0;
     cur.fish = [];
 
-    textLabels.current = [];
+    state.current.textLabels = [];
     accuracyLabel.current = null;
     finalAccuracy.current = 0;
     displayAccuracy.current = 0;
