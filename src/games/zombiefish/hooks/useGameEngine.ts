@@ -142,6 +142,8 @@ export default function useGameEngine() {
       if (rockImgs) {
         const rA = rockImgs.background_rock_a;
         const rB = rockImgs.background_rock_b;
+        // Rock positions roughly match the layout in
+        // public/assets/fish/Sample.png
         if (rA) ctx.drawImage(rA, width * 0.1, groundY - rA.height);
         if (rB) ctx.drawImage(rB, width * 0.7, groundY - rB.height);
       }
@@ -156,6 +158,8 @@ export default function useGameEngine() {
           { img: seaweedImgs.background_seaweed_c, x: width * 0.5 },
           { img: seaweedImgs.background_seaweed_e, x: width * 0.8 },
         ];
+        // Seaweed clusters are placed near the rocks as seen in
+        // public/assets/fish/Sample.png
         sw.forEach(({ img, x }) => {
           if (img) ctx.drawImage(img, x, bottom - img.height);
         });
