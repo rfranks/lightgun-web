@@ -41,6 +41,7 @@ const BUBBLE_VY_MIN = -1.5;
 const BUBBLE_VY_MAX = -0.5;
 const ROCK_SPEED = [0.1, 0.2];
 const SEAWEED_SPEED = [0.2, 0.4];
+const SEAGRASS_SPEED = [0.3, 0.6];
 const MAX_BUBBLES = 20;
 const HURT_FRAMES = 10;
 const CONVERT_FLASH_FRAMES = 5;
@@ -83,6 +84,7 @@ export default function useGameEngine() {
   const fishSpawnTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const rockOffsets = useRef<number[]>(ROCK_SPEED.map(() => 0));
   const seaweedOffsets = useRef<number[]>(SEAWEED_SPEED.map(() => 0));
+  const seaGrassOffsets = useRef<number[]>(SEAGRASS_SPEED.map(() => 0));
   const accuracyLabel = useRef<TextLabel | null>(null);
   const finalAccuracy = useRef(0);
   const displayAccuracy = useRef(0);
@@ -228,6 +230,34 @@ export default function useGameEngine() {
             rockBgImgs.forEach((img, idx) => {
               if (!img) return;
               ctx.drawImage(img, x + offset + idx * rockBgImgs[0].width, y);
+            });
+          }
+        }
+      }
+
+      // --- Foreground Sea Grass -----------------------------------------
+      // Parallax scrolling foreground sea grass from Objects/SeaGrass.
+      const seaGrassImgs = getImg("seaGrassFgImgs") as
+        | HTMLImageElement[]
+        | undefined;
+      if (seaGrassImgs && seaGrassImgs.length) {
+        const groupWidth = seaGrassImgs[0].width * seaGrassImgs.length;
+        SEAGRASS_SPEED.forEach((speed, i) => {
+          seaGrassOffsets.current[i] -= speed;
+          if (seaGrassOffsets.current[i] <= -groupWidth)
+            seaGrassOffsets.current[i] += groupWidth;
+        });
+        for (let i = 0; i < SEAGRASS_SPEED.length; i++) {
+          const offset = seaGrassOffsets.current[i];
+          const y = groundY - seaGrassImgs[0].height;
+          for (let x = -groupWidth; x < width + groupWidth; x += groupWidth) {
+            seaGrassImgs.forEach((img, idx) => {
+              if (!img) return;
+              ctx.drawImage(
+                img,
+                x + offset + idx * seaGrassImgs[0].width,
+                y
+              );
             });
           }
         }
@@ -658,6 +688,7 @@ export default function useGameEngine() {
     displayAccuracy.current = 0;
     rockOffsets.current.fill(0);
     seaweedOffsets.current.fill(0);
+    seaGrassOffsets.current.fill(0);
     pausedLabel.current = null;
 
     const digitImgs = getImg("digitImgs") as Record<string, HTMLImageElement>;
@@ -803,6 +834,7 @@ export default function useGameEngine() {
     nextBubbleId.current = 1;
     rockOffsets.current.fill(0);
     seaweedOffsets.current.fill(0);
+    seaGrassOffsets.current.fill(0);
     pausedLabel.current = null;
 
     setUI({
