@@ -21,6 +21,7 @@ import {
 import type { AssetMgr } from "@/types/ui";
 import type { TextLabel } from "@/types/ui";
 import type { AudioMgr } from "@/types/audio";
+import type { ClickEvent } from "@/types/events";
 
 /* eslint-disable react-hooks/exhaustive-deps */
 
@@ -919,8 +920,8 @@ export default function useGameEngine() {
 
   // handle left click – detect and affect fish
   const handleClick = useCallback(
-    (e: React.MouseEvent) => {
-      e.preventDefault();
+    (e: ClickEvent) => {
+      e.preventDefault?.();
       const cur = state.current;
       if (cur.phase === "gameover") {
         const canvas = canvasRef.current;
