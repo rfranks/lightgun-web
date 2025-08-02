@@ -57,6 +57,7 @@ export function drawTextLabels({
 
     // increment age for the label
     lbl.y += lbl.vy ?? 0;
+    lbl.scale += lbl.vs ?? 0;
     lbl.age++;
   });
 
@@ -81,11 +82,12 @@ export function drawTextLabels({
 export function newTextLabel(
   textLabelProps: Omit<
     TextLabel,
-    "age" | "imgs" | "x" | "y" | "vy" | "maxAge" | "spaceGap"
+    "age" | "imgs" | "x" | "y" | "vy" | "vs" | "maxAge" | "spaceGap"
   > & {
     x?: number;
     y?: number;
     vy?: number;
+    vs?: number;
     maxAge?: number;
     spaceGap?: number;
   },
@@ -93,7 +95,8 @@ export function newTextLabel(
   dims?: Dims
 ): TextLabel {
   // destructure properties from textLabelProps
-  const { text, scale, fixed, fade, x, y, vy, maxAge, onClick } = textLabelProps;
+  const { text, scale, fixed, fade, x, y, vy, vs, maxAge, onClick } =
+    textLabelProps;
   let { spaceGap } = textLabelProps;
 
   // get images from asset manager
@@ -148,6 +151,7 @@ export function newTextLabel(
     x: posX,
     y: posY,
     vy: vy ?? 0,
+    vs: vs ?? 0,
     age: 0,
     maxAge: maxAge ? maxAge : fade ? 60 : Infinity,
     spaceGap,

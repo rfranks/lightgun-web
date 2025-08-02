@@ -13,6 +13,7 @@ export default function Game() {
   const {
     ui,
     canvasRef,
+    handleMouseMove,
     handleClick,
     handleContext,
     startSplash,
@@ -59,6 +60,7 @@ export default function Game() {
       cursor={ui.cursor}
       handleClick={handleClick}
       handleContext={handleContext}
+      handleMouseMove={handleMouseMove}
     />
   );
 }

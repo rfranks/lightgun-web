@@ -9,6 +9,8 @@ export const DEFAULT_CURSOR =
   `url('${BASE_PATH}/assets/shooting-gallery/PNG/HUD/crosshair_blue_small.png') 16 16, auto`;
 export const SHOT_CURSOR =
   `url('${BASE_PATH}/assets/shooting-gallery/PNG/HUD/crosshair_white_small.png') 16 16, auto`;
+export const TARGET_CURSOR =
+  `url('${BASE_PATH}/assets/shooting-gallery/PNG/HUD/crosshair_red_small.png') 16 16, auto`;
 
 // Background color representing the underwater environment
 export const SKY_COLOR = "#1d8fde";
@@ -23,6 +25,9 @@ export const FISH_SPEED_MAX = 3;
 
 // Speed at which skeleton fish chase others.
 export const SKELETON_SPEED = 2;
+
+// Maximum number of skeleton fish allowed simultaneously.
+export const MAX_SKELETONS = 20;
 
 // Time adjustments when hitting special fish (in seconds).
 export const TIME_BONUS_BROWN_FISH = 3;
