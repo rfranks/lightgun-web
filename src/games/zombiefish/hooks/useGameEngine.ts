@@ -29,6 +29,7 @@ const GAME_TIME = 99;
 const FPS = 60; // assumed frame rate for requestAnimationFrame
 
 const FISH_SIZE = 128;
+const FISH_FRAME_DELAY = 6;
 const MAX_SCHOOL_SIZE = 4;
 const SKELETON_CONVERT_DISTANCE = FISH_SIZE / 2;
 const BUBBLE_BASE_SIZE = 64;
@@ -321,6 +322,8 @@ export default function useGameEngine() {
           nearest.flashTimer = CONVERT_FLASH_FRAMES;
           nearest.vx = 0;
           nearest.vy = 0;
+          nearest.frame = 0;
+          nearest.frameCounter = 0;
           delete nearest.groupId;
           cur.conversions += 1;
           audio.play("convert");
@@ -490,15 +493,18 @@ export default function useGameEngine() {
     drawBackground(ctx);
 
     cur.fish.forEach((f) => {
-      const imgMap = getImg(
-        f.isSkeleton ? "skeletonImgs" : "fishImgs"
-      ) as Record<string, HTMLImageElement>;
-      const key = f.isSkeleton
-        ? f.kind
-        : f.highlight
-        ? `${f.kind}_outline`
-        : f.kind;
-      const img = imgMap[key as keyof typeof imgMap];
+      const frameMap = getImg(
+        f.isSkeleton ? "skeletonFrames" : "fishFrames"
+      ) as Record<string, HTMLImageElement[]>;
+      const frames = frameMap[f.kind as keyof typeof frameMap];
+      if (!frames || frames.length === 0) return;
+      f.frameCounter++;
+      if (f.frameCounter >= FISH_FRAME_DELAY) {
+        f.frameCounter = 0;
+        f.frame = (f.frame + 1) % frames.length;
+      }
+      const img = frames[f.frame];
+
       if (!img) return;
       ctx.save();
       ctx.translate(f.x + FISH_SIZE / 2, f.y + FISH_SIZE / 2);
@@ -577,15 +583,17 @@ export default function useGameEngine() {
       });
 
       cur.fish.forEach((f) => {
-        const imgMap = getImg(
-          f.isSkeleton ? "skeletonImgs" : "fishImgs"
-        ) as Record<string, HTMLImageElement>;
-        const key = f.isSkeleton
-          ? f.kind
-          : f.highlight
-          ? `${f.kind}_outline`
-          : f.kind;
-        const img = imgMap[key as keyof typeof imgMap];
+        const frameMap = getImg(
+          f.isSkeleton ? "skeletonFrames" : "fishFrames"
+        ) as Record<string, HTMLImageElement[]>;
+        const frames = frameMap[f.kind as keyof typeof frameMap];
+        if (!frames || frames.length === 0) return;
+        f.frameCounter++;
+        if (f.frameCounter >= FISH_FRAME_DELAY) {
+          f.frameCounter = 0;
+          f.frame = (f.frame + 1) % frames.length;
+        }
+        const img = frames[f.frame];
         if (!img) return;
         ctx.save();
         ctx.translate(f.x + FISH_SIZE / 2, f.y + FISH_SIZE / 2);
@@ -945,6 +953,8 @@ export default function useGameEngine() {
               if (Math.random() < 0.5 && skeletonCount < MAX_SKELETONS) {
                 f.isSkeleton = true;
                 f.health = 1;
+                f.frame = 0;
+                f.frameCounter = 0;
                 audio.play("skeleton");
               } else {
                 cur.fish.splice(i, 1);
@@ -1041,6 +1051,8 @@ export default function useGameEngine() {
         y,
         vx,
         vy,
+        frame: 0,
+        frameCounter: 0,
         ...(k === "skeleton" ? { health: 2 } : {}),
         isSkeleton: k === "skeleton",
         ...(groupId !== undefined ? { groupId } : {}),
@@ -1068,6 +1080,8 @@ export default function useGameEngine() {
             ...(kind === "skeleton" ? { health: 2 } : {}),
             isSkeleton: kind === "skeleton",
             ...(groupId !== undefined ? { groupId } : {}),
+            frame: 0,
+            frameCounter: 0,
             highlight: true,
           } as Fish);
         });
@@ -1088,6 +1102,8 @@ export default function useGameEngine() {
             ...(kind === "skeleton" ? { health: 2 } : {}),
             isSkeleton: kind === "skeleton",
             ...(groupId !== undefined ? { groupId } : {}),
+            frame: 0,
+            frameCounter: 0,
             highlight: true,
           } as Fish);
         });

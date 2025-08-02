@@ -13,6 +13,10 @@ export interface Fish {
   vy: number;
   /** Current drawing angle in radians based on velocity. */
   angle: number;
+  /** Current animation frame index */
+  frame: number;
+  /** Counter used to time frame changes */
+  frameCounter: number;
   /** Health points, used by skeleton fish. */
   health?: number;
   /** Frames remaining for the red flash after taking damage. */
