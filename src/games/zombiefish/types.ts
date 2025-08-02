@@ -18,9 +18,9 @@ export interface Fish {
   /** Counter used to time frame changes */
   frameCounter: number;
   /** Health points, used by skeleton fish. */
-  health?: number;
+  health: number;
   /** Frames remaining for the red flash after taking damage. */
-  hurtTimer?: number;
+  hurtTimer: number;
   /**
    * Optional identifier tying fish together when spawned in a group.
    * Special fish spawn without a groupId.
