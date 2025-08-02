@@ -43,6 +43,7 @@ const MAX_FISH_INCLINE = 0.5;
 const SKELETON_CONVERT_DISTANCE = FISH_SIZE / 2;
 const SKELETON_REPEL_DISTANCE = FISH_SIZE;
 const SKELETON_REPEL_FORCE = 0.05;
+const SKELETON_DETECTION_RADIUS = FISH_SIZE * 8;
 const BUBBLE_BASE_SIZE = 64;
 const BUBBLE_MIN_SIZE = BUBBLE_BASE_SIZE * 0.5;
 const BUBBLE_MAX_SIZE = BUBBLE_BASE_SIZE * 1.5;
@@ -442,12 +443,14 @@ export default function useGameEngine() {
     // skeleton behavior
     const immuneKinds = new Set(["brown", "grey_long_a", "grey_long_b"]);
     const skeletonSpeed = SKELETON_SPEED + cur.conversions * 0.05;
+    const detectionRadius2 =
+      SKELETON_DETECTION_RADIUS * SKELETON_DETECTION_RADIUS;
     let skeletonCount = cur.fish.filter((f) => f.isSkeleton).length;
     cur.fish.forEach((s) => {
       if (!s.isSkeleton) return;
 
       let nearest: Fish | undefined;
-      let nearestDist = Infinity;
+      let nearestDist2 = detectionRadius2;
 
       cur.fish.forEach((t) => {
         if (t.isSkeleton) return;
@@ -456,8 +459,8 @@ export default function useGameEngine() {
         const dx = t.x - s.x;
         const dy = t.y - s.y;
         const dist2 = dx * dx + dy * dy;
-        if (dist2 < nearestDist) {
-          nearestDist = dist2;
+        if (dist2 < nearestDist2) {
+          nearestDist2 = dist2;
           nearest = t;
         }
       });
@@ -465,7 +468,7 @@ export default function useGameEngine() {
       if (nearest) {
         const dx = nearest.x - s.x;
         const dy = nearest.y - s.y;
-        const dist = Math.hypot(dx, dy);
+        const dist = Math.sqrt(nearestDist2);
         if (dist > 0) {
           s.vx = (dx / dist) * skeletonSpeed;
           s.vy = (dy / dist) * skeletonSpeed;
@@ -489,7 +492,6 @@ export default function useGameEngine() {
           skeletonCount += 1;
         }
       }
-
     });
 
     // natural wandering for non-skeleton fish
