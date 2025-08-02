@@ -286,7 +286,13 @@ export default function useZombiefishEngine() {
         ctx.translate(f.x + FISH_SIZE / 2, f.y + FISH_SIZE / 2);
         if (f.vx < 0) ctx.scale(-1, 1);
         ctx.rotate(f.angle);
-        ctx.drawImage(img, -FISH_SIZE / 2, -FISH_SIZE / 2, FISH_SIZE, FISH_SIZE);
+        ctx.drawImage(
+          img,
+          -FISH_SIZE / 2,
+          -FISH_SIZE / 2,
+          FISH_SIZE,
+          FISH_SIZE
+        );
         ctx.restore();
       });
 
@@ -480,33 +486,6 @@ export default function useZombiefishEngine() {
     e.preventDefault();
   }, []);
 
-  // reset back to title screen
-  const resetGame = useCallback(() => {
-    const cur = state.current;
-    cur.phase = "title";
-    cur.timer = GAME_TIME;
-    cur.shots = 0;
-    cur.hits = 0;
-    cur.accuracy = 0;
-    cur.fish = [];
-
-    textLabels.current = [];
-    accuracyLabel.current = null;
-    finalAccuracy.current = 0;
-    displayAccuracy.current = 0;
-    frameRef.current = 0;
-
-    setUI({
-      phase: cur.phase,
-      timer: cur.timer,
-      shots: cur.shots,
-      hits: cur.hits,
-      accuracy: cur.accuracy,
-    });
-    audio.pauseAll();
-    if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
-  }, [audio]);
-
   // spawn a group of fish just outside the viewport edges
   const spawnFish = useCallback((kind: string, count: number): Fish[] => {
     const spawned: Fish[] = [];
@@ -552,11 +531,11 @@ export default function useZombiefishEngine() {
           vx: baseVx,
           vy: 0,
           angle: 0,
-          ...(k === "skeleton" ? { health: 2 } : {}),
-          isSkeleton: k === "skeleton",
+          ...(kind === "skeleton" ? { health: 2 } : {}),
+          isSkeleton: kind === "skeleton",
           ...(groupId !== undefined ? { groupId } : {}),
-        } as Fish;
-      };
+        } as Fish);
+      });
 
       if (specialPairs.includes(kind)) {
         const groupId = nextGroupId.current++;
@@ -576,13 +555,13 @@ export default function useZombiefishEngine() {
             isSkeleton: false,
           });
         });
-      });
-    } else {
-      const groupId = specialSingles.includes(kind)
-        ? undefined
-        : nextGroupId.current++;
-      for (let i = 0; i < count; i++) {
-        spawned.push(makeFish(kind, 0, groupId));
+      } else {
+        const groupId = specialSingles.includes(kind)
+          ? undefined
+          : nextGroupId.current++;
+        for (let i = 0; i < count; i++) {
+          spawned.push(makeFish(kind, 0, groupId));
+        }
       }
     }
 
