@@ -581,6 +581,11 @@ export default function useGameEngine() {
 
       drawBackground(ctx);
 
+      // draw timer bar at top of screen
+      const barWidth = (cur.timer / GAME_TIME) * canvas.width;
+      ctx.fillStyle = "rgba(0,0,0,0.5)";
+      ctx.fillRect(0, 0, barWidth, 8);
+
       const bubbleImgs = getImg("bubbleImgs") as Record<string, HTMLImageElement>;
       cur.bubbles.forEach((b) => {
         const img = bubbleImgs[b.kind as keyof typeof bubbleImgs];
