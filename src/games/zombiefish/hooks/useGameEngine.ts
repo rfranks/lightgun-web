@@ -12,7 +12,7 @@ import {
   TIME_BONUS_BROWN_FISH,
   TIME_PENALTY_GREY_LONG,
   DEFAULT_CURSOR,
-  SHOT_CURSOR
+  SHOT_CURSOR,
 } from "../constants";
 import type { AssetMgr } from "@/types/ui";
 import type { TextLabel } from "@/types/ui";
