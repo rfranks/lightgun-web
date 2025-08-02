@@ -508,21 +508,40 @@ export default function useGameEngine() {
 
     if (specialSingles.includes(kind) || specialPairs.includes(kind)) count = 1;
 
-    // decide side and velocity
-    const fromLeft = Math.random() < 0.5;
-    const baseVx = (Math.random() * 2 + 1) * (fromLeft ? 1 : -1);
-    const startX = fromLeft ? -FISH_SIZE : width + FISH_SIZE;
+    // decide spawning edge
+    const edge = Math.floor(Math.random() * 4); // 0:left,1:right,2:top,3:bottom
+    const startX =
+      edge === 0 ? -FISH_SIZE : edge === 1 ? width + FISH_SIZE : 0;
+    const startY =
+      edge === 2 ? -FISH_SIZE : edge === 3 ? height + FISH_SIZE : 0;
+
+    // generate a velocity based on the entry edge
+    const genVelocity = () => {
+      const main = Math.random() * 2 + 1;
+      const cross = Math.random() * 2 - 1;
+      switch (edge) {
+        case 0:
+          return { vx: main, vy: cross };
+        case 1:
+          return { vx: -main, vy: cross };
+        case 2:
+          return { vx: cross, vy: main };
+        case 3:
+        default:
+          return { vx: cross, vy: -main };
+      }
+    };
 
     // helper to create a fish
-    const makeFish = (k: string, xOffset = 0, groupId?: number) => {
-      const y = Math.random() * height;
+    const makeFish = (k: string, x: number, y: number, groupId?: number) => {
+      const { vx, vy } = genVelocity();
       return {
         id: nextFishId.current++,
         kind: k,
-        x: startX + xOffset,
+        x,
         y,
-        vx: baseVx,
-        vy: 0,
+        vx,
+        vy,
         ...(k === "skeleton" ? { health: 2 } : {}),
         isSkeleton: k === "skeleton",
         ...(groupId !== undefined ? { groupId } : {}),
@@ -531,30 +550,64 @@ export default function useGameEngine() {
 
     if (specialPairs.includes(kind)) {
       const groupId = nextGroupId.current++;
-      const pairStart = fromLeft ? -2 * FISH_SIZE : width + 2 * FISH_SIZE;
-      const y = Math.random() * height;
-      ["grey_long_a", "grey_long_b"].forEach((name, idx) => {
-        const x = pairStart + (fromLeft ? idx * FISH_SIZE : -idx * FISH_SIZE);
-        spawned.push({
-          id: nextFishId.current++,
-          kind: name,
-          x,
-          y,
-          vx: baseVx,
-          vy: 0,
-          angle: 0,
-          groupId,
-          ...(kind === "skeleton" ? { health: 2 } : {}),
-          isSkeleton: kind === "skeleton",
-          ...(groupId !== undefined ? { groupId } : {}),
-        } as Fish);
-      });
+      const { vx, vy } = genVelocity(); // keep pair aligned
+      if (edge === 0 || edge === 1) {
+        const pairStart = edge === 0 ? -2 * FISH_SIZE : width + 2 * FISH_SIZE;
+        const y = Math.random() * height;
+        ["grey_long_a", "grey_long_b"].forEach((name, idx) => {
+          const x = pairStart + (edge === 0 ? idx * FISH_SIZE : -idx * FISH_SIZE);
+          spawned.push({
+            id: nextFishId.current++,
+            kind: name,
+            x,
+            y,
+            vx,
+            vy,
+            angle: 0,
+            groupId,
+            ...(kind === "skeleton" ? { health: 2 } : {}),
+            isSkeleton: kind === "skeleton",
+            ...(groupId !== undefined ? { groupId } : {}),
+          } as Fish);
+        });
+      } else {
+        const pairStart = Math.random() * (width - 2 * FISH_SIZE);
+        const y = startY;
+        ["grey_long_a", "grey_long_b"].forEach((name, idx) => {
+          const x = pairStart + idx * FISH_SIZE;
+          spawned.push({
+            id: nextFishId.current++,
+            kind: name,
+            x,
+            y,
+            vx,
+            vy,
+            angle: 0,
+            groupId,
+            ...(kind === "skeleton" ? { health: 2 } : {}),
+            isSkeleton: kind === "skeleton",
+            ...(groupId !== undefined ? { groupId } : {}),
+          } as Fish);
+        });
+      }
     } else {
       const groupId = specialSingles.includes(kind)
         ? undefined
         : nextGroupId.current++;
       for (let i = 0; i < count; i++) {
-        spawned.push(makeFish(kind, 0, groupId));
+        const x =
+          edge === 0
+            ? startX
+            : edge === 1
+            ? startX
+            : Math.random() * width;
+        const y =
+          edge === 2
+            ? startY
+            : edge === 3
+            ? startY
+            : Math.random() * height;
+        spawned.push(makeFish(kind, x, y, groupId));
       }
     }
 
