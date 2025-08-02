@@ -6,8 +6,6 @@ import { drawTextLabels, newTextLabel } from "@/utils/ui";
 
 import type { GameState, GameUIState, Fish, Bubble } from "../types";
 import {
-  FISH_SPAWN_INTERVAL_MIN,
-  FISH_SPAWN_INTERVAL_MAX,
   SKELETON_SPEED,
   TIME_BONUS_BROWN_FISH,
   TIME_PENALTY_GREY_LONG,
@@ -295,10 +293,6 @@ export default function useGameEngine() {
       return;
     }
 
-    canvas.width = cur.dims.width;
-    canvas.height = cur.dims.height;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
     if (cur.phase === "playing") {
       updateFish();
 
@@ -395,28 +389,6 @@ export default function useGameEngine() {
         }
       }
     }
-
-    drawBackground(ctx);
-
-    cur.fish.forEach((f) => {
-      const imgMap = getImg(
-        f.isSkeleton ? "skeletonImgs" : "fishImgs"
-      ) as Record<string, HTMLImageElement>;
-      const img = imgMap[f.kind as keyof typeof imgMap];
-      if (!img) return;
-      ctx.save();
-      ctx.translate(f.x + FISH_SIZE / 2, f.y + FISH_SIZE / 2);
-      if (f.vx < 0) ctx.scale(-1, 1);
-      ctx.rotate(f.angle);
-      ctx.drawImage(img, -FISH_SIZE / 2, -FISH_SIZE / 2, FISH_SIZE, FISH_SIZE);
-      ctx.restore();
-    });
-
-    cur.textLabels = drawTextLabels({
-      textLabels: cur.textLabels,
-      ctx,
-      cull: true,
-    });
 
     // cull fish that have moved completely off-screen
     const { width, height } = cur.dims;
