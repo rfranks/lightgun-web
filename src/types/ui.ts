@@ -61,6 +61,8 @@ export interface TextLabel {
   x: number;
   /** Y position (pixels) */
   y: number;
+  /** Vertical velocity (pixels per frame) */
+  vy?: number;
   /** Current age in frames */
   age: number;
   /** Maximum age before removal */
