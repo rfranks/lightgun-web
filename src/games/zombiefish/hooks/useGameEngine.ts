@@ -11,6 +11,7 @@ import {
   FISH_SPAWN_INTERVAL_MIN,
   FISH_SPAWN_INTERVAL_MAX,
   SKELETON_SPEED,
+  MAX_SKELETONS,
   TIME_BONUS_BROWN_FISH,
   TIME_PENALTY_GREY_LONG,
   DEFAULT_CURSOR,
@@ -230,6 +231,7 @@ export default function useGameEngine() {
     const base = SKELETON_SPEED;
     const extra = SKELETON_SPEED;
     const skeletonSpeed = base + (1 - cur.timer / GAME_TIME) * extra;
+    let skeletonCount = cur.fish.filter((f) => f.isSkeleton).length;
     cur.fish.forEach((s) => {
       if (!s.isSkeleton) return;
 
@@ -258,7 +260,8 @@ export default function useGameEngine() {
         }
         if (
           dist < SKELETON_CONVERT_DISTANCE &&
-          !immuneKinds.has(nearest.kind)
+          !immuneKinds.has(nearest.kind) &&
+          skeletonCount < MAX_SKELETONS
         ) {
           // Spawn a brief text effect before converting the fish
           makeText("POOF", nearest.x, nearest.y);
@@ -268,6 +271,7 @@ export default function useGameEngine() {
           nearest.vy = 0;
           delete nearest.groupId;
           audio.play("convert");
+          skeletonCount += 1;
         }
       }
 
@@ -811,8 +815,9 @@ export default function useGameEngine() {
             cur.fish = cur.fish.filter((fish) => fish.groupId !== gid);
             audio.play("penalty");
           } else {
+            const skeletonCount = cur.fish.filter((fish) => fish.isSkeleton).length;
             if (!f.isSkeleton) {
-              if (Math.random() < 0.5) {
+              if (Math.random() < 0.5 && skeletonCount < MAX_SKELETONS) {
                 f.isSkeleton = true;
                 f.health = 1;
                 audio.play("skeleton");
