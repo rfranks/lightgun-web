@@ -943,6 +943,30 @@ export default function useGameEngine() {
       const canvasY =
         ((e.clientY - rect.top) / rect.height) * cur.dims.height;
 
+      // check bubbles first so they are popped before fish hits
+      for (let i = cur.bubbles.length - 1; i >= 0; i--) {
+        const b = cur.bubbles[i];
+        if (
+          canvasX >= b.x &&
+          canvasX <= b.x + b.size &&
+          canvasY >= b.y &&
+          canvasY <= b.y + b.size
+        ) {
+          cur.bubbles.splice(i, 1);
+          audio.play("pop");
+          cur.accuracy = cur.shots > 0 ? (cur.hits / cur.shots) * 100 : 0;
+          setUI({
+            phase: cur.phase,
+            timer: cur.timer,
+            shots: cur.shots,
+            hits: cur.hits,
+            accuracy: cur.accuracy,
+            cursor: cur.cursor,
+          });
+          return;
+        }
+      }
+
       // iterate fish in reverse draw order so topmost fish are hit first
       for (let i = cur.fish.length - 1; i >= 0; i--) {
         const f = cur.fish[i];
