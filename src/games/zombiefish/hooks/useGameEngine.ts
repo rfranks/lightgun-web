@@ -110,6 +110,18 @@ export default function useGameEngine() {
     state.current.dims = dims;
   }, [dims]);
 
+  const syncCursor = useCallback((cursor: string) => {
+    state.current.cursor = cursor;
+    setUI({
+      phase: state.current.phase,
+      timer: state.current.timer,
+      shots: state.current.shots,
+      hits: state.current.hits,
+      accuracy: state.current.accuracy,
+      cursor,
+    });
+  }, []);
+
   const makeText = useCallback(
     (text: string, x: number, y: number) => {
       const lbl = newTextLabel(
@@ -837,35 +849,33 @@ export default function useGameEngine() {
   }, [resetGame, startSplash]);
 
   // handle mouse move – change cursor when hovering over fish
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    const cur = state.current;
-    if (cur.phase !== "playing" || cur.cursor === SHOT_CURSOR) return;
+  const handleMouseMove = useCallback(
+    (e: React.MouseEvent) => {
+      const cur = state.current;
+      if (cur.phase !== "playing" || cur.cursor === SHOT_CURSOR) return;
 
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const { left, top, width, height } = canvas.getBoundingClientRect();
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const { left, top, width, height } = canvas.getBoundingClientRect();
 
-    const x = ((e.clientX - left) / width) * cur.dims.width;
-    const y = ((e.clientY - top) / height) * cur.dims.height;
+      const x = ((e.clientX - left) / width) * cur.dims.width;
+      const y = ((e.clientY - top) / height) * cur.dims.height;
 
-    const hovering = cur.fish.some(
-      (f) =>
-        x >= f.x && x <= f.x + FISH_SIZE && y >= f.y && y <= f.y + FISH_SIZE
-    );
+      const hovering = cur.fish.some(
+        (f) =>
+          x >= f.x &&
+          x <= f.x + FISH_SIZE &&
+          y >= f.y &&
+          y <= f.y + FISH_SIZE
+      );
 
-    const nextCursor = hovering ? TARGET_CURSOR : DEFAULT_CURSOR;
-    if (nextCursor !== cur.cursor) {
-      cur.cursor = nextCursor;
-      setUI({
-        phase: cur.phase,
-        timer: cur.timer,
-        shots: cur.shots,
-        hits: cur.hits,
-        accuracy: cur.accuracy,
-        cursor: nextCursor,
-      });
-    }
-  }, []);
+      const nextCursor = hovering ? TARGET_CURSOR : DEFAULT_CURSOR;
+      if (nextCursor !== cur.cursor) {
+        syncCursor(nextCursor);
+      }
+    },
+    [syncCursor]
+  );
 
   // handle left click – detect and affect fish
   const handleClick = useCallback(
@@ -895,18 +905,10 @@ export default function useGameEngine() {
 
       if (cur.phase !== "playing") return;
 
-      cur.cursor = SHOT_CURSOR;
+      syncCursor(SHOT_CURSOR);
       if (cursorTimeoutRef.current) clearTimeout(cursorTimeoutRef.current);
       cursorTimeoutRef.current = setTimeout(() => {
-        state.current.cursor = DEFAULT_CURSOR;
-        setUI({
-          phase: state.current.phase,
-          timer: state.current.timer,
-          shots: state.current.shots,
-          hits: state.current.hits,
-          accuracy: state.current.accuracy,
-          cursor: state.current.cursor,
-        });
+        syncCursor(DEFAULT_CURSOR);
       }, 100);
 
       cur.shots += 1;
