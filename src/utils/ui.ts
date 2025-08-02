@@ -104,6 +104,8 @@ export function newTextLabel(
   const letterImgs = getImg("letterImgs") as Record<string, HTMLImageElement>;
   const numberImgs = getImg("numberImgs") as Record<string, HTMLImageElement>;
   const digitImgs = getImg("digitImgs") as Record<string, HTMLImageElement>;
+  const plusImg = getImg("plusImg") as HTMLImageElement;
+  const minusImg = getImg("minusImg") as HTMLImageElement;
 
   // measure total width, accounting for spaces
   let totalWidth = 0;
@@ -120,7 +122,11 @@ export function newTextLabel(
       imgs.push(null); // push null for space to maintain index
     } else {
       const img =
-        letterImgs[ch.toUpperCase()] || numberImgs[ch] || digitImgs[ch];
+        (ch === "+"
+          ? plusImg
+          : ch === "-"
+          ? minusImg
+          : letterImgs[ch.toUpperCase()] || numberImgs[ch] || digitImgs[ch]);
       if (img) {
         totalWidth += img.width * scale + 2;
         imgs.push(img);
