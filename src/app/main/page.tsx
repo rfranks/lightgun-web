@@ -3,7 +3,7 @@
 
 import React from "react";
 import { Container } from "@mui/material";
-import Game from "@/games/warbirds";
+import Game from "@/games/zombiefish";
 
 export default function Home() {
   return (
