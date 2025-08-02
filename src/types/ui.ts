@@ -61,6 +61,8 @@ export interface TextLabel {
   x: number;
   /** Y position (pixels) */
   y: number;
+  /** Vertical padding (pixels) */
+  py?: number;
   /** Vertical velocity (pixels per frame) */
   vy?: number;
   /** Change in scale per frame */

@@ -60,6 +60,8 @@ const CONVERT_FLASH_FRAMES = 5;
 const MISS_GROWTH = 4;
 const MISS_FADE = 0.05;
 
+const STAT_LABEL_PY = 8;
+
 const clampIncline = (vx: number, vy: number) => {
   if (Math.abs(vx) >= Math.abs(vy)) {
     const limit = Math.abs(vx) * MAX_FISH_INCLINE;
@@ -601,7 +603,12 @@ export default function useGameEngine() {
           Math.max(max, (img?.height || 0) * lbl.scale),
         0
       );
-      timeTextBounds.current = { x: lbl.x, y: lbl.y, width, height };
+      timeTextBounds.current = {
+        x: lbl.x,
+        y: lbl.y - (lbl.py ?? 0),
+        width,
+        height: height + (lbl.py ?? 0) * 2,
+      };
     }
 
     const canvas = canvasRef.current;
@@ -676,6 +683,7 @@ export default function useGameEngine() {
             fade: false,
             x: (cur.dims.width - totalWidth) / 2,
             y: cur.dims.height / 2,
+            py: STAT_LABEL_PY,
           },
           assetMgr
         );
@@ -687,7 +695,7 @@ export default function useGameEngine() {
         // create game over stat labels
         const makeStat = (text: string, y: number) => {
           const lbl = newTextLabel(
-            { text, scale: 1, fixed: true, fade: false, y },
+            { text, scale: 1, fixed: true, fade: false, y, py: STAT_LABEL_PY },
             assetMgr,
             cur.dims
           );
@@ -729,6 +737,7 @@ export default function useGameEngine() {
             fade: false,
             x: 16,
             y: 16,
+            py: STAT_LABEL_PY,
           },
           assetMgr
         );
@@ -971,18 +980,20 @@ export default function useGameEngine() {
         fade: false,
         x: 16,
         y: 16,
+        py: STAT_LABEL_PY,
       },
       assetMgr
     );
     timeTextLabel.current = timeText;
     timeTextBounds.current = {
       x: timeText.x,
-      y: timeText.y,
+      y: timeText.y - timeText.py,
       width: labelWidth(timeText),
-      height: timeText.imgs.reduce(
-        (max, img) => Math.max(max, (img?.height || 0) * timeText.scale),
-        0
-      ),
+      height:
+        timeText.imgs.reduce(
+          (max, img) => Math.max(max, (img?.height || 0) * timeText.scale),
+          0
+        ) + timeText.py * 2,
     };
 
     timerLabel.current = newTextLabel(
@@ -993,6 +1004,7 @@ export default function useGameEngine() {
         fade: false,
         x: 16 + labelWidth(timeText),
         y: 16,
+        py: STAT_LABEL_PY,
       },
       assetMgr
     );
@@ -1006,6 +1018,7 @@ export default function useGameEngine() {
         fade: false,
         x: 16,
         y: 16 + lineHeight,
+        py: STAT_LABEL_PY,
       },
       assetMgr
     );
@@ -1017,6 +1030,7 @@ export default function useGameEngine() {
         fade: false,
         x: 16 + labelWidth(shotsText),
         y: 16 + lineHeight,
+        py: STAT_LABEL_PY,
       },
       assetMgr
     );
@@ -1029,6 +1043,7 @@ export default function useGameEngine() {
         fade: false,
         x: 16,
         y: 16 + lineHeight * 2,
+        py: STAT_LABEL_PY,
       },
       assetMgr
     );
@@ -1040,6 +1055,7 @@ export default function useGameEngine() {
         fade: false,
         x: 16 + labelWidth(hitsText),
         y: 16 + lineHeight * 2,
+        py: STAT_LABEL_PY,
       },
       assetMgr
     );
@@ -1052,6 +1068,7 @@ export default function useGameEngine() {
         fade: false,
         x: 16,
         y: 16 + lineHeight * 3,
+        py: STAT_LABEL_PY,
       },
       assetMgr
     );
@@ -1063,6 +1080,7 @@ export default function useGameEngine() {
         fade: false,
         x: 16 + labelWidth(scoreText),
         y: 16 + lineHeight * 3,
+        py: STAT_LABEL_PY,
       },
       assetMgr
     );
