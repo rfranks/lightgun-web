@@ -171,8 +171,6 @@ export default function useZombiefishEngine() {
     );
 
     // draw fish and text labels
-    const canvas = canvasRef.current;
-    const ctx = canvas?.getContext("2d");
     if (canvas && ctx) {
       canvas.width = cur.dims.width;
       canvas.height = cur.dims.height;
