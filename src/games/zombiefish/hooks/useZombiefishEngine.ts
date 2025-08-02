@@ -45,7 +45,6 @@ export default function useZombiefishEngine() {
 
   const nextFishId = useRef(1);
   const nextGroupId = useRef(1);
-  const textLabels = useRef<TextLabel[]>([]);
   const frameRef = useRef(0); // track frames for one-second ticks
   const accuracyLabel = useRef<TextLabel | null>(null);
   const finalAccuracy = useRef(0);
@@ -172,7 +171,7 @@ export default function useZombiefishEngine() {
         frameRef.current = 0;
         cur.timer = Math.max(0, cur.timer - 1);
 
-        const lbl = textLabels.current[0];
+        const lbl = cur.textLabels[0];
         if (lbl) {
           const t = cur.timer.toString().padStart(2, "0");
           lbl.text = t;
@@ -189,12 +188,6 @@ export default function useZombiefishEngine() {
           displayAccuracy.current = 0;
         }
       }
-
-      // move fish based on velocity
-      cur.fish.forEach((f) => {
-        f.x += f.vx;
-        f.y += f.vy;
-      });
 
       // cull fish that have moved completely off-screen
       const { width, height } = cur.dims;
@@ -240,7 +233,7 @@ export default function useZombiefishEngine() {
         lbl.text = "0%";
         lbl.imgs = initImgs;
         accuracyLabel.current = lbl;
-        textLabels.current.push(lbl);
+        cur.textLabels.push(lbl);
       } else {
         const lbl = accuracyLabel.current;
         if (displayAccuracy.current < finalAccuracy.current) {
@@ -263,7 +256,6 @@ export default function useZombiefishEngine() {
       }
     }
 
-    // draw fish and text labels
     cur.fish.forEach((f) => {
       const imgMap = getImg(
         f.isSkeleton ? "skeletonImgs" : "fishImgs"
@@ -278,6 +270,12 @@ export default function useZombiefishEngine() {
       ctx.restore();
     });
 
+    cur.textLabels = drawTextLabels({
+      textLabels: cur.textLabels,
+      ctx,
+      cull: true,
+    }); 
+    
     // cull fish that have moved completely off-screen
     const { width, height } = cur.dims;
     const margin = FISH_SIZE * 2;
@@ -322,11 +320,6 @@ export default function useZombiefishEngine() {
       });
     }
 
-    textLabels.current = drawTextLabels({
-      textLabels: textLabels.current,
-      ctx,
-    });
-
     cur.accuracy = cur.shots > 0 ? (cur.hits / cur.shots) * 100 : 0;
 
     setUI({
@@ -353,7 +346,7 @@ export default function useZombiefishEngine() {
     accuracyLabel.current = null;
     finalAccuracy.current = 0;
     displayAccuracy.current = 0;
-    textLabels.current = [
+    state.current.textLabels = [
       newTextLabel(
         {
           text: cur.timer.toString().padStart(2, "0"),
