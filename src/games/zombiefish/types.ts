@@ -1,7 +1,7 @@
 import type { Dims, TextLabel } from "@/types/ui";
 
 // Game phases for the simple zombiefish prototype
-export type GamePhase = "title" | "playing" | "gameover";
+export type GamePhase = "title" | "playing" | "paused" | "gameover";
 
 // Basic fish state tracked by the engine
 export interface Fish {

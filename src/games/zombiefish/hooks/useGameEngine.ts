@@ -64,6 +64,7 @@ export default function useGameEngine() {
   const timerLabel = useRef<TextLabel | null>(null);
   const shotsLabel = useRef<TextLabel | null>(null);
   const hitsLabel = useRef<TextLabel | null>(null);
+  const pausedLabel = useRef<TextLabel | null>(null);
 
   // ui state that triggers re-renders
   const [ui, setUI] = useState<GameUIState>({
@@ -425,22 +426,38 @@ export default function useGameEngine() {
       cull: true,
     });
 
-    // cull fish that have moved completely off-screen
-    const { width, height } = cur.dims;
-    const margin = FISH_SIZE * 2;
-    cur.fish = cur.fish.filter(
-      (f) =>
-        f.x > -margin &&
-        f.x < width + margin &&
-        f.y > -margin &&
-        f.y < height + margin
-    );
+      // cull fish that have moved completely off-screen
+      if (cur.phase === "playing") {
+        const { width, height } = cur.dims;
+        const margin = FISH_SIZE * 2;
+        cur.fish = cur.fish.filter(
+          (f) =>
+            f.x > -margin &&
+            f.x < width + margin &&
+            f.y > -margin &&
+            f.y < height + margin
+        );
+      }
 
-    // draw bubbles, fish and text labels
-    if (canvas && ctx) {
-      canvas.width = cur.dims.width;
-      canvas.height = cur.dims.height;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      if (cur.phase === "paused") {
+        if (!pausedLabel.current) {
+          pausedLabel.current = newTextLabel(
+            { text: "PAUSED", scale: 2, fixed: true, fade: false },
+            assetMgr,
+            cur.dims
+          );
+          cur.textLabels.push(pausedLabel.current);
+        }
+      } else if (pausedLabel.current) {
+        cur.textLabels = cur.textLabels.filter((l) => l !== pausedLabel.current);
+        pausedLabel.current = null;
+      }
+
+      // draw bubbles, fish and text labels
+      if (canvas && ctx) {
+        canvas.width = cur.dims.width;
+        canvas.height = cur.dims.height;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       drawBackground(ctx);
 
@@ -506,6 +523,7 @@ export default function useGameEngine() {
     accuracyLabel.current = null;
     finalAccuracy.current = 0;
     displayAccuracy.current = 0;
+    pausedLabel.current = null;
     const digitImgs = getImg("digitImgs") as Record<string, HTMLImageElement>;
     const digitHeight = digitImgs["0"]?.height || 0;
     const lineHeight = digitHeight + 8;
@@ -630,6 +648,7 @@ export default function useGameEngine() {
     hitsLabel.current = null;
     state.current.textLabels = [];
     bubbleSpawnRef.current = 0;
+    pausedLabel.current = null;
 
     setUI({
       phase: cur.phase,
@@ -645,8 +664,20 @@ export default function useGameEngine() {
 
   useEffect(() => {
     const handleKeydown = (e: KeyboardEvent) => {
-      if (e.code !== "Space") return;
-      if (state.current.phase === "gameover") {
+      const cur = state.current;
+      if (e.code === "Escape" && (cur.phase === "playing" || cur.phase === "paused")) {
+        cur.phase = cur.phase === "playing" ? "paused" : "playing";
+        setUI({
+          phase: cur.phase,
+          timer: cur.timer,
+          shots: cur.shots,
+          hits: cur.hits,
+          accuracy: cur.accuracy,
+          cursor: cur.cursor,
+        });
+        return;
+      }
+      if (cur.phase === "gameover" && e.code === "Space") {
         resetGame();
         startSplash();
       } else if (state.current.phase === "title") {
