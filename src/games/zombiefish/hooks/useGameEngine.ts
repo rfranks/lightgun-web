@@ -847,9 +847,16 @@ export default function useGameEngine() {
       const delay = minDelay + Math.random() * (maxDelay - minDelay);
       timer = setTimeout(() => {
         if (state.current.phase !== "playing") return;
-        const kind = basicKinds[Math.floor(Math.random() * basicKinds.length)];
-        const count = Math.floor(Math.random() * 5) + 1;
-        spawnFish(kind, count);
+        const roll = Math.random();
+        if (roll < 0.1) {
+          spawnFish("brown", 1);
+        } else if (roll < 0.15) {
+          spawnFish("grey_long", 1);
+        } else {
+          const kind = basicKinds[Math.floor(Math.random() * basicKinds.length)];
+          const count = Math.floor(Math.random() * 5) + 1;
+          spawnFish(kind, count);
+        }
         schedule();
       }, delay);
     };
