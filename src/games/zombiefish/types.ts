@@ -21,6 +21,8 @@ export interface Fish {
   health: number;
   /** Frames remaining for the red flash after taking damage. */
   hurtTimer: number;
+  /** Frames remaining before the fish picks a new random heading. */
+  wanderTimer: number;
   /**
    * Optional identifier tying fish together when spawned in a group.
    * Special fish spawn without a groupId.
@@ -74,6 +76,8 @@ export interface GameUIState {
   shots: number;
   /** Total number of successful hits */
   hits: number;
+  /** Current score accumulated by the player */
+  score: number;
   /** Hit accuracy percentage */
   accuracy: number;
   /** Current cursor style */
@@ -82,6 +86,8 @@ export interface GameUIState {
 
 // Internal game state tracked by the engine
 export interface GameState extends GameUIState {
+  /** Current score accumulated by the player */
+  score: number;
   dims: Dims;
   /** Active fish currently in the scene */
   fish: Fish[];
@@ -93,4 +99,6 @@ export interface GameState extends GameUIState {
   missParticles: MissParticle[];
   /** Total number of fish converted into skeletons */
   conversions: number;
+  /** Whether the ten-second warning has been played */
+  warningPlayed: boolean;
 }

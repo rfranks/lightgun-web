@@ -173,6 +173,16 @@ export function useGameAssets(): {
           ] || undefined
       );
 
+    // SURFACE & CLOUDS
+    assetRefs.current.surfaceImgs = [
+      loadImg("/assets/shooting-gallery/PNG/Stall/water1.png"),
+      loadImg("/assets/shooting-gallery/PNG/Stall/water2.png"),
+    ];
+    assetRefs.current.cloudImgs = [
+      loadImg("/assets/shooting-gallery/PNG/Stall/cloud1.png"),
+      loadImg("/assets/shooting-gallery/PNG/Stall/cloud2.png"),
+    ];
+
     // TERRAIN
     const topLetters = "abcdefgh".split("");
     const dirtNames = [

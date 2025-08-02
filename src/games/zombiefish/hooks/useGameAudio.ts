@@ -52,6 +52,10 @@ export function useGameAudio(): AudioMgr {
     tick.src = withBasePath("/audio/tick_002.ogg");
     tick.preload = "auto";
 
+    const warning = document.createElement("audio");
+    warning.src = withBasePath("/audio/warning.ogg");
+    warning.preload = "auto";
+
     return {
       shoot,
       hit,
@@ -62,6 +66,7 @@ export function useGameAudio(): AudioMgr {
       convert,
       pop,
       tick,
+      warning,
       bgm,
     };
   }, []);
