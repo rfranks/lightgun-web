@@ -1001,7 +1001,10 @@ export default function useGameEngine() {
     let timer: ReturnType<typeof setTimeout>;
     const schedule = () => {
       const factor = difficultyFactor();
-      const delay = (1000 + Math.random() * 2000) / factor;
+      // FISH_SPAWN_INTERVAL_* are expressed in frames; convert to ms
+      const min = (FISH_SPAWN_INTERVAL_MIN / FPS) * 1000;
+      const max = (FISH_SPAWN_INTERVAL_MAX / FPS) * 1000;
+      const delay = (min + Math.random() * (max - min)) / factor;
 
       timer = setTimeout(() => {
         if (state.current.phase !== "playing") return;
