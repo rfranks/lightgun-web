@@ -49,6 +49,7 @@ const BUBBLE_MAX_SIZE = BUBBLE_BASE_SIZE * 1.5;
 const BUBBLE_VX_MAX = 0.5;
 const BUBBLE_VY_MIN = -1.5;
 const BUBBLE_VY_MAX = -0.5;
+const SURFACE_SPEED = [0.05, 0.1];
 const ROCK_SPEED = [0.1, 0.2];
 const SEAWEED_SPEED = [0.2, 0.4];
 const SEAGRASS_SPEED = [0.3, 0.6];
@@ -107,6 +108,7 @@ export default function useGameEngine() {
   const cursorTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const frameRef = useRef(0); // track frames for one-second ticks
   const fishSpawnTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const surfaceOffsets = useRef<number[]>(SURFACE_SPEED.map(() => 0));
   const rockOffsets = useRef<number[]>(ROCK_SPEED.map(() => 0));
   const seaweedOffsets = useRef<number[]>(SEAWEED_SPEED.map(() => 0));
   const seaGrassOffsets = useRef<number[]>(SEAGRASS_SPEED.map(() => 0));
@@ -201,6 +203,50 @@ export default function useGameEngine() {
       } else {
         ctx.fillStyle = "#1d8fde";
         ctx.fillRect(0, 0, width, height);
+      }
+
+      // --- Surface -------------------------------------------------------
+      // Parallax scrolling water surface and clouds.
+      const surfaceImgs = getImg("surfaceImgs") as
+        | HTMLImageElement[]
+        | undefined;
+      const cloudImgs = getImg("cloudImgs") as
+        | HTMLImageElement[]
+        | undefined;
+      if (surfaceImgs && surfaceImgs.length) {
+        const groupWidth = surfaceImgs[0].width * surfaceImgs.length;
+        SURFACE_SPEED.forEach((speed, i) => {
+          surfaceOffsets.current[i] -= speed;
+          if (surfaceOffsets.current[i] <= -groupWidth)
+            surfaceOffsets.current[i] += groupWidth;
+        });
+        for (let i = 0; i < SURFACE_SPEED.length; i++) {
+          const offset = surfaceOffsets.current[i];
+          for (let x = -groupWidth; x < width + groupWidth; x += groupWidth) {
+            surfaceImgs.forEach((img, idx) => {
+              ctx.drawImage(
+                img,
+                x + offset + idx * surfaceImgs[0].width,
+                0
+              );
+            });
+          }
+        }
+      }
+      if (cloudImgs && cloudImgs.length) {
+        const groupWidth = cloudImgs[0].width * cloudImgs.length;
+        for (let i = 0; i < SURFACE_SPEED.length; i++) {
+          const offset = surfaceOffsets.current[i];
+          for (let x = -groupWidth; x < width + groupWidth; x += groupWidth) {
+            cloudImgs.forEach((img, idx) => {
+              ctx.drawImage(
+                img,
+                x + offset + idx * cloudImgs[0].width,
+                0
+              );
+            });
+          }
+        }
       }
 
       // --- Sand -----------------------------------------------------------
@@ -854,6 +900,7 @@ export default function useGameEngine() {
     bestAccuracyLabel.current = null;
     finalAccuracy.current = 0;
     displayAccuracy.current = 0;
+    surfaceOffsets.current.fill(0);
     rockOffsets.current.fill(0);
     seaweedOffsets.current.fill(0);
     seaGrassOffsets.current.fill(0);
@@ -1046,6 +1093,7 @@ export default function useGameEngine() {
     nextGroupId.current = 1;
     nextPairId.current = 1;
     nextBubbleId.current = 1;
+    surfaceOffsets.current.fill(0);
     rockOffsets.current.fill(0);
     seaweedOffsets.current.fill(0);
     seaGrassOffsets.current.fill(0);
