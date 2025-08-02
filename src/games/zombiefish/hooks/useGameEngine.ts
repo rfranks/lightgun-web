@@ -562,6 +562,25 @@ export default function useGameEngine() {
     return spawned;
   }, []);
 
+  // spawn scheduler
+  useEffect(() => {
+    if (ui.phase !== "playing") return;
+    const basicKinds = ["blue", "green", "grey", "orange", "pink", "red"];
+    let timer: ReturnType<typeof setTimeout>;
+    const schedule = () => {
+      const delay = 1000 + Math.random() * 2000;
+      timer = setTimeout(() => {
+        if (state.current.phase !== "playing") return;
+        const kind = basicKinds[Math.floor(Math.random() * basicKinds.length)];
+        const count = Math.floor(Math.random() * 5) + 1;
+        spawnFish(kind, count);
+        schedule();
+      }, delay);
+    };
+    schedule();
+    return () => clearTimeout(timer);
+  }, [ui.phase, spawnFish]);
+
   // cleanup on unmount
   useEffect(() => {
     return () => {
