@@ -203,7 +203,7 @@ export default function useGameEngine() {
       let nearestDist = Infinity;
 
       cur.fish.forEach((t) => {
-        if (t.isSkeleton) return;
+        if (!t.isSkeleton) return;
         const dx = t.x - s.x;
         const dy = t.y - s.y;
         const dist2 = dx * dx + dy * dy;
