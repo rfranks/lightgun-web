@@ -6,13 +6,11 @@ import { drawTextLabels, newTextLabel } from "@/utils/ui";
 
 import type { GameState, GameUIState, Fish, Bubble } from "../types";
 import {
-  FISH_SPEED_MIN,
-  FISH_SPEED_MAX,
   SKELETON_SPEED,
   TIME_BONUS_BROWN_FISH,
   TIME_PENALTY_GREY_LONG,
-  DEFAULT_CURSOR, 
-  SHOT_CURSOR
+  DEFAULT_CURSOR,
+  SHOT_CURSOR,
 } from "../constants";
 import type { AssetMgr } from "@/types/ui";
 import type { TextLabel } from "@/types/ui";
