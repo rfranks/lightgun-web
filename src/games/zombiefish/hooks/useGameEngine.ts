@@ -82,6 +82,7 @@ export default function useGameEngine() {
   const accuracyLabel = useRef<TextLabel | null>(null);
   const finalAccuracy = useRef(0);
   const displayAccuracy = useRef(0);
+  const bestAccuracyLabel = useRef<TextLabel | null>(null);
   const timerLabel = useRef<TextLabel | null>(null);
   const shotsLabel = useRef<TextLabel | null>(null);
   const hitsLabel = useRef<TextLabel | null>(null);
@@ -466,6 +467,25 @@ export default function useGameEngine() {
         accuracyLabel.current = lbl;
         cur.textLabels.push(lbl);
       }
+      if (!bestAccuracyLabel.current) {
+        const best = Number(localStorage.bestAccuracy || 0);
+        const pctImg = getImg("pctImg") as HTMLImageElement;
+        const digitImgs = getImg("digitImgs") as Record<string, HTMLImageElement>;
+        const lbl = newTextLabel(
+          {
+            text: `${best}%`,
+            scale: 1,
+            fixed: true,
+            fade: false,
+            x: 16,
+            y: 16,
+          },
+          assetMgr
+        );
+        lbl.imgs = [...best.toString().split("").map((ch) => digitImgs[ch]), pctImg];
+        bestAccuracyLabel.current = lbl;
+        cur.textLabels.push(lbl);
+      }
 
       const lbl = accuracyLabel.current!;
       if (displayAccuracy.current < finalAccuracy.current) {
@@ -549,14 +569,18 @@ export default function useGameEngine() {
       }
 
 
-    if (cur.phase === "paused") {
-      if (!pausedLabel.current) {
-        pausedLabel.current = newTextLabel(
-          { text: "PAUSED", scale: 2, fixed: true, fade: false },
-          assetMgr,
-          cur.dims
-        );
-        cur.textLabels.push(pausedLabel.current);
+      if (cur.phase === "paused") {
+        if (!pausedLabel.current) {
+          pausedLabel.current = newTextLabel(
+            { text: "PAUSED", scale: 2, fixed: true, fade: false },
+            assetMgr,
+            cur.dims
+          );
+          cur.textLabels.push(pausedLabel.current);
+        }
+      } else if (pausedLabel.current) {
+        cur.textLabels = cur.textLabels.filter((l) => l !== pausedLabel.current);
+        pausedLabel.current = null;
       }
     } else if (pausedLabel.current) {
       cur.textLabels = cur.textLabels.filter((l) => l !== pausedLabel.current);
@@ -643,6 +667,7 @@ export default function useGameEngine() {
 
     frameRef.current = 0;
     accuracyLabel.current = null;
+    bestAccuracyLabel.current = null;
     finalAccuracy.current = 0;
     displayAccuracy.current = 0;
     rockOffsets.current.fill(0);
@@ -769,6 +794,7 @@ export default function useGameEngine() {
     cur.bubbles = [];
 
     accuracyLabel.current = null;
+    bestAccuracyLabel.current = null;
     finalAccuracy.current = 0;
     displayAccuracy.current = 0;
     frameRef.current = 0;
