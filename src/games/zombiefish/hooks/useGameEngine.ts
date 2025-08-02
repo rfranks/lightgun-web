@@ -27,6 +27,7 @@ const GAME_TIME = 99;
 const FPS = 60; // assumed frame rate for requestAnimationFrame
 
 const FISH_SIZE = 128;
+const MAX_SCHOOL_SIZE = 4;
 const SKELETON_CONVERT_DISTANCE = FISH_SIZE / 2;
 const BUBBLE_SIZE = 64;
 const ROCK_SPEED = 0.2;
@@ -864,6 +865,7 @@ export default function useGameEngine() {
     const specialPairs = ["grey_long"];
 
     if (specialSingles.includes(kind) || specialPairs.includes(kind)) count = 1;
+    count = Math.min(count, MAX_SCHOOL_SIZE);
 
     // decide spawning edge
     const edge = Math.floor(Math.random() * 4); // 0:left,1:right,2:top,3:bottom
@@ -955,18 +957,18 @@ export default function useGameEngine() {
       const groupId = specialSingles.includes(kind)
         ? undefined
         : nextGroupId.current++;
-        const x =
-          edge === 0
-            ? startX
-            : edge === 1
-            ? startX
-            : Math.random() * width;
-        const y =
-          edge === 2
-            ? startY
-            : edge === 3
-            ? startY
-            : Math.random() * height;
+      const x =
+        edge === 0
+          ? startX
+          : edge === 1
+          ? startX
+          : Math.random() * width;
+      const y =
+        edge === 2
+          ? startY
+          : edge === 3
+          ? startY
+          : Math.random() * height;
 
       if (groupId === undefined) {
         for (let i = 0; i < count; i++) {
@@ -975,16 +977,31 @@ export default function useGameEngine() {
       } else {
         const leader = makeFish(kind, x, y, groupId);
         spawned.push(leader);
+        const existingPositions: Fish[] = [...state.current.fish, leader];
+        const overlaps = (nx: number, ny: number) =>
+          existingPositions.some(
+            (f) =>
+              Math.abs(f.x - nx) < FISH_SIZE &&
+              Math.abs(f.y - ny) < FISH_SIZE
+          );
         for (let i = 1; i < count; i++) {
           const member = makeFish(kind, leader.x, leader.y, groupId);
-          member.x = leader.x + (Math.random() - 0.5) * FISH_SIZE;
-          member.y = Math.min(
+          let mx = leader.x + (Math.random() - 0.5) * FISH_SIZE;
+          const my = Math.min(
             Math.max(leader.y + (Math.random() - 0.5) * FISH_SIZE, 0),
             height
           );
+          let attempts = 0;
+          while (overlaps(mx, my) && attempts < 10) {
+            mx += FISH_SIZE;
+            attempts++;
+          }
+          member.x = Math.min(Math.max(mx, 0), width - FISH_SIZE);
+          member.y = my;
           member.vx = leader.vx + (Math.random() - 0.5) * 0.5;
           member.vy = (Math.random() - 0.5) * 0.5;
           spawned.push(member);
+          existingPositions.push(member);
         }
       }
     }
