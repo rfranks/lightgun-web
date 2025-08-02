@@ -100,6 +100,8 @@ export default function useGameEngine() {
   const gameoverShotsLabel = useRef<TextLabel | null>(null);
   const gameoverHitsLabel = useRef<TextLabel | null>(null);
   const gameoverTimeLabel = useRef<TextLabel | null>(null);
+  const timeTextLabel = useRef<TextLabel | null>(null);
+  const timeTextBounds = useRef({ x: 0, y: 0, width: 0, height: 0 });
 
   // ui state that triggers re-renders
   const [ui, setUI] = useState<GameUIState>({
@@ -403,6 +405,21 @@ export default function useGameEngine() {
   const loop = useCallback(() => {
     const cur = state.current;
 
+    if (timeTextLabel.current) {
+      const lbl = timeTextLabel.current;
+      const width = lbl.imgs.reduce(
+        (sum, img) =>
+          sum + (img ? img.width * lbl.scale + 2 : lbl.spaceGap),
+        0
+      );
+      const height = lbl.imgs.reduce(
+        (max, img) =>
+          Math.max(max, (img?.height || 0) * lbl.scale),
+        0
+      );
+      timeTextBounds.current = { x: lbl.x, y: lbl.y, width, height };
+    }
+
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");
     if (!canvas || !ctx) {
@@ -701,6 +718,16 @@ export default function useGameEngine() {
       },
       assetMgr
     );
+    timeTextLabel.current = timeText;
+    timeTextBounds.current = {
+      x: timeText.x,
+      y: timeText.y,
+      width: labelWidth(timeText),
+      height: timeText.imgs.reduce(
+        (max, img) => Math.max(max, (img?.height || 0) * timeText.scale),
+        0
+      ),
+    };
 
     timerLabel.current = newTextLabel(
       {
@@ -929,6 +956,45 @@ export default function useGameEngine() {
         return;
       }
 
+      const canvas = canvasRef.current;
+      if (!canvas) {
+        setUI({
+          phase: cur.phase,
+          timer: cur.timer,
+          shots: cur.shots,
+          hits: cur.hits,
+          accuracy: cur.accuracy,
+          cursor: cur.cursor,
+        });
+        return;
+      }
+      const rect = canvas.getBoundingClientRect();
+      const canvasX =
+        ((e.clientX - rect.left) / rect.width) * cur.dims.width;
+      const canvasY =
+        ((e.clientY - rect.top) / rect.height) * cur.dims.height;
+
+      const bounds = timeTextBounds.current;
+      if (
+        canvasX >= bounds.x &&
+        canvasX <= bounds.x + bounds.width &&
+        canvasY >= bounds.y &&
+        canvasY <= bounds.y + bounds.height
+      ) {
+        if (cur.phase === "playing" || cur.phase === "paused") {
+          cur.phase = cur.phase === "playing" ? "paused" : "playing";
+          setUI({
+            phase: cur.phase,
+            timer: cur.timer,
+            shots: cur.shots,
+            hits: cur.hits,
+            accuracy: cur.accuracy,
+            cursor: cur.cursor,
+          });
+        }
+        return;
+      }
+
       if (cur.phase !== "playing") return;
 
       syncCursor(SHOT_CURSOR);
@@ -940,26 +1006,6 @@ export default function useGameEngine() {
       cur.shots += 1;
       updateDigitLabel(shotsLabel.current, cur.shots);
       audio.play("shoot");
-      const canvas = canvasRef.current;
-      if (!canvas) {
-        cur.accuracy = cur.shots > 0 ? (cur.hits / cur.shots) * 100 : 0;
-        setUI({
-          phase: cur.phase,
-          timer: cur.timer,
-          shots: cur.shots,
-          hits: cur.hits,
-          accuracy: cur.accuracy,
-          cursor: cur.cursor,
-        });
-        return;
-      }
-
-      // translate mouse coordinates into canvas space
-      const rect = canvas.getBoundingClientRect();
-      const canvasX =
-        ((e.clientX - rect.left) / rect.width) * cur.dims.width;
-      const canvasY =
-        ((e.clientY - rect.top) / rect.height) * cur.dims.height;
 
       // check bubbles first so they are popped before fish hits
       for (let i = cur.bubbles.length - 1; i >= 0; i--) {
