@@ -35,6 +35,7 @@ export default function useZombiefishEngine() {
     timer: GAME_TIME,
     shots: 0,
     hits: 0,
+    accuracy: 0,
     dims,
     fish: [],
     textLabels: [],
@@ -51,6 +52,7 @@ export default function useZombiefishEngine() {
     timer: GAME_TIME,
     shots: 0,
     hits: 0,
+    accuracy: 0,
   });
 
   // sync dims when window size changes
@@ -193,7 +195,16 @@ export default function useZombiefishEngine() {
 
     textLabels.current = drawTextLabels({ textLabels: textLabels.current, ctx });
 
-    setUI({ phase: cur.phase, timer: cur.timer, shots: cur.shots, hits: cur.hits });
+    cur.accuracy = cur.shots > 0 ? (cur.hits / cur.shots) * 100 : 0;
+    
+    setUI({
+      phase: cur.phase,
+      timer: cur.timer,
+      shots: cur.shots,
+      hits: cur.hits,
+      accuracy: cur.accuracy,
+    });
+
     animationFrameRef.current = requestAnimationFrame(loop);
   }, [updateFish, getImg]);
 
@@ -204,6 +215,8 @@ export default function useZombiefishEngine() {
     cur.timer = GAME_TIME;
     cur.shots = 0;
     cur.hits = 0;
+    cur.accuracy = 0;
+
     frameRef.current = 0;
     textLabels.current = [
       newTextLabel(
@@ -218,7 +231,8 @@ export default function useZombiefishEngine() {
         assetMgr
       ),
     ];
-    setUI({ phase: cur.phase, timer: cur.timer, shots: cur.shots, hits: cur.hits });
+    setUI({ phase: cur.phase, timer: cur.timer, shots: cur.shots, hits: cur.hits, accuracy: cur.accuracy });
+
     if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
     animationFrameRef.current = requestAnimationFrame(loop);
   }, [loop, assetMgr]);
@@ -233,7 +247,14 @@ export default function useZombiefishEngine() {
       cur.shots += 1;
       const canvas = canvasRef.current;
       if (!canvas) {
-        setUI({ phase: cur.phase, timer: cur.timer, shots: cur.shots, hits: cur.hits });
+        cur.accuracy = cur.shots > 0 ? (cur.hits / cur.shots) * 100 : 0;
+        setUI({
+          phase: cur.phase,
+          timer: cur.timer,
+          shots: cur.shots,
+          hits: cur.hits,
+          accuracy: cur.accuracy,
+        });
         return;
       }
 
@@ -277,11 +298,13 @@ export default function useZombiefishEngine() {
         }
       }
 
+      cur.accuracy = cur.shots > 0 ? (cur.hits / cur.shots) * 100 : 0;
       setUI({
         phase: cur.phase,
         timer: cur.timer,
         shots: cur.shots,
         hits: cur.hits,
+        accuracy: cur.accuracy,
       });
     },
     [killSfx, makeText]
@@ -299,10 +322,19 @@ export default function useZombiefishEngine() {
     cur.timer = GAME_TIME;
     cur.shots = 0;
     cur.hits = 0;
+    cur.accuracy = 0;
     cur.fish = [];
+
     textLabels.current = [];
     frameRef.current = 0;
-    setUI({ phase: cur.phase, timer: cur.timer, shots: cur.shots, hits: cur.hits });
+
+    setUI({
+      phase: cur.phase,
+      timer: cur.timer,
+      shots: cur.shots,
+      hits: cur.hits,
+      accuracy: cur.accuracy,
+    });
     if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
   }, []);
 

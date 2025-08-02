@@ -27,7 +27,7 @@ export function GameUI({
   handleContext,
   resetGame,
 }: GameUIProps) {
-  const { phase, timer, shots, hits } = ui;
+  const { phase, timer, shots, hits, accuracy } = ui;
 
   return (
     <Box position="relative" width="100vw" height="100dvh">
@@ -61,10 +61,12 @@ export function GameUI({
             color: "white",
             fontSize: 48,
             cursor: "pointer",
+            textAlign: "center",
           }}
           onClick={resetGame}
         >
-          Game Over
+          <div>Game Over</div>
+          <div style={{ fontSize: 24 }}>Accuracy: {accuracy.toFixed(0)}%</div>
         </Box>
       )}
     </Box>

@@ -31,6 +31,8 @@ export interface GameUIState {
   shots: number;
   /** Total number of successful hits */
   hits: number;
+  /** Hit accuracy percentage */
+  accuracy: number;
 }
 
 // Internal game state tracked by the engine
