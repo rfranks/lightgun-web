@@ -196,6 +196,16 @@ export function GameUI({
         ref={canvasRef}
         onClick={handleClick}
         onContextMenu={handleContext}
+        onTouchStart={(e) => {
+          e.preventDefault();
+          const touch = e.touches[0];
+          handleClick(
+            {
+              clientX: touch.clientX,
+              clientY: touch.clientY,
+            } as unknown as React.MouseEvent<HTMLCanvasElement>
+          );
+        }}
         style={{
           display: "block",
           width: "100%",
