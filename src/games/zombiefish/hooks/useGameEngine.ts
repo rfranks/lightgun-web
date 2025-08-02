@@ -686,6 +686,23 @@ export default function useGameEngine() {
         ctx.translate(f.x + FISH_SIZE / 2, f.y + FISH_SIZE / 2);
         if (f.vx < 0) ctx.scale(-1, 1);
         ctx.rotate(f.angle);
+        if (f.highlight) {
+          const fishImgs = getImg("fishImgs") as Record<string, HTMLImageElement>;
+          const outline = fishImgs[
+            `${f.kind}_outline` as keyof typeof fishImgs
+          ];
+          if (outline) {
+            ctx.globalAlpha = (Math.sin(frameRef.current / 10) + 1) / 2;
+            ctx.drawImage(
+              outline,
+              -FISH_SIZE / 2,
+              -FISH_SIZE / 2,
+              FISH_SIZE,
+              FISH_SIZE
+            );
+            ctx.globalAlpha = 1;
+          }
+        }
         ctx.drawImage(
           img,
           -FISH_SIZE / 2,
@@ -1180,8 +1197,9 @@ export default function useGameEngine() {
 
     const specialSingles = ["brown", "grey_long_a", "grey_long_b"];
     const specialPairs = ["grey_long"];
+    const isSpecial = specialSingles.includes(kind) || specialPairs.includes(kind);
 
-    if (specialSingles.includes(kind) || specialPairs.includes(kind)) count = 1;
+    if (isSpecial) count = 1;
     count = Math.min(count, MAX_SCHOOL_SIZE);
 
     // decide spawning edge
@@ -1262,7 +1280,7 @@ export default function useGameEngine() {
             pairId,
             frame: 0,
             frameCounter: 0,
-            highlight: true,
+            highlight: isSpecial,
           } as Fish);
         });
       } else {
@@ -1285,7 +1303,7 @@ export default function useGameEngine() {
             pairId,
             frame: 0,
             frameCounter: 0,
-            highlight: true,
+            highlight: isSpecial,
           } as Fish);
         });
       }
@@ -1300,18 +1318,10 @@ export default function useGameEngine() {
 
       if (groupId === undefined) {
         for (let i = 0; i < count; i++) {
-          spawned.push(
-            makeFish(kind, x, y, groupId, specialSingles.includes(kind))
-          );
+          spawned.push(makeFish(kind, x, y, groupId, isSpecial));
         }
       } else {
-        const leader = makeFish(
-          kind,
-          x,
-          y,
-          groupId,
-          specialSingles.includes(kind)
-        );
+        const leader = makeFish(kind, x, y, groupId, isSpecial);
         spawned.push(leader);
         const existingPositions: Fish[] = [...state.current.fish, leader];
         const overlaps = (nx: number, ny: number) =>
