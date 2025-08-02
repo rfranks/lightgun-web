@@ -76,6 +76,76 @@ export default function useGameEngine() {
     [getImg]
   );
 
+  const drawBackground = useCallback(
+    (ctx: CanvasRenderingContext2D) => {
+      const { width, height } = state.current.dims;
+
+      const waterImgs = getImg("terrainWaterImgs") as
+        | Record<string, HTMLImageElement>
+        | undefined;
+      const water = waterImgs?.water_terrain;
+      if (water) {
+        for (let x = 0; x < width; x += water.width) {
+          for (let y = 0; y < height; y += water.height) {
+            ctx.drawImage(water, x, y);
+          }
+        }
+      } else {
+        ctx.fillStyle = "#1d8fde";
+        ctx.fillRect(0, 0, width, height);
+      }
+
+      const sandImgs = getImg("terrainSandImgs") as
+        | Record<string, HTMLImageElement>
+        | undefined;
+      const sand = sandImgs?.terrain_sand_a;
+      const sandTop = sandImgs?.terrain_sand_top_a;
+      let groundY = height;
+      if (sand) {
+        groundY = height - sand.height;
+        for (let x = 0; x < width; x += sand.width) {
+          ctx.drawImage(sand, x, groundY);
+        }
+      } else {
+        groundY = height - 64;
+        ctx.fillStyle = "#c2b280";
+        ctx.fillRect(0, groundY, width, 64);
+      }
+      if (sandTop) {
+        const y = groundY - sandTop.height;
+        for (let x = 0; x < width; x += sandTop.width) {
+          ctx.drawImage(sandTop, x, y);
+        }
+      }
+
+      const rockImgs = getImg("rockImgs") as
+        | Record<string, HTMLImageElement>
+        | undefined;
+      if (rockImgs) {
+        const rA = rockImgs.background_rock_a;
+        const rB = rockImgs.background_rock_b;
+        if (rA) ctx.drawImage(rA, width * 0.1, groundY - rA.height);
+        if (rB) ctx.drawImage(rB, width * 0.7, groundY - rB.height);
+      }
+
+      const seaweedImgs = getImg("seaweedImgs") as
+        | Record<string, HTMLImageElement>
+        | undefined;
+      if (seaweedImgs) {
+        const bottom = groundY;
+        const sw = [
+          { img: seaweedImgs.background_seaweed_a, x: width * 0.2 },
+          { img: seaweedImgs.background_seaweed_c, x: width * 0.5 },
+          { img: seaweedImgs.background_seaweed_e, x: width * 0.8 },
+        ];
+        sw.forEach(({ img, x }) => {
+          if (img) ctx.drawImage(img, x, bottom - img.height);
+        });
+      }
+    },
+    [getImg]
+  );
+
   const updateFish = useCallback(() => {
     const cur = state.current;
 
@@ -257,6 +327,8 @@ export default function useGameEngine() {
       }
     }
 
+    drawBackground(ctx);
+
     cur.fish.forEach((f) => {
       const imgMap = getImg(
         f.isSkeleton ? "skeletonImgs" : "fishImgs"
@@ -293,6 +365,8 @@ export default function useGameEngine() {
       canvas.width = cur.dims.width;
       canvas.height = cur.dims.height;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      drawBackground(ctx);
 
       cur.fish.forEach((f) => {
         const imgMap = getImg(
