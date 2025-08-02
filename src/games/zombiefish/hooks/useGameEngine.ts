@@ -442,7 +442,8 @@ export default function useGameEngine() {
     // skeleton behavior
     const immuneKinds = new Set(["brown", "grey_long_a", "grey_long_b"]);
     const skeletonSpeed = SKELETON_SPEED + cur.conversions * 0.05;
-    let skeletonCount = cur.fish.filter((f) => f.isSkeleton).length;
+    let skeletonCount = cur.fish.filter((f) => f.isSkeleton || f.pendingSkeleton)
+      .length;
     cur.fish.forEach((s) => {
       if (!s.isSkeleton) return;
 
@@ -1377,7 +1378,7 @@ export default function useGameEngine() {
             audio.play("penalty");
           } else {
             const skeletonCount = cur.fish.filter(
-              (fish) => fish.isSkeleton
+              (fish) => fish.isSkeleton || fish.pendingSkeleton
             ).length;
             if (!f.isSkeleton) {
               if (Math.random() < 0.5 && skeletonCount < MAX_SKELETONS) {
@@ -1386,6 +1387,7 @@ export default function useGameEngine() {
                 f.hurtTimer = 0;
                 f.frame = 0;
                 f.frameCounter = 0;
+                delete f.groupId;
                 audio.play("skeleton");
               } else {
                 const [removed] = cur.fish.splice(i, 1);
@@ -1441,6 +1443,7 @@ export default function useGameEngine() {
 
   // spawn a group of fish just outside the viewport edges
   const spawnFish = useCallback((kind: string, count: number): Fish[] => {
+    if (kind === "skeleton") return [];
     const spawned: Fish[] = [];
     const { width, height } = state.current.dims;
     // keep school member velocity variance tied to the configured speed range
@@ -1510,9 +1513,9 @@ export default function useGameEngine() {
       f.frame = 0;
       f.frameCounter = 0;
       f.angle = 0;
-      f.health = k === "skeleton" ? 2 : 0;
+      f.health = 0;
       f.hurtTimer = 0;
-      f.isSkeleton = k === "skeleton";
+      f.isSkeleton = false;
       f.groupId = groupId;
       f.pairId = undefined;
       f.highlight = highlight ? true : undefined;
@@ -1541,9 +1544,9 @@ export default function useGameEngine() {
           f.vx = vx;
           f.vy = vy;
           f.angle = 0;
-          f.health = kind === "skeleton" ? 2 : 0;
+          f.health = 0;
           f.hurtTimer = 0;
-          f.isSkeleton = kind === "skeleton";
+          f.isSkeleton = false;
           f.groupId = groupId;
           f.pairId = pairId;
           f.frame = 0;
@@ -1567,9 +1570,9 @@ export default function useGameEngine() {
           f.vx = vx;
           f.vy = vy;
           f.angle = 0;
-          f.health = kind === "skeleton" ? 2 : 0;
+          f.health = 0;
           f.hurtTimer = 0;
-          f.isSkeleton = kind === "skeleton";
+          f.isSkeleton = false;
           f.groupId = groupId;
           f.pairId = pairId;
           f.frame = 0;
