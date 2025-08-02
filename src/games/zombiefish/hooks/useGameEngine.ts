@@ -553,8 +553,25 @@ export default function useGameEngine() {
       const groupId = specialSingles.includes(kind)
         ? undefined
         : nextGroupId.current++;
-      for (let i = 0; i < count; i++) {
-        spawned.push(makeFish(kind, 0, groupId));
+
+      if (groupId === undefined) {
+        for (let i = 0; i < count; i++) {
+          spawned.push(makeFish(kind, 0, groupId));
+        }
+      } else {
+        const leader = makeFish(kind, 0, groupId);
+        spawned.push(leader);
+        for (let i = 1; i < count; i++) {
+          const member = makeFish(kind, 0, groupId);
+          member.x = leader.x + (Math.random() - 0.5) * FISH_SIZE;
+          member.y = Math.min(
+            Math.max(leader.y + (Math.random() - 0.5) * FISH_SIZE, 0),
+            height
+          );
+          member.vx = leader.vx + (Math.random() - 0.5) * 0.5;
+          member.vy = (Math.random() - 0.5) * 0.5;
+          spawned.push(member);
+        }
       }
     }
 
