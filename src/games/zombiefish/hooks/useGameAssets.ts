@@ -88,6 +88,33 @@ export function useGameAssets(): {
       assetRefs.current.skeletonFrames = makeFrames(skeletonCoords);
       setReady(true);
     };
+    
+        // FISH IMAGES
+    const fishTypes = [
+      "blue",
+      "brown",
+      "brown_outline",
+      "green",
+      "grey",
+      "grey_long_a",
+      "grey_long_a_outline",
+      "grey_long_b",
+      "grey_long_b_outline",
+      "orange",
+      "pink",
+      "red",
+    ];
+    assetRefs.current.fishImgs = Object.fromEntries(
+      fishTypes.map((name) => [
+        name,
+        loadImg(`/assets/fish/PNG/Objects/Fish/fish_${name}.png`),
+      ])
+    );
+
+    // FLASH OVERLAY
+    assetRefs.current.fishFlashImg = loadImg(
+      "/assets/smoke/PNG/Flash/flash00.png"
+    );
 
     // OBJECTS
     assetRefs.current.bubbleImgs = build("Objects/Bubbles", [
@@ -104,6 +131,10 @@ export function useGameAssets(): {
       "rock_b",
       "rock_b_outline",
     ]);
+    assetRefs.current.rockBgImgs = [
+      assetRefs.current.rockImgs.background_rock_a,
+      assetRefs.current.rockImgs.background_rock_b,
+    ];
 
     assetRefs.current.seaGrassImgs = build("Objects/SeaGrass", [
       "seaweed_grass_a",
@@ -129,6 +160,9 @@ export function useGameAssets(): {
       seaweedNames.push(`seaweed_pink_${l}_outline`);
     });
     assetRefs.current.seaweedImgs = build("Objects/Seaweed", seaweedNames);
+    assetRefs.current.seaweedBgImgs = "abcdefgh"
+      .split("")
+      .map((l) => assetRefs.current.seaweedImgs[`background_seaweed_${l}`]);
 
     // TERRAIN
     const topLetters = "abcdefgh".split("");

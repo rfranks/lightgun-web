@@ -10,6 +10,7 @@ export interface GameUIProps {
   cursor: string;
   handleClick: (e: React.MouseEvent) => void;
   handleContext: (e: React.MouseEvent) => void;
+  handleMouseMove: (e: React.MouseEvent) => void;
 }
 
 // Minimal in-game UI
@@ -19,6 +20,7 @@ export function GameUI({
   cursor,
   handleClick,
   handleContext,
+  handleMouseMove,
 }: GameUIProps) {
   const { phase, cursor } = ui;
 
@@ -28,6 +30,17 @@ export function GameUI({
         ref={canvasRef}
         onClick={handleClick}
         onContextMenu={handleContext}
+        onTouchStart={(e) => {
+          e.preventDefault();
+          const touch = e.touches[0];
+          handleClick(
+            {
+              clientX: touch.clientX,
+              clientY: touch.clientY,
+            } as unknown as React.MouseEvent<HTMLCanvasElement>
+          );
+        }}
+        onMouseMove={handleMouseMove}
         style={{ display: "block", width: "100%", height: "100%", cursor }}
       />
       {phase === "gameover" && (
