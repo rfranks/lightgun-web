@@ -32,6 +32,7 @@ const BUBBLE_SIZE = 64;
 const ROCK_SPEED = 0.2;
 const SEAWEED_SPEED = 0.4;
 const MAX_BUBBLES = 20;
+const HURT_FRAMES = 10;
 
 export default function useGameEngine() {
   // canvas and animation frame refs
@@ -281,6 +282,7 @@ export default function useGameEngine() {
 
     // move fish with a slight oscillation and update their angle
     cur.fish.forEach((f) => {
+      if (f.hurtTimer && f.hurtTimer > 0) f.hurtTimer -= 1;
       const osc = Math.sin((frameRef.current + f.id) / 20) * 0.5;
       const vy = f.vy + osc;
       f.x += f.vx;
@@ -441,6 +443,10 @@ export default function useGameEngine() {
       if (f.vx < 0) ctx.scale(-1, 1);
       ctx.rotate(f.angle);
       ctx.drawImage(img, -FISH_SIZE / 2, -FISH_SIZE / 2, FISH_SIZE, FISH_SIZE);
+      if (f.hurtTimer && f.hurtTimer > 0) {
+        ctx.fillStyle = "rgba(255,0,0,0.5)";
+        ctx.fillRect(-FISH_SIZE / 2, -FISH_SIZE / 2, FISH_SIZE, FISH_SIZE);
+      }
       ctx.restore();
     });
 
@@ -510,6 +516,10 @@ export default function useGameEngine() {
           FISH_SIZE,
           FISH_SIZE
         );
+        if (f.hurtTimer && f.hurtTimer > 0) {
+          ctx.fillStyle = "rgba(255,0,0,0.5)";
+          ctx.fillRect(-FISH_SIZE / 2, -FISH_SIZE / 2, FISH_SIZE, FISH_SIZE);
+        }
         ctx.restore();
       });
 
@@ -826,6 +836,7 @@ export default function useGameEngine() {
                 cur.fish.splice(i, 1);
                 audio.play("death");
               } else {
+                f.hurtTimer = HURT_FRAMES;
                 audio.play("skeleton");
               }
             }
