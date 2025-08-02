@@ -6,12 +6,10 @@ import { drawTextLabels, newTextLabel } from "@/utils/ui";
 
 import type { GameState, GameUIState, Fish, Bubble } from "../types";
 import {
-  FISH_SPEED_MIN,
-  FISH_SPEED_MAX,
   SKELETON_SPEED,
   TIME_BONUS_BROWN_FISH,
   TIME_PENALTY_GREY_LONG,
-  DEFAULT_CURSOR, 
+  DEFAULT_CURSOR,
   SHOT_CURSOR
 } from "../constants";
 import type { AssetMgr } from "@/types/ui";
@@ -142,6 +140,8 @@ export default function useGameEngine() {
       if (rockImgs) {
         const rA = rockImgs.background_rock_a;
         const rB = rockImgs.background_rock_b;
+        // Rock positions roughly match the layout in
+        // public/assets/fish/Sample.png
         if (rA) ctx.drawImage(rA, width * 0.1, groundY - rA.height);
         if (rB) ctx.drawImage(rB, width * 0.7, groundY - rB.height);
       }
@@ -156,6 +156,8 @@ export default function useGameEngine() {
           { img: seaweedImgs.background_seaweed_c, x: width * 0.5 },
           { img: seaweedImgs.background_seaweed_e, x: width * 0.8 },
         ];
+        // Seaweed clusters are placed near the rocks as seen in
+        // public/assets/fish/Sample.png
         sw.forEach(({ img, x }) => {
           if (img) ctx.drawImage(img, x, bottom - img.height);
         });
