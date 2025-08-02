@@ -23,6 +23,10 @@ export function useGameAudio(): AudioMgr {
     const bonus = document.createElement("audio");
     bonus.src = withBasePath("/audio/powerUp8.ogg"); // special-fish bonus
     bonus.preload = "auto";
+
+    const penalty = document.createElement("audio");
+    penalty.src = withBasePath("/audio/error_004.ogg"); // special-fish penalty
+    penalty.preload = "auto";
     const skeleton = document.createElement("audio");
     skeleton.src = withBasePath("/audio/splash.ogg");
     skeleton.preload = "auto";
@@ -35,7 +39,7 @@ export function useGameAudio(): AudioMgr {
     convert.src = withBasePath("/audio/zap1.ogg");
     convert.preload = "auto";
 
-    return { shoot, hit, bonus, skeleton, death, convert };
+    return { shoot, hit, bonus, penalty, skeleton, death, convert };
   }, []);
 
   // Play a sound by key

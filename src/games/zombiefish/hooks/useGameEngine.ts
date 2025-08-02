@@ -6,8 +6,6 @@ import { drawTextLabels, newTextLabel } from "@/utils/ui";
 
 import type { GameState, GameUIState, Fish, Bubble } from "../types";
 import {
-  FISH_SPAWN_INTERVAL_MIN,
-  FISH_SPAWN_INTERVAL_MAX,
   SKELETON_SPEED,
   TIME_BONUS_BROWN_FISH,
   TIME_PENALTY_GREY_LONG,
@@ -690,7 +688,7 @@ export default function useGameEngine() {
             makeText(`-${TIME_PENALTY_GREY_LONG}`, f.x, f.y);
             const gid = f.groupId;
             cur.fish = cur.fish.filter((fish) => fish.groupId !== gid);
-            audio.play("hit");
+            audio.play("penalty");
           } else {
             if (!f.isSkeleton) {
               f.isSkeleton = true;
