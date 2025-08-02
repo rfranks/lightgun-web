@@ -466,16 +466,16 @@ export default function useGameEngine() {
             const gid = f.groupId;
             cur.fish = cur.fish.filter((fish) => fish.groupId !== gid);
             audio.play("hit");
-          } else if (f.isSkeleton) {
+          } else {
+            if (!f.isSkeleton) {
+              f.isSkeleton = true;
+              f.health = 2;
+            }
             f.health = (f.health ?? 0) - 1;
             audio.play("skeleton");
             if ((f.health ?? 0) <= 0) {
               cur.fish.splice(i, 1);
             }
-          } else {
-            f.isSkeleton = true;
-            f.health = 1;
-            audio.play("skeleton");
           }
           break;
         }
