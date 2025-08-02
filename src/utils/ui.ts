@@ -89,6 +89,7 @@ export function newTextLabel(
   > & {
     x?: number;
     y?: number;
+    py?: number;
     vy?: number;
     vs?: number;
     maxAge?: number;
@@ -98,7 +99,7 @@ export function newTextLabel(
   dims?: Dims
 ): TextLabel {
   // destructure properties from textLabelProps
-  const { text, scale, fixed, fade, x, y, vy, vs, maxAge, onClick, color } =
+  const { text, scale, fixed, fade, x, y, py, vy, vs, maxAge, onClick, color } =
     textLabelProps;
   let { spaceGap } = textLabelProps;
 
@@ -146,7 +147,8 @@ export function newTextLabel(
   });
   const posX =
     x ?? (dims?.width !== undefined ? (dims.width - totalWidth) / 2 : 0);
-  const posY = y ?? (dims?.height !== undefined ? dims.height * 0.2 : 0);
+  const posY =
+    (y ?? (dims?.height !== undefined ? dims.height * 0.2 : 0)) + (py ?? 0);
 
   const newLabel: TextLabel = {
     text,
@@ -156,6 +158,7 @@ export function newTextLabel(
     fade,
     x: posX,
     y: posY,
+    py: py ?? 0,
     vy: vy ?? 0,
     vs: vs ?? 0,
     age: 0,
