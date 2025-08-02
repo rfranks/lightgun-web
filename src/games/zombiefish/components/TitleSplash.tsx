@@ -28,7 +28,7 @@ export const TitleSplash: React.FC<TitleSplashProps> = ({
     canvas.height = window.innerHeight;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-    const best = Number(localStorage.bestAccuracy || 0);
+    const best = Number(localStorage.getItem("bestAccuracy") || 0);
     const assetMgr = { getImg } as AssetMgr;
     const lbl = newTextLabel(
       {
@@ -43,7 +43,8 @@ export const TitleSplash: React.FC<TitleSplashProps> = ({
     );
     const pctImg = getImg("pctImg") as HTMLImageElement;
     const digitImgs = getImg("digitImgs") as Record<string, HTMLImageElement>;
-    lbl.imgs = [...best.toString().split("").map((ch) => digitImgs[ch]), pctImg];
+    const digits = best.toString().split("").map((ch) => digitImgs[ch]);
+    lbl.imgs = [...digits, pctImg];
     drawTextLabels({ textLabels: [lbl], ctx });
   }, [getImg]);
 

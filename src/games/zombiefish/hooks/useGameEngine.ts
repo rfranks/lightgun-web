@@ -86,6 +86,12 @@ export default function useGameEngine() {
   const accuracyLabel = useRef<TextLabel | null>(null);
   const finalAccuracy = useRef(0);
   const displayAccuracy = useRef(0);
+  const updateBestAccuracy = (score: number) => {
+    const best = Number(localStorage.getItem("bestAccuracy") || 0);
+    if (score > best) {
+      localStorage.setItem("bestAccuracy", score.toString());
+    }
+  };
   const bestAccuracyLabel = useRef<TextLabel | null>(null);
   const timerLabel = useRef<TextLabel | null>(null);
   const shotsLabel = useRef<TextLabel | null>(null);
@@ -429,10 +435,7 @@ export default function useGameEngine() {
       if (cur.timer === 0) {
         cur.phase = "gameover";
         finalAccuracy.current = Math.round(cur.accuracy);
-        const best = Number(localStorage.bestAccuracy || 0);
-        if (finalAccuracy.current > best) {
-          localStorage.bestAccuracy = finalAccuracy.current.toString();
-        }
+        updateBestAccuracy(finalAccuracy.current);
         displayAccuracy.current = 0;
         audio.pause("bgm");
 
@@ -484,7 +487,7 @@ export default function useGameEngine() {
         gameoverHitsLabel.current = makeStat(`HITS ${cur.hits}`, baseY + 80);
       }
       if (!bestAccuracyLabel.current) {
-        const best = Number(localStorage.bestAccuracy || 0);
+        const best = Number(localStorage.getItem("bestAccuracy") || 0);
         const pctImg = getImg("pctImg") as HTMLImageElement;
         const digitImgs = getImg("digitImgs") as Record<
           string,
