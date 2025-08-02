@@ -1028,6 +1028,8 @@ export default function useGameEngine() {
   const spawnFish = useCallback((kind: string, count: number): Fish[] => {
     const spawned: Fish[] = [];
     const { width, height } = state.current.dims;
+    // keep school member velocity variance tied to the configured speed range
+    const speedVariance = (FISH_SPEED_MAX - FISH_SPEED_MIN) / 4;
 
     const specialSingles = ["brown", "grey_long_a", "grey_long_b"];
     const specialPairs = ["grey_long"];
@@ -1181,8 +1183,8 @@ export default function useGameEngine() {
           }
           member.x = Math.min(Math.max(mx, 0), width - FISH_SIZE);
           member.y = my;
-          member.vx = leader.vx + (Math.random() - 0.5) * 0.5;
-          member.vy = (Math.random() - 0.5) * 0.5;
+          member.vx = leader.vx + (Math.random() - 0.5) * speedVariance;
+          member.vy = leader.vy + (Math.random() - 0.5) * speedVariance;
           spawned.push(member);
           existingPositions.push(member);
         }
