@@ -15,7 +15,6 @@ export default function Game() {
     canvasRef,
     handleClick,
     handleContext,
-    getImg,
     startSplash,
     ready: assetsReady,
   } = engine;
@@ -53,11 +52,9 @@ export default function Game() {
 
   return (
     <GameUI
-      ui={ui}
       canvasRef={canvasRef}
       handleClick={handleClick}
       handleContext={handleContext}
-      getImg={getImg}
     />
   );
 }
