@@ -32,6 +32,7 @@ const BUBBLE_SIZE = 64;
 const ROCK_SPEED = 0.2;
 const SEAWEED_SPEED = 0.4;
 const MAX_BUBBLES = 20;
+const CONVERT_FLASH_FRAMES = 5;
 
 export default function useGameEngine() {
   // canvas and animation frame refs
@@ -203,6 +204,19 @@ export default function useGameEngine() {
   const updateFish = useCallback(() => {
     const cur = state.current;
 
+    // handle conversion flashes
+    cur.fish.forEach((f) => {
+      if (f.pendingSkeleton) {
+        f.flashTimer = (f.flashTimer || 0) - 1;
+        if (f.flashTimer <= 0) {
+          f.isSkeleton = true;
+          f.health = 2;
+          f.pendingSkeleton = undefined;
+          f.flashTimer = undefined;
+        }
+      }
+    });
+
     // For each group, nudge members toward the group's average velocity.
     const groups: Record<number, { vx: number; vy: number; members: Fish[] }> =
       {};
@@ -258,12 +272,13 @@ export default function useGameEngine() {
         }
         if (
           dist < SKELETON_CONVERT_DISTANCE &&
-          !immuneKinds.has(nearest.kind)
+          !immuneKinds.has(nearest.kind) &&
+          !nearest.pendingSkeleton
         ) {
           // Spawn a brief text effect before converting the fish
           makeText("POOF", nearest.x, nearest.y);
-          nearest.isSkeleton = true;
-          nearest.health = 2;
+          nearest.pendingSkeleton = true;
+          nearest.flashTimer = CONVERT_FLASH_FRAMES;
           nearest.vx = 0;
           nearest.vy = 0;
           delete nearest.groupId;
@@ -446,6 +461,20 @@ export default function useGameEngine() {
       if (f.vx < 0) ctx.scale(-1, 1);
       ctx.rotate(f.angle);
       ctx.drawImage(img, -FISH_SIZE / 2, -FISH_SIZE / 2, FISH_SIZE, FISH_SIZE);
+      if (f.flashTimer && f.flashTimer > 0) {
+        const overlay = getImg("fishFlashImg") as HTMLImageElement;
+        if (overlay) {
+          ctx.globalAlpha = f.flashTimer / CONVERT_FLASH_FRAMES;
+          ctx.drawImage(
+            overlay,
+            -FISH_SIZE / 2,
+            -FISH_SIZE / 2,
+            FISH_SIZE,
+            FISH_SIZE
+          );
+          ctx.globalAlpha = 1;
+        }
+      }
       ctx.restore();
     });
 

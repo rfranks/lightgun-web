@@ -65,6 +65,11 @@ export function useGameAssets(): {
       ])
     );
 
+    // FLASH OVERLAY
+    assetRefs.current.fishFlashImg = loadImg(
+      "/assets/smoke/PNG/Flash/flash00.png"
+    );
+
     // OBJECTS
     assetRefs.current.bubbleImgs = build("Objects/Bubbles", [
       "bubble_a",
