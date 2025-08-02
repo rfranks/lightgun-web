@@ -489,7 +489,7 @@ export default function useGameEngine() {
           nearest.frameCounter = 0;
           delete nearest.groupId;
           cur.conversions += 1;
-          audio.play("convert");
+          audio.play("skeletonConvert");
           skeletonCount += 1;
         }
       }
@@ -642,7 +642,7 @@ export default function useGameEngine() {
         audio.play("tick");
         updateDigitLabel(timerLabel.current, cur.timer, 2, ":");
         if (cur.timer === 10 && !cur.warningPlayed) {
-          audio.play("warning");
+          audio.play("tenSecondWarning");
           cur.warningPlayed = true;
         }
       }
@@ -655,6 +655,7 @@ export default function useGameEngine() {
         updateBestAccuracy(finalAccuracy.current);
         displayAccuracy.current = 0;
         audio.pause("bgm");
+        audio.play("gameover");
 
         // create accuracy label
         const pctImg = getImg("pctImg") as HTMLImageElement;
@@ -1288,7 +1289,7 @@ export default function useGameEngine() {
 
       cur.shots += 1;
       updateDigitLabel(shotsLabel.current, cur.shots);
-      audio.play("shoot");
+      audio.play("shot");
 
       // check bubbles first so they are popped before fish hits
       for (let i = cur.bubbles.length - 1; i >= 0; i--) {
@@ -1329,7 +1330,7 @@ export default function useGameEngine() {
           cur.hits += 1;
           cur.hitCounts[f.kind] = (cur.hitCounts[f.kind] || 0) + 1;
           updateDigitLabel(hitsLabel.current, cur.hits);
-          audio.play("hit");
+          audio.play("fishHit");
           hit = true;
           const scoreMap: Record<string, number> = {
             brown: 50,
@@ -1346,7 +1347,7 @@ export default function useGameEngine() {
             makeText("+3", f.x, f.y, "#0f0");
             const [removed] = cur.fish.splice(i, 1);
             if (removed) inactiveFish.current.push(removed);
-            audio.play("bonus");
+            audio.play("specialBonus");
           } else if (f.kind === "grey_long_a" || f.kind === "grey_long_b") {
             cur.timer += TIME_BONUS_GREY_LONG;
             updateDigitLabel(timerLabel.current, cur.timer, 2, ":");
@@ -1360,7 +1361,7 @@ export default function useGameEngine() {
               const [removed] = cur.fish.splice(i, 1);
               if (removed) inactiveFish.current.push(removed);
             }
-            audio.play("bonus");
+            audio.play("specialBonus");
           } else {
             const skeletonCount = cur.fish.filter(
               (fish) => fish.isSkeleton || fish.pendingSkeleton

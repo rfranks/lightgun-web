@@ -12,17 +12,17 @@ export function useGameAudio(): AudioMgr {
     if (typeof Audio === "undefined")
       return {} as Record<string, HTMLAudioElement>;
 
-    const shoot = document.createElement("audio");
-    shoot.src = withBasePath("/audio/laser4.ogg");
-    shoot.preload = "auto";
+    const shot = document.createElement("audio");
+    shot.src = withBasePath("/audio/laser4.ogg");
+    shot.preload = "auto";
 
-    const hit = document.createElement("audio");
-    hit.src = withBasePath("/audio/laser9.ogg");
-    hit.preload = "auto";
+    const fishHit = document.createElement("audio");
+    fishHit.src = withBasePath("/audio/laser9.ogg");
+    fishHit.preload = "auto";
 
-    const bonus = document.createElement("audio");
-    bonus.src = withBasePath("/audio/powerUp8.ogg"); // special-fish bonus
-    bonus.preload = "auto";
+    const specialBonus = document.createElement("audio");
+    specialBonus.src = withBasePath("/audio/powerUp8.ogg"); // special-fish bonus
+    specialBonus.preload = "auto";
 
     const penalty = document.createElement("audio");
     penalty.src = withBasePath("/audio/error_004.ogg"); // special-fish penalty
@@ -35,9 +35,9 @@ export function useGameAudio(): AudioMgr {
     death.src = withBasePath("/audio/lowDown.ogg");
     death.preload = "auto";
 
-    const convert = document.createElement("audio");
-    convert.src = withBasePath("/audio/zap1.ogg");
-    convert.preload = "auto";
+    const skeletonConvert = document.createElement("audio");
+    skeletonConvert.src = withBasePath("/audio/zap1.ogg");
+    skeletonConvert.preload = "auto";
 
     const pop = document.createElement("audio");
     pop.src = withBasePath("/audio/glass_001.ogg");
@@ -52,21 +52,26 @@ export function useGameAudio(): AudioMgr {
     tick.src = withBasePath("/audio/tick_002.ogg");
     tick.preload = "auto";
 
-    const warning = document.createElement("audio");
-    warning.src = withBasePath("/audio/warning.ogg");
-    warning.preload = "auto";
+    const tenSecondWarning = document.createElement("audio");
+    tenSecondWarning.src = withBasePath("/audio/warning.ogg");
+    tenSecondWarning.preload = "auto";
+
+    const gameover = document.createElement("audio");
+    gameover.src = withBasePath("/audio/error_005.ogg");
+    gameover.preload = "auto";
 
     return {
-      shoot,
-      hit,
-      bonus,
+      shot,
+      fishHit,
+      specialBonus,
       penalty,
       skeleton,
       death,
-      convert,
+      skeletonConvert,
       pop,
       tick,
-      warning,
+      tenSecondWarning,
+      gameover,
       bgm,
     };
   }, []);
