@@ -653,7 +653,7 @@ export default function useGameEngine() {
         frameRef.current = 0;
         cur.timer = Math.max(0, cur.timer - 1);
         audio.play("tick");
-        updateDigitLabel(timerLabel.current, cur.timer, 2, ":");
+        updateDigitLabel(timerLabel.current, cur.timer, 2);
         if (cur.timer === 10 && !cur.warningPlayed) {
           audio.play("warning");
           cur.warningPlayed = true;
@@ -1008,7 +1008,7 @@ export default function useGameEngine() {
 
     const timer = newTextLabel(
       {
-        text: `${cur.timer.toString().padStart(2, "0")}:`,
+        text: `${cur.timer.toString().padStart(2, "0")}`,
         scale: 1,
         fixed: true,
         fade: false,
@@ -1018,7 +1018,7 @@ export default function useGameEngine() {
       },
       assetMgr
     );
-    updateDigitLabel(timer, cur.timer, 2, ":");
+    updateDigitLabel(timer, cur.timer, 2);
     timer.x = (cur.dims.width - labelWidth(timer)) / 2;
     timerLabel.current = timer;
     timeTextBounds.current = {
@@ -1399,14 +1399,14 @@ export default function useGameEngine() {
           updateDigitLabel(scoreLabel.current, cur.score);
           if (f.kind === "brown") {
             cur.timer += TIME_BONUS_BROWN_FISH;
-            updateDigitLabel(timerLabel.current, cur.timer, 2, ":");
+            updateDigitLabel(timerLabel.current, cur.timer, 2);
             makeText(`+${TIME_BONUS_BROWN_FISH}`, f.x, f.y, "#0f0");
             const [removed] = cur.fish.splice(i, 1);
             if (removed) inactiveFish.current.push(removed);
             audio.play("bonus");
           } else if (f.kind === "grey_long_a" || f.kind === "grey_long_b") {
             cur.timer += TIME_BONUS_GREY_LONG;
-            updateDigitLabel(timerLabel.current, cur.timer, 2, ":");
+            updateDigitLabel(timerLabel.current, cur.timer, 2);
             makeText(`+${TIME_BONUS_GREY_LONG}`, f.x, f.y, "#f00");
             const pid = f.pairId;
             if (pid !== undefined) {
