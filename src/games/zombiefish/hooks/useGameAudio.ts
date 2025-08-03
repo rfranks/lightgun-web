@@ -43,10 +43,7 @@ export function useGameAudio(): AudioMgr {
 
   // Play a sound by key
   const play = useCallback(
-    (
-      key: string,
-      options?: { loop?: boolean; volume?: number }
-    ) => {
+    (key: string, options?: { loop?: boolean; volume?: number }) => {
       const audio = audios[key];
       if (audio) {
         if (options?.loop !== undefined) audio.loop = options.loop;
@@ -73,7 +70,7 @@ export function useGameAudio(): AudioMgr {
   const seqRef = useRef<{
     current?: HTMLAudioElement;
     handler?: () => void;
-  }>();
+  }>({ current: undefined, handler: undefined });
 
   const pauseAll = useCallback(() => {
     Object.values(audios).forEach((audio) => audio.pause());
@@ -81,7 +78,7 @@ export function useGameAudio(): AudioMgr {
     if (seq?.current && seq.handler) {
       seq.current.removeEventListener("ended", seq.handler);
     }
-    seqRef.current = undefined;
+    seqRef.current = { current: undefined, handler: undefined };
   }, [audios]);
 
   const playSequence = useCallback(
@@ -101,7 +98,7 @@ export function useGameAudio(): AudioMgr {
             if (options?.loop) {
               index = 0;
             } else {
-              seqRef.current = undefined;
+              seqRef.current = { current: undefined, handler: undefined };
               return;
             }
           }
