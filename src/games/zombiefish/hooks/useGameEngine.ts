@@ -466,7 +466,7 @@ export default function useGameEngine() {
       // synchronize vertical velocity
       b.vy = a.vy;
       // small corrective horizontal velocity to maintain spacing
-      const sign = b.x >= a.x ? 1 : -1;
+      const sign = a.vx >= 0 ? 1 : -1;
       const desiredX = a.x + FISH_SIZE * sign;
       const dx = desiredX - b.x;
       b.vx += dx * 0.05;
