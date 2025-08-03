@@ -66,9 +66,6 @@ const BUBBLE_VX_MAX = 0.5;
 const BUBBLE_VY_MIN = -1.5;
 const BUBBLE_VY_MAX = -0.5;
 const SURFACE_SPEED = [0.05, 0.1];
-const ROCK_SPEED = [0.1, 0.2];
-const SEAWEED_SPEED = [0.2, 0.4];
-const SEAGRASS_SPEED = [0.3, 0.6];
 const MAX_BUBBLES = 20;
 const HURT_FRAMES = 10;
 const CONVERT_FLASH_FRAMES = 5;
@@ -143,14 +140,16 @@ export default function useGameEngine() {
   const frameRef = useRef(0); // track frames for one-second ticks
   const fishSpawnTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const surfaceOffsets = useRef<number[]>(SURFACE_SPEED.map(() => 0));
-  const rockOffsets = useRef<number[]>(ROCK_SPEED.map(() => 0));
-  const seaweedOffsets = useRef<number[]>(SEAWEED_SPEED.map(() => 0));
-  const seaGrassOffsets = useRef<number[]>(SEAGRASS_SPEED.map(() => 0));
   const terrainPattern = useRef<{
     tiles: number;
     sandSeq: string[];
     topSeq: string[];
-    objects: { img: HTMLImageElement; x: number }[];
+    objects: {
+      imgs: HTMLImageElement[];
+      x: number;
+      swaySpeed: number;
+      swayOffset: number;
+    }[];
   }>({ tiles: 0, sandSeq: [], topSeq: [], objects: [] });
   const accuracyLabel = useRef<TextLabel | null>(null);
   const accuracyStatLabel = useRef<TextLabel | null>(null);
@@ -295,9 +294,6 @@ export default function useGameEngine() {
           terrainPattern.current.sandSeq = [];
           terrainPattern.current.topSeq = [];
           terrainPattern.current.objects = [];
-          const rockImgs = getImg("rockImgs") as
-            | Record<string, HTMLImageElement>
-            | undefined;
           const seaweedImgs = getImg("seaweedImgs") as
             | Record<string, HTMLImageElement>
             | undefined;
@@ -312,36 +308,38 @@ export default function useGameEngine() {
               topOpts[(start + i) % topOpts.length]
             );
             if (Math.random() < 0.3) {
-              const objs: HTMLImageElement[] = [];
-              if (rockImgs) {
-                if (rockImgs.rock_a) objs.push(rockImgs.rock_a);
-                if (rockImgs.rock_b) objs.push(rockImgs.rock_b);
-              }
+              const groups: HTMLImageElement[][] = [];
               if (seaweedImgs) {
-                [
-                  "seaweed_green_a",
-                  "seaweed_green_b",
-                  "seaweed_green_c",
-                  "seaweed_green_d",
-                  "seaweed_orange_a",
-                  "seaweed_orange_b",
-                  "seaweed_pink_a",
-                  "seaweed_pink_b",
-                  "seaweed_pink_c",
-                  "seaweed_pink_d",
-                ].forEach((n) => {
-                  if (seaweedImgs && seaweedImgs[n]) objs.push(seaweedImgs[n]);
+                const colors = ["green", "orange", "pink"];
+                colors.forEach((color) => {
+                  const arr: HTMLImageElement[] = [];
+                  ["a", "b", "c", "d"].forEach((l) => {
+                    const base = `seaweed_${color}_${l}`;
+                    if (seaweedImgs[base]) arr.push(seaweedImgs[base]);
+                    const outline = `${base}_outline`;
+                    if (seaweedImgs[outline]) arr.push(seaweedImgs[outline]);
+                  });
+                  if (arr.length) groups.push(arr);
                 });
               }
               if (seaGrassImgs) {
-                if (seaGrassImgs.seaweed_grass_a)
-                  objs.push(seaGrassImgs.seaweed_grass_a);
-                if (seaGrassImgs.seaweed_grass_b)
-                  objs.push(seaGrassImgs.seaweed_grass_b);
+                const arr: HTMLImageElement[] = [];
+                ["a", "b"].forEach((l) => {
+                  const base = `seaweed_grass_${l}`;
+                  if (seaGrassImgs[base]) arr.push(seaGrassImgs[base]);
+                  const outline = `${base}_outline`;
+                  if (seaGrassImgs[outline]) arr.push(seaGrassImgs[outline]);
+                });
+                if (arr.length) groups.push(arr);
               }
-              if (objs.length) {
-                const img = objs[Math.floor(Math.random() * objs.length)];
-                terrainPattern.current.objects.push({ img, x: i * tileW });
+              if (groups.length) {
+                const imgs = groups[Math.floor(Math.random() * groups.length)];
+                terrainPattern.current.objects.push({
+                  imgs,
+                  x: i * tileW,
+                  swaySpeed: 0.02 + Math.random() * 0.03,
+                  swayOffset: Math.random() * Math.PI * 2,
+                });
               }
             }
           }
@@ -356,82 +354,28 @@ export default function useGameEngine() {
           const img = sandImgs[`terrain_sand_top_${l}`];
           if (img) ctx.drawImage(img, idx * tileW, topY);
         });
-        terrainPattern.current.objects.forEach(({ img, x }) => {
-          const y = groundY - img.height;
-          ctx.drawImage(img, x, y);
-        });
+        terrainPattern.current.objects.forEach(
+          ({ imgs, x, swaySpeed, swayOffset }) => {
+            if (!imgs.length) return;
+            const phase = frameRef.current * swaySpeed + swayOffset;
+            const imgIdx = Math.floor(
+              ((Math.sin(phase) + 1) / 2) * imgs.length
+            );
+            const img = imgs[Math.min(imgIdx, imgs.length - 1)];
+            const scaleX = 1 + 0.1 * Math.abs(Math.sin(phase));
+            const flip = Math.sin(phase) < 0 ? -1 : 1;
+            const baseY = groundY;
+            ctx.save();
+            ctx.translate(x + img.width / 2, baseY);
+            ctx.scale(flip * scaleX, 1);
+            ctx.drawImage(img, -img.width / 2, -img.height);
+            ctx.restore();
+          }
+        );
       } else {
         groundY = height - 64;
         ctx.fillStyle = "#c2b280";
         ctx.fillRect(0, groundY, width, 64);
-      }
-
-      // --- Seaweed -------------------------------------------------------
-      // Parallax scrolling background seaweed from Objects/Seaweed.
-      const seaweedBgImgs = getImg("seaweedBgImgs") as
-        | HTMLImageElement[]
-        | undefined;
-      if (seaweedBgImgs && seaweedBgImgs.length) {
-        const bottom = groundY;
-        const groupWidth = seaweedBgImgs[0].width * seaweedBgImgs.length;
-        SEAWEED_SPEED.forEach((speed, i) => {
-          seaweedOffsets.current[i] =
-            (seaweedOffsets.current[i] - speed) % groupWidth;
-        });
-        for (let i = 0; i < SEAWEED_SPEED.length; i++) {
-          const offset = seaweedOffsets.current[i];
-          for (let x = -groupWidth; x < width + groupWidth; x += groupWidth) {
-            seaweedBgImgs.forEach((img, idx) => {
-              if (!img) return;
-              const y = bottom - img.height;
-              ctx.drawImage(img, x + offset + idx * seaweedBgImgs[0].width, y);
-            });
-          }
-        }
-      }
-
-      // --- Rocks ---------------------------------------------------------
-      // Parallax scrolling background rocks from Objects/Rocks.
-      const rockBgImgs = getImg("rockBgImgs") as HTMLImageElement[] | undefined;
-      if (rockBgImgs && rockBgImgs.length) {
-        const groupWidth = rockBgImgs[0].width * rockBgImgs.length;
-        ROCK_SPEED.forEach((speed, i) => {
-          rockOffsets.current[i] =
-            (rockOffsets.current[i] - speed) % groupWidth;
-        });
-        for (let i = 0; i < ROCK_SPEED.length; i++) {
-          const offset = rockOffsets.current[i];
-          const y = groundY - rockBgImgs[0].height;
-          for (let x = -groupWidth; x < width + groupWidth; x += groupWidth) {
-            rockBgImgs.forEach((img, idx) => {
-              if (!img) return;
-              ctx.drawImage(img, x + offset + idx * rockBgImgs[0].width, y);
-            });
-          }
-        }
-      }
-
-      // --- Foreground Sea Grass -----------------------------------------
-      // Parallax scrolling foreground sea grass from Objects/SeaGrass.
-      const seaGrassImgs = getImg("seaGrassFgImgs") as
-        | HTMLImageElement[]
-        | undefined;
-      if (seaGrassImgs && seaGrassImgs.length) {
-        const groupWidth = seaGrassImgs[0].width * seaGrassImgs.length;
-        SEAGRASS_SPEED.forEach((speed, i) => {
-          seaGrassOffsets.current[i] =
-            (seaGrassOffsets.current[i] - speed) % groupWidth;
-        });
-        for (let i = 0; i < SEAGRASS_SPEED.length; i++) {
-          const offset = seaGrassOffsets.current[i];
-          const y = groundY - seaGrassImgs[0].height;
-          for (let x = -groupWidth; x < width + groupWidth; x += groupWidth) {
-            seaGrassImgs.forEach((img, idx) => {
-              if (!img) return;
-              ctx.drawImage(img, x + offset + idx * seaGrassImgs[0].width, y);
-            });
-          }
-        }
       }
     },
     [getImg]
@@ -1069,9 +1013,6 @@ export default function useGameEngine() {
     finalAccuracy.current = 0;
     displayAccuracy.current = 0;
     surfaceOffsets.current.fill(0);
-    rockOffsets.current.fill(0);
-    seaweedOffsets.current.fill(0);
-    seaGrassOffsets.current.fill(0);
     terrainPattern.current = {
       tiles: 0,
       sandSeq: [],
@@ -1235,9 +1176,6 @@ export default function useGameEngine() {
     nextPairId.current = 1;
     nextBubbleId.current = 1;
     surfaceOffsets.current.fill(0);
-    rockOffsets.current.fill(0);
-    seaweedOffsets.current.fill(0);
-    seaGrassOffsets.current.fill(0);
     terrainPattern.current = {
       tiles: 0,
       sandSeq: [],
