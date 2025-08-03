@@ -1453,11 +1453,11 @@ export default function useGameEngine() {
     count = Math.min(count, MAX_SCHOOL_SIZE);
 
     // decide spawning edge with a bias toward left/right entrances
-    const edges = [0, 0, 0, 1, 1, 1, 2, 3];
-    const edge = edges[Math.floor(Math.random() * edges.length)]; // 0:left,1:right,2:top,3:bottom
-    const startX = edge === 0 ? -FISH_SIZE : edge === 1 ? width + FISH_SIZE : 0;
-    const startY =
-      edge === 2 ? -FISH_SIZE : edge === 3 ? height + FISH_SIZE : 0;
+    // omit top/bottom edges to avoid vertically swimming fish
+    const edges = [0, 0, 0, 1, 1, 1];
+    const edge = edges[Math.floor(Math.random() * edges.length)]; // 0:left,1:right
+    const startX = edge === 0 ? -FISH_SIZE : width + FISH_SIZE;
+    const startY = 0;
 
     // generate a velocity based on the entry edge
     const genVelocity = () => {
@@ -1467,24 +1467,12 @@ export default function useGameEngine() {
       const cross = (Math.random() * range - range / 2) * factor;
       let vx: number;
       let vy: number;
-      switch (edge) {
-        case 0:
-          vx = main;
-          vy = cross;
-          break;
-        case 1:
-          vx = -main;
-          vy = cross;
-          break;
-        case 2:
-          vx = cross;
-          vy = main;
-          break;
-        case 3:
-        default:
-          vx = cross;
-          vy = -main;
-          break;
+      if (edge === 0) {
+        vx = main;
+        vy = cross;
+      } else {
+        vx = -main;
+        vy = cross;
       }
       return clampIncline(vx, vy);
     };
@@ -1576,8 +1564,8 @@ export default function useGameEngine() {
       }
     } else {
       // non-special fish
-      const baseX = edge === 0 || edge === 1 ? startX : Math.random() * width;
-      const baseY = edge === 2 || edge === 3 ? startY : Math.random() * height;
+      const baseX = startX;
+      const baseY = Math.random() * height;
       const baseVel = genVelocity();
       const groupId =
         count > 1 && !specialSingles.includes(kind)
@@ -1591,30 +1579,18 @@ export default function useGameEngine() {
         let vy = baseVel.vy;
 
         if (groupId !== undefined && i > 0) {
-          if (edge === 0 || edge === 1) {
-            py += (Math.random() - 0.5) * FISH_SIZE;
-            px +=
-              edge === 0
-                ? -Math.random() * (FISH_SIZE / 2)
-                : Math.random() * (FISH_SIZE / 2);
-          } else {
-            px += (Math.random() - 0.5) * FISH_SIZE;
-            py +=
-              edge === 2
-                ? -Math.random() * (FISH_SIZE / 2)
-                : Math.random() * (FISH_SIZE / 2);
-          }
+          py += (Math.random() - 0.5) * FISH_SIZE;
+          px +=
+            edge === 0
+              ? -Math.random() * (FISH_SIZE / 2)
+              : Math.random() * (FISH_SIZE / 2);
           vx += (Math.random() - 0.5) * speedVariance;
           vy += (Math.random() - 0.5) * speedVariance;
           const limited = clampIncline(vx, vy);
           vx = limited.vx;
           vy = limited.vy;
         } else {
-          if (edge === 0 || edge === 1) {
-            py = Math.random() * height;
-          } else {
-            px = Math.random() * width;
-          }
+          py = Math.random() * height;
         }
 
         const fish = makeFish(
