@@ -101,7 +101,6 @@ function drawRandomTerrainBackground(
   getImg: (key: string) => unknown,
   width: number,
   height: number,
-  frame = 0,
   seed = 0
 ) {
   // deterministic pseudo random seeded by dimensions and seed
@@ -116,7 +115,7 @@ function drawRandomTerrainBackground(
   const step = 20;
   const wave = (x: number, amp: number, len: number, offset: number) =>
     amp * Math.sin(x / len + offset);
-  const phase = frame * 0.02;
+  const phase = 0;
 
   // water background
   const waterImgs = getImg("terrainWaterImgs") as
@@ -274,6 +273,7 @@ export default function useGameEngine() {
   const frameRef = useRef(0); // track frames for one-second ticks
   const fishSpawnTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const backgroundSeed = useRef(Math.random() * 1000);
+  const backgroundCanvas = useRef<HTMLCanvasElement | null>(null);
   const accuracyLabel = useRef<TextLabel | null>(null);
   const accuracyStatLabel = useRef<TextLabel | null>(null);
   const finalAccuracy = useRef(0);
@@ -344,19 +344,36 @@ export default function useGameEngine() {
     [getImg]
   );
 
-  const drawBackground = useCallback(
-    (ctx: CanvasRenderingContext2D) => {
-      const { width, height } = state.current.dims;
+  const regenerateBackground = useCallback(() => {
+    const { width, height } = state.current.dims;
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const bgCtx = canvas.getContext("2d");
+    if (bgCtx) {
       drawRandomTerrainBackground(
-        ctx,
+        bgCtx,
         getImg,
         width,
         height,
-        frameRef.current,
         backgroundSeed.current
       );
+    }
+    backgroundCanvas.current = canvas;
+  }, [getImg]);
+
+  const drawBackground = useCallback(
+    (ctx: CanvasRenderingContext2D) => {
+      const { width, height } = state.current.dims;
+      const canvas = backgroundCanvas.current;
+      if (!canvas || canvas.width !== width || canvas.height !== height) {
+        regenerateBackground();
+      }
+      if (backgroundCanvas.current) {
+        ctx.drawImage(backgroundCanvas.current, 0, 0);
+      }
     },
-    [getImg]
+    [regenerateBackground]
   );
 
   const updateDigitLabel = useCallback(
@@ -991,6 +1008,7 @@ export default function useGameEngine() {
     finalAccuracy.current = 0;
     displayAccuracy.current = 0;
     backgroundSeed.current = Math.random() * 1000;
+    backgroundCanvas.current = null;
     pausedLabel.current = null;
     gameoverShotsLabel.current = null;
     gameoverHitsLabel.current = null;
@@ -1148,6 +1166,7 @@ export default function useGameEngine() {
     nextPairId.current = 1;
     nextBubbleId.current = 1;
     backgroundSeed.current = Math.random() * 1000;
+    backgroundCanvas.current = null;
     pausedLabel.current = null;
 
     setUI({
@@ -1509,11 +1528,10 @@ export default function useGameEngine() {
       const pairId = nextPairId.current++;
       const { vx, vy } = genVelocity(); // keep pair aligned
       if (edge === 0 || edge === 1) {
-        const pairStart = edge === 0 ? -2 * FISH_SIZE : width + 2 * FISH_SIZE;
+        const pairStart = edge === 0 ? -2 * FISH_SIZE : width - FISH_SIZE;
         const y = Math.random() * height;
         ["grey_long_a", "grey_long_b"].forEach((name, idx) => {
-          const x =
-            pairStart + (edge === 0 ? idx * FISH_SIZE : -idx * FISH_SIZE);
+          const x = pairStart + idx * FISH_SIZE;
           const f = makeFish(name, x, y, vx, vy, groupId);
           f.pairId = pairId;
           spawned.push(f);
