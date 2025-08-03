@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useRef } from "react";
 import { AudioMgr } from "@/types/audio";
 import { withBasePath } from "@/utils/basePath";
 
@@ -12,63 +12,33 @@ export function useGameAudio(): AudioMgr {
     if (typeof Audio === "undefined")
       return {} as Record<string, HTMLAudioElement>;
 
-    const shoot = document.createElement("audio");
-    shoot.src = withBasePath("/audio/laser4.ogg");
-    shoot.preload = "auto";
-
-    const hit = document.createElement("audio");
-    hit.src = withBasePath("/audio/laser9.ogg");
-    hit.preload = "auto";
-
-    const bonus = document.createElement("audio");
-    bonus.src = withBasePath("/audio/powerUp8.ogg"); // special-fish bonus
-    bonus.preload = "auto";
-
-    const penalty = document.createElement("audio");
-    penalty.src = withBasePath("/audio/error_004.ogg"); // special-fish penalty
-    penalty.preload = "auto";
-    const skeleton = document.createElement("audio");
-    skeleton.src = withBasePath("/audio/splash.ogg");
-    skeleton.preload = "auto";
-
-    const death = document.createElement("audio");
-    death.src = withBasePath("/audio/lowDown.ogg");
-    death.preload = "auto";
-
-    const convert = document.createElement("audio");
-    convert.src = withBasePath("/audio/zap1.ogg");
-    convert.preload = "auto";
-
-    const pop = document.createElement("audio");
-    pop.src = withBasePath("/audio/glass_001.ogg");
-    pop.preload = "auto";
-
-    const bgm = document.createElement("audio");
-    bgm.src = withBasePath("/audio/back_001.ogg");
-    bgm.preload = "auto";
-    bgm.loop = true;
-
-    const tick = document.createElement("audio");
-    tick.src = withBasePath("/audio/tick_002.ogg");
-    tick.preload = "auto";
-
-    const warning = document.createElement("audio");
-    warning.src = withBasePath("/audio/warning.ogg");
-    warning.preload = "auto";
-
-    return {
-      shoot,
-      hit,
-      bonus,
-      penalty,
-      skeleton,
-      death,
-      convert,
-      pop,
-      tick,
-      warning,
-      bgm,
+    const create = (src: string, loop = false) => {
+      const audio = document.createElement("audio");
+      audio.src = withBasePath(src);
+      audio.preload = "auto";
+      audio.loop = loop;
+      return audio;
     };
+
+    const base: Record<string, HTMLAudioElement> = {
+      shoot: create("/audio/laser4.ogg"),
+      hit: create("/audio/laser9.ogg"),
+      bonus: create("/audio/powerUp8.ogg"), // special-fish bonus
+      penalty: create("/audio/error_004.ogg"), // special-fish penalty
+      skeleton: create("/audio/splash.ogg"),
+      death: create("/audio/lowDown.ogg"),
+      convert: create("/audio/zap1.ogg"),
+      pop: create("/audio/glass_001.ogg"),
+      tick: create("/audio/tick_002.ogg"),
+      warning: create("/audio/warning.ogg"),
+    };
+
+    for (let i = 0; i <= 16; i++) {
+      const key = `jingles_NES${i.toString().padStart(2, "0")}`;
+      base[key] = create(`/audio/${key}.ogg`);
+    }
+
+    return base;
   }, []);
 
   // Play a sound by key
@@ -100,16 +70,59 @@ export function useGameAudio(): AudioMgr {
   );
 
   // Pause all sounds (required by AudioMgr interface)
+  const seqRef = useRef<{
+    current?: HTMLAudioElement;
+    handler?: () => void;
+  }>();
+
   const pauseAll = useCallback(() => {
     Object.values(audios).forEach((audio) => audio.pause());
+    const seq = seqRef.current;
+    if (seq?.current && seq.handler) {
+      seq.current.removeEventListener("ended", seq.handler);
+    }
+    seqRef.current = undefined;
   }, [audios]);
+
+  const playSequence = useCallback(
+    (keys: string[], options?: { loop?: boolean; volume?: number }) => {
+      if (!keys.length) return;
+      let index = 0;
+      const playNext = () => {
+        const key = keys[index];
+        const audio = audios[key];
+        if (!audio) return;
+        if (options?.volume !== undefined) audio.volume = options.volume;
+        audio.currentTime = 0;
+        const handler = () => {
+          audio.removeEventListener("ended", handler);
+          index += 1;
+          if (index >= keys.length) {
+            if (options?.loop) {
+              index = 0;
+            } else {
+              seqRef.current = undefined;
+              return;
+            }
+          }
+          playNext();
+        };
+        seqRef.current = { current: audio, handler };
+        audio.addEventListener("ended", handler);
+        void audio.play();
+      };
+      playNext();
+    },
+    [audios]
+  );
 
   return useMemo(
     () => ({
       play,
+      playSequence,
       pause,
       pauseAll,
     }),
-    [play, pause, pauseAll]
+    [play, playSequence, pause, pauseAll]
   );
 }

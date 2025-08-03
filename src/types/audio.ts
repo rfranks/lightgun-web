@@ -7,6 +7,7 @@ export interface AudioMgr
     | (() => void)
     | ((key: string) => void)
     | ((key: string, options?: { loop?: boolean; volume?: number }) => void)
+    | ((keys: string[], options?: { loop?: boolean; volume?: number }) => void)
   > {
   /**
    * Play a sound by key.
@@ -14,6 +15,16 @@ export interface AudioMgr
    * @param options Optional looping/volume controls.
    */
   play: (key: string, options?: { loop?: boolean; volume?: number }) => void;
+
+  /**
+   * Play a sequence of sounds by key.
+   * @param keys    Ordered list of identifiers matching loaded audio assets.
+   * @param options Optional looping/volume controls applied to each sound.
+   */
+  playSequence: (
+    keys: string[],
+    options?: { loop?: boolean; volume?: number }
+  ) => void;
 
   /**
    * Pause a sound by key.
