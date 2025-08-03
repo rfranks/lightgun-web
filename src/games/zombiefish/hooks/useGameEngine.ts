@@ -1610,20 +1610,7 @@ export default function useGameEngine() {
         ["grey_long_a", "grey_long_b"].forEach((name, idx) => {
           const x =
             pairStart + (edge === 0 ? idx * FISH_SIZE : -idx * FISH_SIZE);
-          const f = reuseFish();
-          f.id = nextFishId.current++;
-          f.kind = name;
-          f.x = x;
-          f.y = y;
-          f.vx = vx;
-          f.vy = vy;
-          const orient = orientFish(vx, vy);
-          f.angle = orient.angle;
-          f.flipped = orient.flipped;
-          f.health = 0;
-          f.hurtTimer = 0;
-          f.isSkeleton = false;
-          f.groupId = groupId;
+          const f = makeFish(name, x, y, vx, vy, groupId);
           f.pairId = pairId;
           spawned.push(f);
         });
@@ -1632,20 +1619,7 @@ export default function useGameEngine() {
         const y = startY;
         ["grey_long_a", "grey_long_b"].forEach((name, idx) => {
           const x = pairStart + idx * FISH_SIZE;
-          const f = reuseFish();
-          f.id = nextFishId.current++;
-          f.kind = name;
-          f.x = x;
-          f.y = y;
-          f.vx = vx;
-          f.vy = vy;
-          const orient = orientFish(vx, vy);
-          f.angle = orient.angle;
-          f.flipped = orient.flipped;
-          f.health = 0;
-          f.hurtTimer = 0;
-          f.isSkeleton = false;
-          f.groupId = groupId;
+          const f = makeFish(name, x, y, vx, vy, groupId);
           f.pairId = pairId;
           spawned.push(f);
         });
