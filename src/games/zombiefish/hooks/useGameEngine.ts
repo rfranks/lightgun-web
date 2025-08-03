@@ -875,10 +875,9 @@ export default function useGameEngine() {
           pivotX = f.x + (f.kind === "grey_long_a" ? FISH_SIZE : 0);
           drawX = f.kind === "grey_long_a" ? -FISH_SIZE : 0;
         }
-        // Rotate the fish based on its current velocity
-        const angle = Math.atan2(f.vy, f.vx);
+        // Rotate the fish based on its precomputed orientation
         ctx.translate(pivotX, pivotY);
-        ctx.rotate(angle);
+        ctx.rotate(f.angle);
         if (f.flipped) {
           ctx.scale(-1, 1);
         }
