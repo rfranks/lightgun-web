@@ -98,7 +98,7 @@ const orientFish = (vx: number, vy: number) => {
 // Draws a layered random seabed with plants and rocks
 function drawRandomTerrainBackground(
   ctx: CanvasRenderingContext2D,
-  getImg: (key: string) => any,
+  getImg: (key: string) => unknown,
   width: number,
   height: number,
   frame = 0,
