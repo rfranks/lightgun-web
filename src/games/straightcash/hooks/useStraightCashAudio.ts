@@ -1,4 +1,4 @@
-import { useCallback, useMemo, RefObject } from "react";
+import { useCallback, useMemo, RefObject, useRef } from "react";
 import { useAudio } from "@/hooks/useAudio";
 import { AudioMgr } from "@/types/audio";
 import { rewindAndPlayAudio, pauseAudio } from "@/utils/audio";
@@ -207,21 +207,63 @@ export function useStraightCashAudio(): AudioMgr {
     [audioRefs]
   );
 
+  const seqRef = useRef<{
+    current?: HTMLAudioElement;
+    handler?: () => void;
+  }>();
+
   const pauseAll = useCallback(() => {
     Object.values(audioRefs).forEach((ref) => {
       if (ref.current) {
         pauseAudio(ref);
       }
     });
+    const seq = seqRef.current;
+    if (seq?.current && seq.handler) {
+      seq.current.removeEventListener("ended", seq.handler);
+    }
+    seqRef.current = undefined;
   }, [audioRefs]);
+
+  const playSequence = useCallback(
+    (keys: string[], options?: { loop?: boolean; volume?: number }) => {
+      if (!keys.length) return;
+      let index = 0;
+      const playNext = () => {
+        const key = keys[index];
+        play(key, { volume: options?.volume });
+        const ref = audioRefs[key];
+        const audio = ref?.current;
+        if (!audio) return;
+        const handler = () => {
+          audio.removeEventListener("ended", handler);
+          index += 1;
+          if (index >= keys.length) {
+            if (options?.loop) {
+              index = 0;
+            } else {
+              seqRef.current = undefined;
+              return;
+            }
+          }
+          playNext();
+        };
+        seqRef.current = { current: audio, handler };
+        audio.addEventListener("ended", handler);
+      };
+      playNext();
+    },
+    [audioRefs, play]
+  );
 
   return useMemo(
     () => ({
       play,
+      playSequence,
       pause,
       pauseAll,
     }),
-    [play, pause, pauseAll]
+    [play, playSequence, pause, pauseAll]
   );
 }
 

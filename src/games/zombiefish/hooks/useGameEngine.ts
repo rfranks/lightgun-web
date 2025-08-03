@@ -38,6 +38,16 @@ const FPS = 60; // assumed frame rate for requestAnimationFrame
 const FISH_SIZE = 128;
 const FISH_FRAME_DELAY = 6;
 const MAX_SCHOOL_SIZE = 4;
+
+// NES-style jingle sequence for background music
+const NES_BGM_SEQUENCE = [
+  "jingles_NES00",
+  "jingles_NES05",
+  "jingles_NES07",
+  "jingles_NES12",
+  "jingles_NES07",
+  "jingles_NES05",
+];
 // limit for how steep fish swim (cross-velocity relative to main)
 const MAX_FISH_INCLINE = 0.5;
 const SKELETON_CONVERT_DISTANCE = FISH_SIZE / 2;
@@ -665,7 +675,7 @@ export default function useGameEngine() {
           cur.shots > 0 ? Math.round((cur.hits / cur.shots) * 100) : 0;
         updateBestAccuracy(finalAccuracy.current);
         displayAccuracy.current = 0;
-        audio.pause("bgm");
+        audio.pauseAll();
         if (accuracyStatLabel.current) {
           cur.textLabels = cur.textLabels.filter(
             (lbl) => lbl !== accuracyStatLabel.current
@@ -996,7 +1006,7 @@ export default function useGameEngine() {
     const digitHeight = digitImgs["0"]?.height || 0;
     const lineHeight = digitHeight + 8;
 
-    audio.play("bgm", { loop: true });
+    audio.playSequence(NES_BGM_SEQUENCE, { loop: true });
 
     const labelWidth = (lbl: TextLabel) =>
       lbl.imgs.reduce(
@@ -1167,7 +1177,6 @@ export default function useGameEngine() {
       clearTimeout(cursorTimeoutRef.current);
       cursorTimeoutRef.current = null;
     }
-    audio.pause("bgm");
     audio.pauseAll();
   }, []);
 
