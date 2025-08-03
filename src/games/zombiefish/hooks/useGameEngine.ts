@@ -40,14 +40,19 @@ const FISH_FRAME_DELAY = 6;
 const MAX_SCHOOL_SIZE = 4;
 
 // NES-style jingle sequence for background music
-const NES_BGM_SEQUENCE = [
-  "jingles_NES00",
-  "jingles_NES05",
-  "jingles_NES07",
-  "jingles_NES12",
-  "jingles_NES07",
-  "jingles_NES05",
-];
+// Build a rising and falling "wave" pattern to feel bubbly and underwater.
+// We step up in thirds, crest, then wash back down and repeat.
+const NES_BGM_SEQUENCE = (() => {
+  const rise = [0, 3, 6, 9].map((n) =>
+    `jingles_NES${n.toString().padStart(2, "0")}`
+  );
+  const fall = [...rise].reverse();
+  const loop: string[] = [];
+  for (let i = 0; i < 2; i++) {
+    loop.push(...rise, "jingles_NES12", ...fall, "jingles_NES14");
+  }
+  return loop;
+})();
 // limit for how steep fish swim (cross-velocity relative to main)
 const MAX_FISH_INCLINE = 0.5;
 const SKELETON_CONVERT_DISTANCE = FISH_SIZE / 2;
