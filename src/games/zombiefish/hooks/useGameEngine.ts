@@ -132,6 +132,7 @@ export default function useGameEngine() {
   const seaweedOffsets = useRef<number[]>(SEAWEED_SPEED.map(() => 0));
   const seaGrassOffsets = useRef<number[]>(SEAGRASS_SPEED.map(() => 0));
   const accuracyLabel = useRef<TextLabel | null>(null);
+  const accuracyStatLabel = useRef<TextLabel | null>(null);
   const finalAccuracy = useRef(0);
   const displayAccuracy = useRef(0);
   const updateBestAccuracy = (score: number) => {
@@ -656,6 +657,12 @@ export default function useGameEngine() {
         updateBestAccuracy(finalAccuracy.current);
         displayAccuracy.current = 0;
         audio.pause("bgm");
+        if (accuracyStatLabel.current) {
+          cur.textLabels = cur.textLabels.filter(
+            (lbl) => lbl !== accuracyStatLabel.current
+          );
+          accuracyStatLabel.current = null;
+        }
 
         // create accuracy label
         const pctImg = getImg("pctImg") as HTMLImageElement;
@@ -917,6 +924,20 @@ export default function useGameEngine() {
 
     cur.accuracy = cur.shots > 0 ? (cur.hits / cur.shots) * 100 : 0;
 
+    if (accuracyStatLabel.current && cur.phase === "playing") {
+      const lbl = accuracyStatLabel.current;
+      const pct = Math.round(cur.accuracy);
+      const digitImgs = getImg("digitImgs") as Record<string, HTMLImageElement>;
+      const pctImg = getImg("pctImg") as HTMLImageElement;
+      lbl.text = `${pct}%`;
+      lbl.imgs = [...pct.toString().split("").map((ch) => digitImgs[ch]), pctImg];
+      const totalWidth = lbl.imgs.reduce(
+        (w, img) => w + (img?.width || 0) * lbl.scale + 2,
+        0
+      );
+      lbl.x = cur.dims.width - totalWidth - 16;
+    }
+
     setUI({
       phase: cur.phase,
       timer: cur.timer,
@@ -948,6 +969,7 @@ export default function useGameEngine() {
 
     frameRef.current = 0;
     accuracyLabel.current = null;
+    accuracyStatLabel.current = null;
     bestAccuracyLabel.current = null;
     finalAccuracy.current = 0;
     displayAccuracy.current = 0;
@@ -1074,6 +1096,26 @@ export default function useGameEngine() {
       },
       assetMgr
     );
+
+    const pctImg = getImg("pctImg") as HTMLImageElement;
+    const accLbl = newTextLabel(
+      {
+        text: "0%",
+        scale: 1,
+        fixed: true,
+        fade: false,
+        x: 0,
+        y: 16,
+        py: STAT_LABEL_PY,
+      },
+      assetMgr
+    );
+    accLbl.imgs = [digitImgs["0"], pctImg];
+    accLbl.x =
+      cur.dims.width -
+      accLbl.imgs.reduce((w, img) => w + (img?.width || 0) * accLbl.scale + 2, 0) -
+      16;
+    accuracyStatLabel.current = accLbl;
     bubbleSpawnRef.current = 0;
 
     state.current.textLabels = [
@@ -1084,6 +1126,7 @@ export default function useGameEngine() {
       hitsLabel.current!,
       scoreText,
       scoreLabel.current!,
+      accLbl,
     ];
     cur.cursor = DEFAULT_CURSOR;
     setUI({
@@ -1127,6 +1170,7 @@ export default function useGameEngine() {
     cur.warningPlayed = false;
 
     accuracyLabel.current = null;
+    accuracyStatLabel.current = null;
     bestAccuracyLabel.current = null;
     finalAccuracy.current = 0;
     displayAccuracy.current = 0;
