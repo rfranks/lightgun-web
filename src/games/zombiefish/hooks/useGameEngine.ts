@@ -503,11 +503,22 @@ export default function useGameEngine() {
       if (f.isSkeleton) return;
       f.wanderTimer -= 1;
       if (f.wanderTimer <= 0) {
-        // pick a new random velocity
         const range = FISH_SPEED_MAX - FISH_SPEED_MIN;
-        const speed = Math.random() * range + FISH_SPEED_MIN;
-        const vx = (Math.random() * 2 - 1) * speed;
-        const vy = (Math.random() * 2 - 1) * speed;
+        const speed =
+          (Math.random() * range + FISH_SPEED_MIN) * difficultyFactor();
+        let vx: number;
+        let vy: number;
+        if (Math.abs(f.vx) >= Math.abs(f.vy)) {
+          // mostly horizontal – keep heading and add slight vertical drift
+          const dir = f.vx >= 0 ? 1 : -1;
+          vx = dir * speed;
+          vy = (Math.random() * 2 - 1) * speed * 0.25;
+        } else {
+          // mostly vertical – keep heading and add slight horizontal drift
+          const dir = f.vy >= 0 ? 1 : -1;
+          vy = dir * speed;
+          vx = (Math.random() * 2 - 1) * speed * 0.25;
+        }
         const limited = clampIncline(vx, vy);
         f.vx = limited.vx;
         f.vy = limited.vy;
@@ -1470,7 +1481,9 @@ export default function useGameEngine() {
   }, []);
 
   // factor that ramps up difficulty as time runs out
-  const difficultyFactor = () => 1 + (1 - state.current.timer / GAME_TIME);
+  function difficultyFactor() {
+    return 1 + (1 - state.current.timer / GAME_TIME);
+  }
 
   // spawn a group of fish just outside the viewport edges
   const spawnFish = useCallback((kind: string, count: number): Fish[] => {
@@ -1490,8 +1503,9 @@ export default function useGameEngine() {
     if (isSpecial) count = 1;
     count = Math.min(count, MAX_SCHOOL_SIZE);
 
-    // decide spawning edge
-    const edge = Math.floor(Math.random() * 4); // 0:left,1:right,2:top,3:bottom
+    // decide spawning edge with a bias toward left/right entrances
+    const edges = [0, 0, 0, 1, 1, 1, 2, 3];
+    const edge = edges[Math.floor(Math.random() * edges.length)]; // 0:left,1:right,2:top,3:bottom
     const startX = edge === 0 ? -FISH_SIZE : edge === 1 ? width + FISH_SIZE : 0;
     const startY =
       edge === 2 ? -FISH_SIZE : edge === 3 ? height + FISH_SIZE : 0;
