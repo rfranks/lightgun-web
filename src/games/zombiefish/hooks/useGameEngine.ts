@@ -1509,11 +1509,10 @@ export default function useGameEngine() {
       const pairId = nextPairId.current++;
       const { vx, vy } = genVelocity(); // keep pair aligned
       if (edge === 0 || edge === 1) {
-        const pairStart = edge === 0 ? -2 * FISH_SIZE : width + 2 * FISH_SIZE;
+        const pairStart = edge === 0 ? -2 * FISH_SIZE : width - FISH_SIZE;
         const y = Math.random() * height;
         ["grey_long_a", "grey_long_b"].forEach((name, idx) => {
-          const x =
-            pairStart + (edge === 0 ? idx * FISH_SIZE : -idx * FISH_SIZE);
+          const x = pairStart + idx * FISH_SIZE;
           const f = makeFish(name, x, y, vx, vy, groupId);
           f.pairId = pairId;
           spawned.push(f);
