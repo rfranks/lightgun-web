@@ -143,8 +143,6 @@ export default function useGameEngine() {
   };
   const bestAccuracyLabel = useRef<TextLabel | null>(null);
   const timerLabel = useRef<TextLabel | null>(null);
-  const shotsLabel = useRef<TextLabel | null>(null);
-  const hitsLabel = useRef<TextLabel | null>(null);
   const scoreLabel = useRef<TextLabel | null>(null);
   const pausedLabel = useRef<TextLabel | null>(null);
   const gameoverShotsLabel = useRef<TextLabel | null>(null);
@@ -1033,56 +1031,6 @@ export default function useGameEngine() {
         (timer?.py || 0) * 2,
     };
 
-    const shotsText = newTextLabel(
-      {
-        text: "SHOTS",
-        scale: 1,
-        fixed: true,
-        fade: false,
-        x: 16,
-        y: 16 + lineHeight,
-        py: STAT_LABEL_PY,
-      },
-      assetMgr
-    );
-    shotsLabel.current = newTextLabel(
-      {
-        text: cur.shots.toString(),
-        scale: 1,
-        fixed: true,
-        fade: false,
-        x: 16 + labelWidth(shotsText),
-        y: 16 + lineHeight,
-        py: STAT_LABEL_PY,
-      },
-      assetMgr
-    );
-
-    const hitsText = newTextLabel(
-      {
-        text: "HITS",
-        scale: 1,
-        fixed: true,
-        fade: false,
-        x: 16,
-        y: 16 + lineHeight * 2,
-        py: STAT_LABEL_PY,
-      },
-      assetMgr
-    );
-    hitsLabel.current = newTextLabel(
-      {
-        text: cur.hits.toString(),
-        scale: 1,
-        fixed: true,
-        fade: false,
-        x: 16 + labelWidth(hitsText),
-        y: 16 + lineHeight * 2,
-        py: STAT_LABEL_PY,
-      },
-      assetMgr
-    );
-
     const scoreText = newTextLabel(
       {
         text: "SCORE",
@@ -1131,10 +1079,6 @@ export default function useGameEngine() {
 
     state.current.textLabels = [
       timerLabel.current!,
-      shotsText,
-      shotsLabel.current!,
-      hitsText,
-      hitsLabel.current!,
       scoreText,
       scoreLabel.current!,
       accLbl,
@@ -1187,8 +1131,6 @@ export default function useGameEngine() {
     displayAccuracy.current = 0;
     frameRef.current = 0;
     timerLabel.current = null;
-    shotsLabel.current = null;
-    hitsLabel.current = null;
     scoreLabel.current = null;
     gameoverShotsLabel.current = null;
     gameoverHitsLabel.current = null;
@@ -1344,7 +1286,6 @@ export default function useGameEngine() {
       }, 100);
 
       cur.shots += 1;
-      updateDigitLabel(shotsLabel.current, cur.shots);
       audio.play("shoot");
 
       // check bubbles first so they are popped before fish hits
@@ -1385,7 +1326,6 @@ export default function useGameEngine() {
         ) {
           cur.hits += 1;
           cur.hitCounts[f.kind] = (cur.hitCounts[f.kind] || 0) + 1;
-          updateDigitLabel(hitsLabel.current, cur.hits);
           audio.play("hit");
           hit = true;
           const scoreMap: Record<string, number> = {
