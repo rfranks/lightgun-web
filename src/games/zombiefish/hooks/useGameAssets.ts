@@ -123,34 +123,14 @@ export function useGameAssets(): {
       "bubble_c",
     ]);
 
-    assetRefs.current.rockImgs = build("Objects/Rocks", [
-      "background_rock_a",
-      "background_rock_b",
-      "rock_a",
-      "rock_a_outline",
-      "rock_b",
-      "rock_b_outline",
-    ]);
-    assetRefs.current.rockBgImgs = [
-      assetRefs.current.rockImgs.background_rock_a,
-      assetRefs.current.rockImgs.background_rock_b,
-    ];
-
     assetRefs.current.seaGrassImgs = build("Objects/SeaGrass", [
       "seaweed_grass_a",
       "seaweed_grass_a_outline",
       "seaweed_grass_b",
       "seaweed_grass_b_outline",
     ]);
-    assetRefs.current.seaGrassFgImgs = [
-      assetRefs.current.seaGrassImgs.seaweed_grass_a,
-      assetRefs.current.seaGrassImgs.seaweed_grass_b,
-    ];
 
     const seaweedNames: string[] = [];
-    "abcdefgh".split("").forEach((l) => {
-      seaweedNames.push(`background_seaweed_${l}`);
-    });
     "abcd".split("").forEach((l) => {
       seaweedNames.push(`seaweed_green_${l}`);
       seaweedNames.push(`seaweed_green_${l}_outline`);
@@ -164,14 +144,6 @@ export function useGameAssets(): {
       seaweedNames.push(`seaweed_pink_${l}_outline`);
     });
     assetRefs.current.seaweedImgs = build("Objects/Seaweed", seaweedNames);
-    assetRefs.current.seaweedBgImgs = "abcdefgh"
-      .split("")
-      .map(
-        (l) =>
-          (assetRefs.current.seaweedImgs as Record<string, HTMLImageElement>)[
-            `background_seaweed_${l}`
-          ] || undefined
-      );
 
     // SURFACE & CLOUDS
     assetRefs.current.surfaceImgs = [
