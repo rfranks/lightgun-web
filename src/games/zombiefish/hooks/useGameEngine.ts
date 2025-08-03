@@ -150,7 +150,6 @@ export default function useGameEngine() {
   const gameoverHitsLabel = useRef<TextLabel | null>(null);
   const gameoverTimeLabel = useRef<TextLabel | null>(null);
   const gameoverScoreLabel = useRef<TextLabel | null>(null);
-  const timeTextLabel = useRef<TextLabel | null>(null);
   const timeTextBounds = useRef({ x: 0, y: 0, width: 0, height: 0 });
 
   // ui state that triggers re-renders
@@ -589,8 +588,8 @@ export default function useGameEngine() {
   const loop = useCallback(() => {
     const cur = state.current;
 
-    if (timeTextLabel.current) {
-      const lbl = timeTextLabel.current;
+    if (timerLabel.current) {
+      const lbl = timerLabel.current;
       const width = lbl.imgs.reduce(
         (sum, img) => sum + (img ? img.width * lbl.scale + 2 : lbl.spaceGap),
         0
@@ -599,6 +598,7 @@ export default function useGameEngine() {
         (max, img) => Math.max(max, (img?.height || 0) * lbl.scale),
         0
       );
+      lbl.x = (cur.dims.width - width) / 2;
       timeTextBounds.current = {
         x: lbl.x,
         y: lbl.y - (lbl.py ?? 0),
@@ -974,44 +974,32 @@ export default function useGameEngine() {
         0
       );
 
-    const timeText = newTextLabel(
-      {
-        text: "TIME",
-        scale: 1,
-        fixed: true,
-        fade: false,
-        x: 16,
-        y: 16,
-        py: STAT_LABEL_PY,
-      },
-      assetMgr
-    );
-    timeTextLabel.current = timeText;
-    timeTextBounds.current = {
-      x: timeText.x,
-      y: timeText.y - (timeText?.py || 0),
-      width: labelWidth(timeText),
-      height:
-        timeText.imgs.reduce(
-          (max, img) => Math.max(max, (img?.height || 0) * timeText.scale),
-          0
-        ) +
-        (timeText?.py || 0) * 2,
-    };
-
-    timerLabel.current = newTextLabel(
+    const timer = newTextLabel(
       {
         text: `${cur.timer.toString().padStart(2, "0")}:`,
         scale: 1,
         fixed: true,
         fade: false,
-        x: 16 + labelWidth(timeText),
+        x: 0,
         y: 16,
         py: STAT_LABEL_PY,
       },
       assetMgr
     );
-    updateDigitLabel(timerLabel.current, cur.timer, 2, ":");
+    updateDigitLabel(timer, cur.timer, 2, ":");
+    timer.x = (cur.dims.width - labelWidth(timer)) / 2;
+    timerLabel.current = timer;
+    timeTextBounds.current = {
+      x: timer.x,
+      y: timer.y - (timer?.py || 0),
+      width: labelWidth(timer),
+      height:
+        timer.imgs.reduce(
+          (max, img) => Math.max(max, (img?.height || 0) * timer.scale),
+          0
+        ) +
+        (timer?.py || 0) * 2,
+    };
 
     const shotsText = newTextLabel(
       {
@@ -1090,7 +1078,6 @@ export default function useGameEngine() {
     bubbleSpawnRef.current = 0;
 
     state.current.textLabels = [
-      timeText,
       timerLabel.current!,
       shotsText,
       shotsLabel.current!,
