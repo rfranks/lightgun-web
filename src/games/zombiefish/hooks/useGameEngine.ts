@@ -360,7 +360,12 @@ export default function useGameEngine() {
         }
       }
 
-      if (!target) return;
+      if (!target) {
+        // No valid target nearby; stop pursuing
+        s.vx = 0;
+        s.vy = 0;
+        return;
+      }
 
       const dx = target.x - s.x;
       const dy = target.y - s.y;
