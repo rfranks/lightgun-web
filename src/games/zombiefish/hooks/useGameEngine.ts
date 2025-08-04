@@ -18,6 +18,8 @@ import {
   FISH_SPAWN_INTERVAL_MAX,
   SKELETON_SPEED,
   MAX_SKELETONS,
+  MAX_FISH,
+  MAX_SPECIAL_FISH,
   TIME_BONUS_BROWN_FISH,
   TIME_BONUS_GREY_LONG,
   DEFAULT_CURSOR,
@@ -1458,10 +1460,25 @@ export default function useGameEngine() {
     const isSpecial =
       specialSingles.includes(kind) || specialPairs.includes(kind);
 
-    const reuseFish = () => inactiveFish.current.pop() || ({} as Fish);
+    const specialsOnScreen = state.current.fish.filter((f) =>
+      specialSingles.includes(f.kind)
+    ).length;
+    const basicsOnScreen = state.current.fish.filter(
+      (f) => !f.isSkeleton && !specialSingles.includes(f.kind)
+    ).length;
 
-    if (isSpecial) count = 1;
+    if (isSpecial) {
+      const needed = specialPairs.includes(kind) ? 2 : 1;
+      if (specialsOnScreen + needed > MAX_SPECIAL_FISH) return [];
+      count = 1;
+    } else {
+      const available = MAX_FISH - basicsOnScreen;
+      if (available <= 0) return [];
+      count = Math.min(count, available);
+    }
     count = Math.min(count, MAX_SCHOOL_SIZE);
+
+    const reuseFish = () => inactiveFish.current.pop() || ({} as Fish);
 
     // decide spawning edge with a bias toward left/right entrances
     // omit top/bottom edges to avoid vertically swimming fish
