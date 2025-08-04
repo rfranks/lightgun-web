@@ -134,6 +134,7 @@ export default function useGameEngine() {
   const nextGroupId = useRef(1);
   const nextPairId = useRef(1);
   const nextBubbleId = useRef(1);
+  const groupVelocityRef = useRef<Record<number, { vx: number; vy: number }>>({});
   const inactiveFish = useRef<Fish[]>([]);
   const inactiveBubbles = useRef<Bubble[]>([]);
   const bubbleSpawnRef = useRef(0);
@@ -294,26 +295,45 @@ export default function useGameEngine() {
       }
     });
 
-    // For each group, nudge members toward the group's average velocity.
+    // For each group, compute the average velocity and apply it to members.
     const groups: Record<number, { vx: number; vy: number; members: Fish[] }> =
       {};
     cur.fish.forEach((f) => {
       if (f.groupId === undefined) return;
-      if (!groups[f.groupId]) {
-        groups[f.groupId] = { vx: 0, vy: 0, members: [] };
-      }
-      const g = groups[f.groupId];
+      const g =
+        (groups[f.groupId] ||= { vx: 0, vy: 0, members: [] });
       g.vx += f.vx;
       g.vy += f.vy;
       g.members.push(f);
     });
-    Object.values(groups).forEach((g) => {
+    const prevGroupVel = groupVelocityRef.current;
+    Object.entries(groups).forEach(([idStr, g]) => {
+      const id = Number(idStr);
       const avgVx = g.vx / g.members.length;
       const avgVy = g.vy / g.members.length;
+      const limited = clampIncline(avgVx, avgVy);
+      const prev = prevGroupVel[id];
+      const angleChanged =
+        prev &&
+        Math.abs(
+          Math.atan2(
+            limited.vx * prev.vy - limited.vy * prev.vx,
+            limited.vx * prev.vx + limited.vy * prev.vy
+          )
+        ) > 0.2;
       g.members.forEach((f) => {
-        f.vx += (avgVx - f.vx) * 0.05;
-        f.vy += (avgVy - f.vy) * 0.05;
+        f.vx = limited.vx;
+        f.vy = limited.vy;
+        if (angleChanged) {
+          f.wanderTimer = Math.floor(Math.random() * FPS) + FPS;
+        }
       });
+      prevGroupVel[id] = { vx: limited.vx, vy: limited.vy };
+    });
+    // Remove velocities for groups that no longer exist.
+    Object.keys(prevGroupVel).forEach((idStr) => {
+      const id = Number(idStr);
+      if (!groups[id]) delete prevGroupVel[id];
     });
 
     // Keep multi-segment fish aligned. For each pairId, ensure the "b" segment
