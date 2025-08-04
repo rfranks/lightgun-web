@@ -363,9 +363,8 @@ export default function useGameEngine() {
     let skeletonCount = cur.fish.filter(
       (f) => f.isSkeleton || f.pendingSkeleton
     ).length;
-    cur.fish.forEach((s) => {
-      if (!s.isSkeleton) return;
-
+    const skeletons = cur.fish.filter((f) => f.isSkeleton);
+    skeletons.forEach((s, idx) => {
       let target: Fish | undefined;
       let targetDist2 = detectionRadius2;
       for (const t of cur.fish) {
@@ -408,6 +407,22 @@ export default function useGameEngine() {
         audio.play("convert");
         skeletonCount += 1;
       }
+
+      // repel nearby skeletons
+      for (let i = 0; i < skeletons.length; i++) {
+        if (i === idx) continue;
+        const other = skeletons[i];
+        const rdx = other.x - s.x;
+        const rdy = other.y - s.y;
+        const rdist = Math.sqrt(rdx * rdx + rdy * rdy);
+        if (rdist > 0 && rdist < SKELETON_REPEL_DISTANCE) {
+          s.vx -= (rdx / rdist) * SKELETON_REPEL_FORCE;
+          s.vy -= (rdy / rdist) * SKELETON_REPEL_FORCE;
+        }
+      }
+      const limited = clampIncline(s.vx, s.vy);
+      s.vx = limited.vx;
+      s.vy = limited.vy;
     });
 
     // natural wandering for non-skeleton fish
@@ -438,33 +453,6 @@ export default function useGameEngine() {
         f.wanderTimer = Math.floor(Math.random() * FPS) + FPS;
       }
     });
-
-    // repel skeletons that get too close to each other
-    const skeletons = cur.fish.filter((f) => f.isSkeleton);
-    for (let i = 0; i < skeletons.length; i++) {
-      const a = skeletons[i];
-      for (let j = i + 1; j < skeletons.length; j++) {
-        const b = skeletons[j];
-        const dx = b.x - a.x;
-        const dy = b.y - a.y;
-        const dist2 = dx * dx + dy * dy;
-        if (
-          dist2 < SKELETON_REPEL_DISTANCE * SKELETON_REPEL_DISTANCE &&
-          dist2 > 0
-        ) {
-          const dist = Math.sqrt(dist2);
-          const force =
-            ((SKELETON_REPEL_DISTANCE - dist) / SKELETON_REPEL_DISTANCE) *
-            SKELETON_REPEL_FORCE;
-          const fx = (dx / dist) * force;
-          const fy = (dy / dist) * force;
-          a.vx -= fx;
-          a.vy -= fy;
-          b.vx += fx;
-          b.vy += fy;
-        }
-      }
-    }
 
     // move fish with a slight oscillation and update their angle
     cur.fish.forEach((f) => {
