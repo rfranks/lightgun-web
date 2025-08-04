@@ -46,8 +46,8 @@ const MAX_SCHOOL_SIZE = 4;
 // Build a rising and falling "wave" pattern to feel bubbly and underwater.
 // We step up in thirds, crest, then wash back down and repeat.
 const NES_BGM_SEQUENCE = (() => {
-  const rise = [0, 3, 6, 9].map((n) =>
-    `jingles_NES${n.toString().padStart(2, "0")}`
+  const rise = [0, 3, 6, 9].map(
+    (n) => `jingles_NES${n.toString().padStart(2, "0")}`
   );
   const fall = [...rise].reverse();
   const loop: string[] = [];
@@ -134,7 +134,9 @@ export default function useGameEngine() {
   const nextGroupId = useRef(1);
   const nextPairId = useRef(1);
   const nextBubbleId = useRef(1);
-  const groupVelocityRef = useRef<Record<number, { vx: number; vy: number }>>({});
+  const groupVelocityRef = useRef<Record<number, { vx: number; vy: number }>>(
+    {}
+  );
   const inactiveFish = useRef<Fish[]>([]);
   const inactiveBubbles = useRef<Bubble[]>([]);
   const bubbleSpawnRef = useRef(0);
@@ -300,8 +302,7 @@ export default function useGameEngine() {
       {};
     cur.fish.forEach((f) => {
       if (f.groupId === undefined) return;
-      const g =
-        (groups[f.groupId] ||= { vx: 0, vy: 0, members: [] });
+      const g = (groups[f.groupId] ||= { vx: 0, vy: 0, members: [] });
       g.vx += f.vx;
       g.vy += f.vy;
       g.members.push(f);
@@ -842,7 +843,13 @@ export default function useGameEngine() {
       const digitImgs = getImg("digitImgs") as Record<string, HTMLImageElement>;
       const pctImg = getImg("pctImg") as HTMLImageElement;
       lbl.text = `${pct}%`;
-      lbl.imgs = [...pct.toString().split("").map((ch) => digitImgs[ch]), pctImg];
+      lbl.imgs = [
+        ...pct
+          .toString()
+          .split("")
+          .map((ch) => digitImgs[ch]),
+        pctImg,
+      ];
       const totalWidth = lbl.imgs.reduce(
         (w, img) => w + (img?.width || 0) * lbl.scale + 2,
         0
@@ -973,7 +980,10 @@ export default function useGameEngine() {
     accLbl.imgs = [digitImgs["0"], pctImg];
     accLbl.x =
       cur.dims.width -
-      accLbl.imgs.reduce((w, img) => w + (img?.width || 0) * accLbl.scale + 2, 0) -
+      accLbl.imgs.reduce(
+        (w, img) => w + (img?.width || 0) * accLbl.scale + 2,
+        0
+      ) -
       16;
     accuracyStatLabel.current = accLbl;
     bubbleSpawnRef.current = 0;
@@ -1331,7 +1341,7 @@ export default function useGameEngine() {
     // keep school member velocity variance tied to the configured speed range
     const speedVariance = (FISH_SPEED_MAX - FISH_SPEED_MIN) / 4;
 
-    const specialSingles = ["brown"] as const;
+    const specialSingles = ["brown"] as string[];
     const specialPairs: Record<string, string[]> = {
       grey_long: ["grey_long_a", "grey_long_b"],
     };
@@ -1339,7 +1349,8 @@ export default function useGameEngine() {
     const isSpecial = specialSingles.includes(kind) || !!specialPairs[kind];
 
     const specialsOnScreen = state.current.fish.filter(
-      (f) => specialSingles.includes(f.kind) || specialPairParts.includes(f.kind)
+      (f) =>
+        specialSingles.includes(f.kind) || specialPairParts.includes(f.kind)
     ).length;
     const basicsOnScreen = state.current.fish.filter(
       (f) =>

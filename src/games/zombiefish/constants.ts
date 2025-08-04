@@ -28,13 +28,13 @@ export const SKELETON_SPEED = 2;
 
 // Maximum number of skeleton fish allowed simultaneously.
 // Lowered to reduce overall fish population on screen.
-export const MAX_SKELETONS = 10;
+export const MAX_SKELETONS = 20;
 
 // Maximum number of basic fish allowed simultaneously.
 export const MAX_FISH = 30;
 
 // Maximum number of special fish (brown, grey long, etc.) allowed at once.
-export const MAX_SPECIAL_FISH = 5;
+export const MAX_SPECIAL_FISH = 3;
 
 // Time adjustments when hitting special fish (in seconds).
 export const TIME_BONUS_BROWN_FISH = 3;
