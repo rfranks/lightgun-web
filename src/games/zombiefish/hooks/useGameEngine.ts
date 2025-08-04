@@ -3,6 +3,7 @@ import { useWindowSize } from "@/hooks/useWindowSize";
 import { useGameAssets } from "./useGameAssets";
 import { useGameAudio } from "./useGameAudio";
 import { drawTextLabels, newTextLabel } from "@/utils/ui";
+import { drawRandomTerrainBackground } from "../drawRandomTerrainBackground";
 
 import type {
   GameState,
@@ -96,140 +97,6 @@ const orientFish = (vx: number, vy: number) => {
   }
   return { angle, flipped };
 };
-
-// Draws a layered random seabed with plants and rocks
-function drawRandomTerrainBackground(
-  ctx: CanvasRenderingContext2D,
-  getImg: (key: string) => unknown,
-  width: number,
-  height: number,
-  seed = 0
-) {
-  // deterministic pseudo random seeded by dimensions and seed
-  const rand = (() => {
-    let s = width * 1000 + height + seed * 1000;
-    return () => {
-      const x = Math.sin(s++) * 10000;
-      return x - Math.floor(x);
-    };
-  })();
-
-  const step = 20;
-  const wave = (x: number, amp: number, len: number, offset: number) =>
-    amp * Math.sin(x / len + offset);
-  const phase = 0;
-
-  // water background
-  const waterImgs = getImg("terrainWaterImgs") as
-    | Record<string, HTMLImageElement>
-    | undefined;
-  const waterTile = waterImgs?.water_terrain;
-  if (waterTile) {
-    const pattern = ctx.createPattern(waterTile, "repeat");
-    if (pattern) {
-      ctx.fillStyle = pattern;
-      ctx.fillRect(0, 0, width, height);
-    } else {
-      ctx.drawImage(waterTile, 0, 0, width, height);
-    }
-  } else {
-    ctx.fillStyle = "#1d8fde";
-    ctx.fillRect(0, 0, width, height);
-  }
-
-  // shoreline points
-  const sandThickness = height * 0.25;
-  const dirtThickness = height * 0.15;
-  const sandAmp = sandThickness * 0.4;
-  const dirtAmp = dirtThickness * 0.4;
-  const waveLen = 200;
-
-  const sandTop: number[] = [];
-  const dirtTop: number[] = [];
-  for (let x = 0; x <= width; x += step) {
-    const sTop =
-      height - sandThickness + wave(x + 1000, sandAmp, waveLen, phase);
-    const dTop =
-      height - sandThickness - dirtThickness +
-      wave(x + 2000, dirtAmp, waveLen * 0.8, phase * 0.8);
-    sandTop.push(sTop);
-    dirtTop.push(Math.min(dTop, sTop - 20));
-  }
-
-  // dirt/rock layer
-  const dirtImgs = getImg("terrainDirtImgs") as
-    | Record<string, HTMLImageElement>
-    | undefined;
-  const dirtTile = dirtImgs?.terrain_dirt_a;
-  const dirtPattern = dirtTile ? ctx.createPattern(dirtTile, "repeat") : null;
-  ctx.fillStyle = dirtPattern ? dirtPattern : "#5c4b3a";
-  ctx.beginPath();
-  ctx.moveTo(0, dirtTop[0]);
-  for (let i = 1, x = step; x <= width; i++, x += step) {
-    ctx.lineTo(x, dirtTop[i] ?? dirtTop[i - 1]);
-  }
-  ctx.lineTo(width, height);
-  ctx.lineTo(0, height);
-  ctx.closePath();
-  ctx.fill();
-
-  // collect possible objects
-  const gather = (rec?: Record<string, HTMLImageElement>) => {
-    const arr: HTMLImageElement[] = [];
-    if (!rec) return arr;
-    Object.entries(rec).forEach(([key, img]) => {
-      if (!key.endsWith("_outline")) arr.push(img);
-    });
-    return arr;
-  };
-  const objects: HTMLImageElement[] = [
-    ...gather(getImg("seaweedImgs") as Record<string, HTMLImageElement>),
-    ...gather(getImg("seaGrassImgs") as Record<string, HTMLImageElement>),
-    ...gather(getImg("coralImgs") as Record<string, HTMLImageElement>),
-    ...gather(getImg("rockImgs") as Record<string, HTMLImageElement>),
-  ];
-
-  const minDist = 80;
-  const placements: { x: number }[] = [];
-  const count = Math.min(objects.length, Math.floor(width / 120));
-  for (let i = 0; i < count; i++) {
-    let attempts = 0;
-    while (attempts++ < 10) {
-      const img = objects[Math.floor(rand() * objects.length)];
-      const x = rand() * width;
-      if (placements.some((p) => Math.abs(p.x - x) < minDist)) continue;
-      placements.push({ x });
-      const idx = Math.min(Math.floor(x / step), sandTop.length - 1);
-      const groundY = sandTop[idx];
-      const scale = 0.5 + rand() * 0.5;
-      const flip = rand() < 0.5 ? -1 : 1;
-      const bury = rand() * (img.height * 0.3);
-      ctx.save();
-      ctx.translate(x, groundY);
-      ctx.scale(flip * scale, scale);
-      ctx.drawImage(img, -img.width / 2, -img.height + bury);
-      ctx.restore();
-      break;
-    }
-  }
-
-  // sand layer on top
-  const sandImgs = getImg("terrainSandImgs") as
-    | Record<string, HTMLImageElement>
-    | undefined;
-  const sandTile = sandImgs?.terrain_sand_a;
-  const sandPattern = sandTile ? ctx.createPattern(sandTile, "repeat") : null;
-  ctx.fillStyle = sandPattern ? sandPattern : "#c2b280";
-  ctx.beginPath();
-  ctx.moveTo(0, sandTop[0]);
-  for (let i = 1, x = step; x <= width; i++, x += step) {
-    ctx.lineTo(x, sandTop[i] ?? sandTop[i - 1]);
-  }
-  ctx.lineTo(width, height);
-  ctx.lineTo(0, height);
-  ctx.closePath();
-  ctx.fill();
-}
 
 export default function useGameEngine() {
   // canvas and animation frame refs
