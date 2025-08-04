@@ -818,15 +818,11 @@ export default function useGameEngine() {
           }
         }
         ctx.drawImage(img, drawX, drawY, FISH_SIZE, FISH_SIZE);
-        if (f.pendingSkeleton) {
+        if (f.pendingSkeleton || (f.isSkeleton && f.hurtTimer > 0)) {
           const flash = getImg("fishFlashImg") as HTMLImageElement;
           if (flash) {
             ctx.drawImage(flash, drawX, drawY, FISH_SIZE, FISH_SIZE);
           }
-        }
-        if (f.isSkeleton && f.hurtTimer > 0) {
-          ctx.fillStyle = "rgba(255,0,0,0.5)";
-          ctx.fillRect(drawX, drawY, FISH_SIZE, FISH_SIZE);
         }
         ctx.restore();
       });
@@ -1279,7 +1275,7 @@ export default function useGameEngine() {
                 audio.play("death");
               }
             } else {
-              f.health = Math.max(0, f.health - 1);
+              f.health -= 1;
               if (f.health > 0) {
                 f.hurtTimer = HURT_FRAMES;
                 audio.play("skeleton");
