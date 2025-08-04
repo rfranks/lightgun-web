@@ -1322,20 +1322,26 @@ export default function useGameEngine() {
     // keep school member velocity variance tied to the configured speed range
     const speedVariance = (FISH_SPEED_MAX - FISH_SPEED_MIN) / 4;
 
-    const specialSingles = ["brown", "grey_long_a", "grey_long_b"];
-    const specialPairs = ["grey_long"];
-    const isSpecial =
-      specialSingles.includes(kind) || specialPairs.includes(kind);
+    const specialSingles = ["brown"] as const;
+    const specialPairs: Record<string, string[]> = {
+      grey_long: ["grey_long_a", "grey_long_b"],
+    };
+    const specialPairParts = Object.values(specialPairs).flat();
+    const isSpecial = specialSingles.includes(kind) || !!specialPairs[kind];
 
-    const specialsOnScreen = state.current.fish.filter((f) =>
-      specialSingles.includes(f.kind)
+    const specialsOnScreen = state.current.fish.filter(
+      (f) => specialSingles.includes(f.kind) || specialPairParts.includes(f.kind)
     ).length;
     const basicsOnScreen = state.current.fish.filter(
-      (f) => !f.isSkeleton && !specialSingles.includes(f.kind)
+      (f) =>
+        !f.isSkeleton &&
+        !specialSingles.includes(f.kind) &&
+        !specialPairParts.includes(f.kind)
     ).length;
 
     if (isSpecial) {
-      const needed = specialPairs.includes(kind) ? 2 : 1;
+      if (specialsOnScreen >= MAX_SPECIAL_FISH) return [];
+      const needed = specialPairs[kind]?.length ?? 1;
       if (specialsOnScreen + needed > MAX_SPECIAL_FISH) return [];
       count = 1;
     } else {
@@ -1352,7 +1358,6 @@ export default function useGameEngine() {
     const edges = [0, 0, 0, 1, 1, 1];
     const edge = edges[Math.floor(Math.random() * edges.length)]; // 0:left,1:right
     const startX = edge === 0 ? -FISH_SIZE : width + FISH_SIZE;
-    const startY = 0;
 
     // generate a velocity based on the entry edge
     const genVelocity = () => {
@@ -1406,30 +1411,18 @@ export default function useGameEngine() {
       return f;
     };
 
-    if (specialPairs.includes(kind)) {
+    if (specialPairs[kind]) {
       // grey_long spawns as two pieces that move together
-      const groupId = nextGroupId.current++;
       const pairId = nextPairId.current++;
       const { vx, vy } = genVelocity(); // keep pair aligned
-      if (edge === 0 || edge === 1) {
-        const pairStart = edge === 0 ? -2 * FISH_SIZE : width - FISH_SIZE;
-        const y = Math.random() * height;
-        ["grey_long_a", "grey_long_b"].forEach((name, idx) => {
-          const x = pairStart + idx * FISH_SIZE;
-          const f = makeFish(name, x, y, vx, vy, groupId);
-          f.pairId = pairId;
-          spawned.push(f);
-        });
-      } else {
-        const pairStart = Math.random() * (width - 2 * FISH_SIZE);
-        const y = startY;
-        ["grey_long_a", "grey_long_b"].forEach((name, idx) => {
-          const x = pairStart + idx * FISH_SIZE;
-          const f = makeFish(name, x, y, vx, vy, groupId);
-          f.pairId = pairId;
-          spawned.push(f);
-        });
-      }
+      const pairStart = edge === 0 ? -2 * FISH_SIZE : width - FISH_SIZE;
+      const y = Math.random() * height;
+      specialPairs[kind].forEach((name, idx) => {
+        const x = pairStart + idx * FISH_SIZE;
+        const f = makeFish(name, x, y, vx, vy);
+        f.pairId = pairId;
+        spawned.push(f);
+      });
     } else {
       // non-special fish
       const baseX = startX;
