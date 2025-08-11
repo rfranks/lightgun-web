@@ -182,6 +182,10 @@ export default function useGameEngine() {
     state.current.dims = dims;
   }, [dims]);
 
+  useEffect(() => {
+    updateScoreLabel(scoreLabel.current, state.current.score);
+  }, [dims, updateScoreLabel]);
+
   const syncCursor = useCallback((cursor: string) => {
     state.current.cursor = cursor;
     setUI({
@@ -259,6 +263,24 @@ export default function useGameEngine() {
       label.imgs = str.split("").map((ch) => digitImgs[ch]);
     },
     [getImg]
+  );
+
+  const updateScoreLabel = useCallback(
+    (label: TextLabel | null, value: number) => {
+      updateDigitLabel(label, value);
+      if (!label) return;
+      const width = label.imgs.reduce(
+        (w, img) => w + (img?.width || 0) * label.scale + 2,
+        0
+      );
+      const height = label.imgs.reduce(
+        (h, img) => Math.max(h, (img?.height || 0) * label.scale),
+        0
+      );
+      label.x = dims.width - width - 16;
+      label.y = dims.height - height - 16;
+    },
+    [updateDigitLabel, dims]
   );
 
   const updateFish = useCallback(() => {
@@ -901,8 +923,6 @@ export default function useGameEngine() {
     gameoverScoreLabel.current = null;
 
     const digitImgs = getImg("digitImgs") as Record<string, HTMLImageElement>;
-    const digitHeight = digitImgs["0"]?.height || 0;
-    const lineHeight = digitHeight + 8;
 
     audio.playSequence(NES_BGM_SEQUENCE, { loop: true });
 
@@ -939,30 +959,16 @@ export default function useGameEngine() {
         (timer?.py || 0) * 2,
     };
 
-    const scoreText = newTextLabel(
-      {
-        text: "SCORE",
-        scale: 1,
-        fixed: true,
-        fade: false,
-        x: 16,
-        y: 16 + lineHeight * 3,
-        py: STAT_LABEL_PY,
-      },
-      assetMgr
-    );
     scoreLabel.current = newTextLabel(
       {
         text: cur.score.toString(),
         scale: 1,
         fixed: true,
         fade: false,
-        x: 16 + labelWidth(scoreText),
-        y: 16 + lineHeight * 3,
-        py: STAT_LABEL_PY,
       },
       assetMgr
     );
+    updateScoreLabel(scoreLabel.current, cur.score);
 
     const pctImg = getImg("pctImg") as HTMLImageElement;
     const accLbl = newTextLabel(
@@ -990,7 +996,6 @@ export default function useGameEngine() {
 
     state.current.textLabels = [
       timerLabel.current!,
-      scoreText,
       scoreLabel.current!,
       accLbl,
     ];
@@ -1244,7 +1249,7 @@ export default function useGameEngine() {
           const base = f.isSkeleton ? 20 : scoreMap[f.kind] ?? 10;
           const gain = base + cur.conversions;
           cur.score += gain;
-          updateDigitLabel(scoreLabel.current, cur.score);
+          updateScoreLabel(scoreLabel.current, cur.score);
           if (f.kind === "brown") {
             cur.timer += TIME_BONUS_BROWN_FISH;
             updateDigitLabel(timerLabel.current, cur.timer, 2);
